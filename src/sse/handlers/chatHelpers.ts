@@ -2,32 +2,29 @@ import { getModelInfo } from "../services/model";
 import { clearAccountError, markAccountUnavailable } from "../services/auth";
 import * as log from "../utils/logger";
 import { updateProviderCredentials } from "../services/tokenRefresh";
-import {
-  detectFormatFromEndpoint,
-  getTargetFormat,
-} from "@omniroute/open-sse/services/provider.ts";
+import { detectFormatFromEndpoint, getTargetFormat } from "@ozrouter/open-sse/services/provider.ts";
 import {
   getModelTargetFormat,
   PROVIDER_ID_TO_ALIAS,
-} from "@omniroute/open-sse/config/providerModels.ts";
-import { handleChatCore } from "@omniroute/open-sse/handlers/chatCore.ts";
+} from "@ozrouter/open-sse/config/providerModels.ts";
+import { handleChatCore } from "@ozrouter/open-sse/handlers/chatCore.ts";
 import {
   errorResponse,
   modelCooldownResponse,
   providerCircuitOpenResponse,
   unavailableResponse,
-} from "@omniroute/open-sse/utils/error.ts";
-import { HTTP_STATUS } from "@omniroute/open-sse/config/constants.ts";
+} from "@ozrouter/open-sse/utils/error.ts";
+import { HTTP_STATUS } from "@ozrouter/open-sse/config/constants.ts";
 import {
   runWithProxyContext,
   runWithTlsTracking,
   isTlsFingerprintActive,
-} from "@omniroute/open-sse/utils/proxyFetch.ts";
+} from "@ozrouter/open-sse/utils/proxyFetch.ts";
 import { resolveProxyForConnection } from "@/lib/localDb";
 import { CircuitBreakerOpenError, getCircuitBreaker } from "../../shared/utils/circuitBreaker";
 import { logProxyEvent } from "../../lib/proxyLogger";
 import { logTranslationEvent } from "../../lib/translatorEvents";
-import { getRuntimeProviderProfile } from "@omniroute/open-sse/services/accountFallback.ts";
+import { getRuntimeProviderProfile } from "@ozrouter/open-sse/services/accountFallback.ts";
 
 export async function resolveModelOrError(modelStr: string, body: any, endpointPath: string = "") {
   const modelInfo = await getModelInfo(modelStr);
@@ -348,7 +345,7 @@ export function withSessionHeader(response: Response, sessionId: string | null):
   if (!response || !sessionId) return response;
 
   try {
-    response.headers.set("X-OmniRoute-Session-Id", sessionId);
+    response.headers.set("X-OzRouter-Session-Id", sessionId);
     return response;
   } catch {
     const cloned = new Response(response.body, {
@@ -356,7 +353,7 @@ export function withSessionHeader(response: Response, sessionId: string | null):
       statusText: response.statusText,
       headers: response.headers,
     });
-    cloned.headers.set("X-OmniRoute-Session-Id", sessionId);
+    cloned.headers.set("X-OzRouter-Session-Id", sessionId);
     return cloned;
   }
 }

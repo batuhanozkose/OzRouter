@@ -11,7 +11,7 @@ import {
   type CompressionConfig,
   type CompressionMode,
   type UltraConfig,
-} from "@omniroute/open-sse/services/compression/types.ts";
+} from "@ozrouter/open-sse/services/compression/types.ts";
 
 const NAMESPACE = "compression";
 const COMPRESSION_MODES = new Set<CompressionMode>([

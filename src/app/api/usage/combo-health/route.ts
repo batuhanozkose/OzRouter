@@ -3,8 +3,8 @@ import { z } from "zod";
 import { getDbInstance } from "@/lib/db/core";
 import { getComboById, getCombos } from "@/lib/db/combos";
 import { getQuotaSnapshots } from "@/lib/db/quotaSnapshots";
-import { getComboMetrics } from "@omniroute/open-sse/services/comboMetrics.ts";
-import { resolveNestedComboTargets } from "@omniroute/open-sse/services/combo.ts";
+import { getComboMetrics } from "@ozrouter/open-sse/services/comboMetrics.ts";
+import { resolveNestedComboTargets } from "@ozrouter/open-sse/services/combo.ts";
 import type {
   ComboHealthMetrics,
   ComboHealthResponse,

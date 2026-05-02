@@ -1,8 +1,8 @@
-import { handleImageEdit } from "@omniroute/open-sse/handlers/imageGeneration.ts";
+import { handleImageEdit } from "@ozrouter/open-sse/handlers/imageGeneration.ts";
 import { getProviderCredentials, clearRecoveredProviderState } from "@/sse/services/auth";
-import { parseImageModel, getImageProvider } from "@omniroute/open-sse/config/imageRegistry.ts";
-import { errorResponse, unavailableResponse } from "@omniroute/open-sse/utils/error.ts";
-import { HTTP_STATUS } from "@omniroute/open-sse/config/constants.ts";
+import { parseImageModel, getImageProvider } from "@ozrouter/open-sse/config/imageRegistry.ts";
+import { errorResponse, unavailableResponse } from "@ozrouter/open-sse/utils/error.ts";
+import { HTTP_STATUS } from "@ozrouter/open-sse/config/constants.ts";
 import * as log from "@/sse/utils/logger";
 import { toJsonErrorPayload } from "@/shared/utils/upstreamError";
 import { enforceApiKeyPolicy } from "@/shared/utils/apiKeyPolicy";
@@ -12,7 +12,7 @@ import { enforceApiKeyPolicy } from "@/shared/utils/apiKeyPolicy";
  *
  * Open WebUI's "Image Edit" toggle (images.edit.engine = "openai") posts here
  * with `prompt` + `image` (file). For chatgpt-web, an "edit" only makes sense
- * if the uploaded image was originally generated through OmniRoute — we then
+ * if the uploaded image was originally generated through OzRouter — we then
  * have its `{conversationId, parentMessageId}` cached and can continue the
  * saved chatgpt.com conversation node, which is the only way to actually edit
  * the image instead of generating an unrelated one from scratch.

@@ -49,7 +49,7 @@ function isAutomatedTestProcess(): boolean {
 // ── State (globalThis survives HMR re-evaluation) ───────────────────────
 
 declare global {
-  var __omnirouteLocalHC:
+  var __ozrouterLocalHC:
     | {
         initialized: boolean;
         sweepTimer: ReturnType<typeof setTimeout> | null;
@@ -60,15 +60,15 @@ declare global {
 }
 
 function getLHCState() {
-  if (!globalThis.__omnirouteLocalHC) {
-    globalThis.__omnirouteLocalHC = {
+  if (!globalThis.__ozrouterLocalHC) {
+    globalThis.__ozrouterLocalHC = {
       initialized: false,
       sweepTimer: null,
       healthCache: new Map(),
       sweepInProgress: false,
     };
   }
-  return globalThis.__omnirouteLocalHC;
+  return globalThis.__ozrouterLocalHC;
 }
 
 const healthCache = getLHCState().healthCache;
@@ -83,7 +83,7 @@ function isEnvFlagEnabled(name: string): boolean {
 
 function isLocalHealthCheckDisabled(): boolean {
   return (
-    isEnvFlagEnabled("OMNIROUTE_DISABLE_LOCAL_HEALTHCHECK") ||
+    isEnvFlagEnabled("OZROUTER_DISABLE_LOCAL_HEALTHCHECK") ||
     isBuildProcess() ||
     isAutomatedTestProcess()
   );
@@ -96,7 +96,7 @@ function isLocalhostUrl(baseUrl: string): boolean {
     if (u.username || u.password) return false;
     // Note: URL.hostname returns "[::1]" WITH brackets for IPv6 — both forms checked.
     // Verified: node -e "new URL('http://[::1]:8080').hostname" → "[::1]"
-    // Strictly matching 172.16.0.0/12 (Docker/local) and explicitly blocking ::1 per SSRF hardening
+    // Strictly matching 172.16.0.0/12 private/local ranges and explicitly blocking ::1 per SSRF hardening
     return (
       u.hostname === "localhost" ||
       u.hostname === "127.0.0.1" ||

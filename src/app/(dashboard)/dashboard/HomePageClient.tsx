@@ -188,58 +188,31 @@ export default function HomePageClient({ machineId }: HomePageClientProps) {
     { label: ts("cliTools"), href: "/dashboard/cli-tools", icon: "terminal" },
     {
       label: t("reportIssue"),
-      href: "https://github.com/diegosouzapw/OmniRoute/issues",
+      href: "https://github.com/batuhanozkose/OzRouter/issues",
       external: true,
       icon: "bug_report",
     },
   ];
 
   const pollBackgroundUpdate = useCallback(
-    async ({
-      channel,
-      message,
-      targetVersion,
-    }: {
-      channel: string;
-      message: string;
-      targetVersion: string;
-    }) => {
+    async ({ message, targetVersion }: { message: string; targetVersion: string }) => {
       const notify = useNotificationStore.getState();
-      const initialSteps =
-        channel === "docker-compose"
-          ? [
-              {
-                step: "install",
-                status: "done",
-                message: message || `Queued update to v${targetVersion}.`,
-              },
-              {
-                step: "rebuild",
-                status: "running",
-                message: "Docker image is rebuilding in the background.",
-              },
-              {
-                step: "restart",
-                status: "pending",
-                message: "Waiting for OmniRoute to restart with the new version.",
-              },
-            ]
-          : [
-              {
-                step: "install",
-                status: "running",
-                message: message || `Installing v${targetVersion}.`,
-              },
-              {
-                step: "restart",
-                status: "pending",
-                message: "Waiting for OmniRoute to restart with the new version.",
-              },
-            ];
+      const initialSteps = [
+        {
+          step: "install",
+          status: "running",
+          message: message || `Installing v${targetVersion}.`,
+        },
+        {
+          step: "restart",
+          status: "pending",
+          message: "Waiting for OzRouter to restart with the new version.",
+        },
+      ];
 
       setUpdateSteps(initialSteps);
 
-      const maxAttempts = channel === "docker-compose" ? 72 : 36;
+      const maxAttempts = 36;
 
       for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
         await wait(5000);
@@ -265,63 +238,45 @@ export default function HomePageClient({ machineId }: HomePageClientProps) {
               next = mergeUpdateStep(next, {
                 step: "complete",
                 status: "done",
-                message: `OmniRoute is now running v${targetVersion}.`,
+                message: `OzRouter is now running v${targetVersion}.`,
               });
 
               return next;
             });
             setUpdating(false);
             setUpdatePhase("done");
-            notify.success(`OmniRoute updated to v${targetVersion}.`);
+            notify.success(`OzRouter updated to v${targetVersion}.`);
             await fetchData();
             return;
           }
 
           setUpdateSteps((prev) => {
-            let next = prev;
-            if (channel === "docker-compose") {
-              next = mergeUpdateStep(next, {
-                step: "rebuild",
-                status: "running",
-                message: `Docker image is still rebuilding for v${targetVersion}.`,
-              });
-            } else {
-              next = mergeUpdateStep(next, {
-                step: "install",
-                status: "running",
-                message: `Installing v${targetVersion} in the background.`,
-              });
-            }
+            let next = mergeUpdateStep(prev, {
+              step: "install",
+              status: "running",
+              message: `Installing v${targetVersion} in the background.`,
+            });
 
             next = mergeUpdateStep(next, {
               step: "restart",
               status: "pending",
-              message: `Waiting for OmniRoute to come back on v${targetVersion}.`,
+              message: `Waiting for OzRouter to come back on v${targetVersion}.`,
             });
 
             return next;
           });
         } catch {
           setUpdateSteps((prev) => {
-            let next = prev;
-            if (channel === "docker-compose") {
-              next = mergeUpdateStep(next, {
-                step: "rebuild",
-                status: "running",
-                message: "Docker rebuild is still in progress.",
-              });
-            } else {
-              next = mergeUpdateStep(next, {
-                step: "install",
-                status: "running",
-                message: `Installing v${targetVersion} in the background.`,
-              });
-            }
+            let next = mergeUpdateStep(prev, {
+              step: "install",
+              status: "running",
+              message: `Installing v${targetVersion} in the background.`,
+            });
 
             next = mergeUpdateStep(next, {
               step: "restart",
               status: "running",
-              message: "Service restart in progress. Waiting for OmniRoute to come back online...",
+              message: "Service restart in progress. Waiting for OzRouter to come back online...",
             });
 
             return next;
@@ -364,7 +319,6 @@ export default function HomePageClient({ machineId }: HomePageClientProps) {
         }
         notify.success(data.message || "Update started.");
         await pollBackgroundUpdate({
-          channel: data.channel || "docker-compose",
           message: data.message || "",
           targetVersion: data.to || data.latest,
         });
@@ -481,7 +435,7 @@ export default function HomePageClient({ machineId }: HomePageClientProps) {
                     ? "Update Complete!"
                     : updatePhase === "failed"
                       ? "Update Failed"
-                      : "Updating OmniRoute..."}
+                      : "Updating OzRouter..."}
                 </h3>
                 <p className="text-xs text-text-muted mt-0.5">
                   {updatePhase === "done"

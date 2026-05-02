@@ -60,7 +60,7 @@ test("getNodeRuntimeSupport rejects unsupported major lines", () => {
 
   assert.equal(node18.nodeCompatible, false);
   assert.equal(node18.reason, "unsupported-major");
-  assert.match(getNodeRuntimeWarning("18.20.8") || "", /outside OmniRoute's approved secure/i);
+  assert.match(getNodeRuntimeWarning("18.20.8") || "", /outside OzRouter's approved secure/i);
 
   assert.equal(node25.nodeCompatible, false);
   assert.equal(node25.reason, "unreleased-major");

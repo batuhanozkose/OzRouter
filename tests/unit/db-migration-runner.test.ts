@@ -144,7 +144,7 @@ test("runMigrations applies pending files sequentially in version order", serial
 
     assert.equal(appliedCount, 3);
     assert.deepEqual(
-      db.prepare("SELECT version FROM _omniroute_migrations ORDER BY version").all(),
+      db.prepare("SELECT version FROM _ozrouter_migrations ORDER BY version").all(),
       [{ version: "001" }, { version: "002" }, { version: "010" }]
     );
     assert.ok(
@@ -187,7 +187,7 @@ test("runMigrations skips versions that are already tracked as applied", serial,
     assert.equal(
       (
         db
-          .prepare("SELECT COUNT(*) AS count FROM _omniroute_migrations WHERE version = ?")
+          .prepare("SELECT COUNT(*) AS count FROM _ozrouter_migrations WHERE version = ?")
           .get("001") as any
       ).count,
       1
@@ -195,7 +195,7 @@ test("runMigrations skips versions that are already tracked as applied", serial,
     assert.equal(
       (
         db
-          .prepare("SELECT COUNT(*) AS count FROM _omniroute_migrations WHERE version = ?")
+          .prepare("SELECT COUNT(*) AS count FROM _ozrouter_migrations WHERE version = ?")
           .get("002") as any
       ).count,
       1
@@ -242,7 +242,7 @@ test(
         assert.equal(names.has(expected), true, `${expected} should exist`);
       }
       assert.deepEqual(
-        db.prepare("SELECT version, name FROM _omniroute_migrations WHERE version = ?").get("032"),
+        db.prepare("SELECT version, name FROM _ozrouter_migrations WHERE version = ?").get("032"),
         { version: "032", name: "apikey_lifecycle" }
       );
     } finally {
@@ -280,7 +280,7 @@ test(
       assert.equal(names.has("expires_at"), true);
       assert.equal(names.has("should_not_run"), false);
       assert.deepEqual(
-        db.prepare("SELECT version, name FROM _omniroute_migrations WHERE version = ?").get("032"),
+        db.prepare("SELECT version, name FROM _ozrouter_migrations WHERE version = ?").get("032"),
         { version: "032", name: "renamed_lifecycle_patch" }
       );
     } finally {
@@ -295,13 +295,13 @@ test("getMigrationStatus reports applied and pending migrations", serial, async 
 
   try {
     db.exec(`
-      CREATE TABLE _omniroute_migrations (
+      CREATE TABLE _ozrouter_migrations (
         version TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         applied_at TEXT NOT NULL DEFAULT (datetime('now'))
       );
     `);
-    db.prepare("INSERT INTO _omniroute_migrations (version, name) VALUES (?, ?)").run(
+    db.prepare("INSERT INTO _ozrouter_migrations (version, name) VALUES (?, ?)").run(
       "001",
       "first"
     );
@@ -363,7 +363,7 @@ test(
       assert.equal(
         (
           db
-            .prepare("SELECT COUNT(*) AS count FROM _omniroute_migrations WHERE version = ?")
+            .prepare("SELECT COUNT(*) AS count FROM _ozrouter_migrations WHERE version = ?")
             .get("002") as any
         ).count,
         0
@@ -417,7 +417,7 @@ test("invalid file names are ignored while valid migrations still run", serial, 
 
     assert.equal(count, 1);
     assert.deepEqual(
-      db.prepare("SELECT version, name FROM _omniroute_migrations ORDER BY version").all(),
+      db.prepare("SELECT version, name FROM _ozrouter_migrations ORDER BY version").all(),
       [{ version: "003", name: "valid" }]
     );
     assert.equal(
@@ -458,7 +458,7 @@ test(
 
       assert.equal(count, 1);
       assert.deepEqual(
-        db.prepare("SELECT version FROM _omniroute_migrations ORDER BY version").all(),
+        db.prepare("SELECT version FROM _ozrouter_migrations ORDER BY version").all(),
         [{ version: "001" }, { version: "002" }, { version: "003" }]
       );
     } finally {
@@ -476,13 +476,13 @@ test(
 
     try {
       db.exec(`
-      CREATE TABLE _omniroute_migrations (
+      CREATE TABLE _ozrouter_migrations (
         version TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         applied_at TEXT NOT NULL DEFAULT (datetime('now'))
       );
     `);
-      db.prepare("INSERT INTO _omniroute_migrations (version, name) VALUES (?, ?)").run(
+      db.prepare("INSERT INTO _ozrouter_migrations (version, name) VALUES (?, ?)").run(
         "999",
         "ghost"
       );
@@ -497,7 +497,7 @@ test(
 
       assert.equal(count, 2);
       assert.deepEqual(
-        db.prepare("SELECT version FROM _omniroute_migrations ORDER BY version").all(),
+        db.prepare("SELECT version FROM _ozrouter_migrations ORDER BY version").all(),
         [{ version: "001" }, { version: "002" }, { version: "999" }]
       );
     } finally {
@@ -515,13 +515,13 @@ test(
 
     try {
       db.exec(`
-      CREATE TABLE _omniroute_migrations (
+      CREATE TABLE _ozrouter_migrations (
         version TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         applied_at TEXT NOT NULL DEFAULT (datetime('now'))
       );
     `);
-      db.prepare("INSERT INTO _omniroute_migrations (version, name) VALUES (?, ?)").run(
+      db.prepare("INSERT INTO _ozrouter_migrations (version, name) VALUES (?, ?)").run(
         "022",
         "call_logs_summary_storage"
       );
@@ -536,7 +536,7 @@ test(
 
       assert.equal(count, 1);
       assert.deepEqual(
-        db.prepare("SELECT version, name FROM _omniroute_migrations ORDER BY version").all(),
+        db.prepare("SELECT version, name FROM _ozrouter_migrations ORDER BY version").all(),
         [
           { version: "022", name: "add_memory_fts5" },
           { version: "025", name: "call_logs_summary_storage" },
@@ -568,17 +568,17 @@ test(
 
     try {
       db.exec(`
-      CREATE TABLE _omniroute_migrations (
+      CREATE TABLE _ozrouter_migrations (
         version TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         applied_at TEXT NOT NULL DEFAULT (datetime('now'))
       );
     `);
-      db.prepare("INSERT INTO _omniroute_migrations (version, name) VALUES (?, ?)").run(
+      db.prepare("INSERT INTO _ozrouter_migrations (version, name) VALUES (?, ?)").run(
         "022",
         "call_logs_summary_storage"
       );
-      db.prepare("INSERT INTO _omniroute_migrations (version, name) VALUES (?, ?)").run(
+      db.prepare("INSERT INTO _ozrouter_migrations (version, name) VALUES (?, ?)").run(
         "025",
         "call_logs_summary_storage"
       );
@@ -594,7 +594,7 @@ test(
 
       assert.equal(count, 1);
       assert.deepEqual(
-        db.prepare("SELECT version, name FROM _omniroute_migrations ORDER BY version").all(),
+        db.prepare("SELECT version, name FROM _ozrouter_migrations ORDER BY version").all(),
         [
           { version: "022", name: "add_memory_fts5" },
           { version: "025", name: "call_logs_summary_storage" },
@@ -626,7 +626,7 @@ test(
 
     try {
       db.exec(`
-      CREATE TABLE _omniroute_migrations (
+      CREATE TABLE _ozrouter_migrations (
         version TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         applied_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -637,7 +637,7 @@ test(
         key TEXT NOT NULL
       );
     `);
-      db.prepare("INSERT INTO _omniroute_migrations (version, name) VALUES (?, ?)").run(
+      db.prepare("INSERT INTO _ozrouter_migrations (version, name) VALUES (?, ?)").run(
         "032",
         "create_reasoning_cache"
       );
@@ -652,7 +652,7 @@ test(
 
       assert.equal(count, 1);
       assert.deepEqual(
-        db.prepare("SELECT version, name FROM _omniroute_migrations ORDER BY version").all(),
+        db.prepare("SELECT version, name FROM _ozrouter_migrations ORDER BY version").all(),
         [
           { version: "032", name: "apikey_lifecycle" },
           { version: "033", name: "create_reasoning_cache" },
@@ -685,7 +685,7 @@ test(
 
     try {
       db.exec(`
-      CREATE TABLE _omniroute_migrations (
+      CREATE TABLE _ozrouter_migrations (
         version TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         applied_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -711,7 +711,7 @@ test(
         ["033", "provider_connections_block_extra_usage"],
       ];
       for (const row of legacyRows) {
-        db.prepare("INSERT INTO _omniroute_migrations (version, name) VALUES (?, ?)").run(
+        db.prepare("INSERT INTO _ozrouter_migrations (version, name) VALUES (?, ?)").run(
           row[0],
           row[1]
         );
@@ -737,7 +737,7 @@ test(
       );
 
       assert.equal(count, 6);
-      const rows = db.prepare("SELECT version, name FROM _omniroute_migrations").all() as Array<{
+      const rows = db.prepare("SELECT version, name FROM _ozrouter_migrations").all() as Array<{
         version: string;
         name: string;
       }>;
@@ -804,7 +804,7 @@ test(
 
     try {
       db.exec(`
-      CREATE TABLE _omniroute_migrations (
+      CREATE TABLE _ozrouter_migrations (
         version TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         applied_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -823,7 +823,7 @@ test(
         expires_at TEXT
       );
     `);
-      db.prepare("INSERT INTO _omniroute_migrations (version, name) VALUES (?, ?)").run(
+      db.prepare("INSERT INTO _ozrouter_migrations (version, name) VALUES (?, ?)").run(
         "021",
         "combo_call_log_targets"
       );
@@ -849,7 +849,7 @@ test(
 
       assert.equal(count, 2);
       assert.deepEqual(
-        db.prepare("SELECT version FROM _omniroute_migrations ORDER BY version").all(),
+        db.prepare("SELECT version FROM _ozrouter_migrations ORDER BY version").all(),
         [{ version: "021" }, { version: "022" }, { version: "023" }]
       );
       assert.deepEqual(db.prepare("SELECT memory_id, content FROM memories").get(), {
@@ -877,13 +877,13 @@ test(
     try {
       createInitialSchemaTables(db);
       db.exec(`
-        CREATE TABLE _omniroute_migrations (
+        CREATE TABLE _ozrouter_migrations (
           version TEXT PRIMARY KEY,
           name TEXT NOT NULL,
           applied_at TEXT NOT NULL DEFAULT (datetime('now'))
         );
       `);
-      db.prepare("INSERT INTO _omniroute_migrations (version, name) VALUES (?, ?)").run(
+      db.prepare("INSERT INTO _ozrouter_migrations (version, name) VALUES (?, ?)").run(
         "001",
         "initial_schema"
       );
@@ -896,7 +896,7 @@ test(
 
       assert.equal(count, 6);
       assert.deepEqual(
-        db.prepare("SELECT version FROM _omniroute_migrations ORDER BY version").all(),
+        db.prepare("SELECT version FROM _ozrouter_migrations ORDER BY version").all(),
         [
           { version: "001" },
           { version: "002" },
@@ -924,13 +924,13 @@ test(
       createInitialSchemaTables(db);
       db.exec(`
         CREATE TABLE request_detail_logs (id TEXT PRIMARY KEY);
-        CREATE TABLE _omniroute_migrations (
+        CREATE TABLE _ozrouter_migrations (
           version TEXT PRIMARY KEY,
           name TEXT NOT NULL,
           applied_at TEXT NOT NULL DEFAULT (datetime('now'))
         );
       `);
-      db.prepare("INSERT INTO _omniroute_migrations (version, name) VALUES (?, ?)").run(
+      db.prepare("INSERT INTO _ozrouter_migrations (version, name) VALUES (?, ?)").run(
         "001",
         "initial_schema"
       );

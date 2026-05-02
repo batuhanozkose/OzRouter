@@ -5,7 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-const TEST_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "omniroute-chatcore-translation-"));
+const TEST_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "ozrouter-chatcore-translation-"));
 process.env.DATA_DIR = TEST_DATA_DIR;
 
 const core = await import("../../src/lib/db/core.ts");
@@ -1228,7 +1228,7 @@ test("chatCore serves a cached idempotent response without hitting the provider 
   assert.equal(first.calls.length, 1);
   assert.equal(second.calls.length, 0);
   assert.equal(second.result.success, true);
-  assert.equal(second.result.response.headers.get("X-OmniRoute-Idempotent"), "true");
+  assert.equal(second.result.response.headers.get("X-OzRouter-Idempotent"), "true");
 
   const payload = (await second.result.response.json()) as any;
   assert.equal(payload.choices[0].message.content, "ok");
@@ -1266,9 +1266,9 @@ test("chatCore returns a semantic cache HIT for repeated deterministic requests"
   });
 
   assert.equal(first.calls.length, 1);
-  assert.equal(first.result.response.headers.get("X-OmniRoute-Cache"), "MISS");
+  assert.equal(first.result.response.headers.get("X-OzRouter-Cache"), "MISS");
   assert.equal(second.calls.length, 0);
-  assert.equal(second.result.response.headers.get("X-OmniRoute-Cache"), "HIT");
+  assert.equal(second.result.response.headers.get("X-OzRouter-Cache"), "HIT");
   assert.equal(upstreamHits, 1);
 
   const payload = (await second.result.response.json()) as any;
@@ -1323,14 +1323,14 @@ test("chatCore skips semantic cache when disabled in settings", async () => {
   assert.equal(first.calls.length, 1);
   assert.equal(second.calls.length, 1);
   assert.equal(upstreamHits, 2);
-  assert.equal(first.result.response.headers.get("X-OmniRoute-Cache"), "MISS");
-  assert.equal(second.result.response.headers.get("X-OmniRoute-Cache"), "MISS");
+  assert.equal(first.result.response.headers.get("X-OzRouter-Cache"), "MISS");
+  assert.equal(second.result.response.headers.get("X-OzRouter-Cache"), "MISS");
 
   const payload = (await second.result.response.json()) as any;
   assert.equal(payload.choices[0].message.content, "fresh-2");
 });
 
-test("chatCore attaches OmniRoute response metadata headers to non-stream responses", async () => {
+test("chatCore attaches OzRouter response metadata headers to non-stream responses", async () => {
   const { result } = await invokeChatCore({
     provider: "claude",
     model: "claude-sonnet-4-6",
@@ -1343,13 +1343,13 @@ test("chatCore attaches OmniRoute response metadata headers to non-stream respon
   });
 
   assert.equal(result.success, true);
-  assert.equal(result.response.headers.get("X-OmniRoute-Provider"), "cc");
-  assert.equal(result.response.headers.get("X-OmniRoute-Model"), "claude-sonnet-4-6");
-  assert.equal(result.response.headers.get("X-OmniRoute-Cache-Hit"), "false");
-  assert.equal(result.response.headers.get("X-OmniRoute-Tokens-In"), "12");
-  assert.equal(result.response.headers.get("X-OmniRoute-Tokens-Out"), "3");
-  assert.ok(Number(result.response.headers.get("X-OmniRoute-Latency-Ms")) >= 0);
-  assert.match(String(result.response.headers.get("X-OmniRoute-Response-Cost")), /^\d+\.\d{10}$/);
+  assert.equal(result.response.headers.get("X-OzRouter-Provider"), "cc");
+  assert.equal(result.response.headers.get("X-OzRouter-Model"), "claude-sonnet-4-6");
+  assert.equal(result.response.headers.get("X-OzRouter-Cache-Hit"), "false");
+  assert.equal(result.response.headers.get("X-OzRouter-Tokens-In"), "12");
+  assert.equal(result.response.headers.get("X-OzRouter-Tokens-Out"), "3");
+  assert.ok(Number(result.response.headers.get("X-OzRouter-Latency-Ms")) >= 0);
+  assert.match(String(result.response.headers.get("X-OzRouter-Response-Cost")), /^\d+\.\d{10}$/);
 });
 
 test("chatCore normalizes tool finish reasons and estimates usage when upstream omits it", async () => {
@@ -1508,7 +1508,7 @@ test("chatCore injects fallback user for Qwen OAuth requests without user", asyn
   });
 
   assert.equal(result.success, true);
-  assert.equal(call.body.user, "omniroute-qwen-oauth");
+  assert.equal(call.body.user, "ozrouter-qwen-oauth");
 });
 
 test("chatCore keeps explicit user for Qwen OAuth requests", async () => {
@@ -1943,13 +1943,13 @@ test("chatCore records Claude prompt cache and cache usage metadata in call logs
 
   assert.equal(result.success, true);
   assert.ok(detail);
-  assert.equal(detail.requestBody._omniroute.claudePromptCache.applied, true);
-  assert.equal(detail.requestBody._omniroute.claudePromptCache.totalBreakpoints, 4);
-  assert.equal(detail.responseBody._omniroute.claudePromptCache.applied, true);
-  assert.equal(detail.responseBody._omniroute.claudePromptCache.totalBreakpoints, 4);
-  assert.equal(typeof detail.responseBody._omniroute.claudePromptCache.anthropicBeta, "string");
-  assert.match(detail.responseBody._omniroute.claudePromptCache.anthropicBeta, /prompt-caching/i);
-  assert.deepEqual(detail.responseBody._omniroute.claudePromptCacheUsage, {
+  assert.equal(detail.requestBody._ozrouter.claudePromptCache.applied, true);
+  assert.equal(detail.requestBody._ozrouter.claudePromptCache.totalBreakpoints, 4);
+  assert.equal(detail.responseBody._ozrouter.claudePromptCache.applied, true);
+  assert.equal(detail.responseBody._ozrouter.claudePromptCache.totalBreakpoints, 4);
+  assert.equal(typeof detail.responseBody._ozrouter.claudePromptCache.anthropicBeta, "string");
+  assert.match(detail.responseBody._ozrouter.claudePromptCache.anthropicBeta, /prompt-caching/i);
+  assert.deepEqual(detail.responseBody._ozrouter.claudePromptCacheUsage, {
     cacheReadTokens: 4,
     cacheCreationTokens: 2,
   });
@@ -1996,7 +1996,7 @@ test("chatCore injects progress events into streaming responses when requested",
     provider: "openai",
     model: "gpt-4o-mini",
     accept: "text/event-stream",
-    requestHeaders: { "x-omniroute-progress": "true" },
+    requestHeaders: { "x-ozrouter-progress": "true" },
     body: {
       model: "gpt-4o-mini",
       stream: true,
@@ -2009,7 +2009,7 @@ test("chatCore injects progress events into streaming responses when requested",
 
   const streamText = await result.response.text();
   assert.equal(result.success, true);
-  assert.equal(result.response.headers.get("X-OmniRoute-Progress"), "enabled");
+  assert.equal(result.response.headers.get("X-OzRouter-Progress"), "enabled");
   assert.match(streamText, /event: progress/);
 });
 
@@ -2031,14 +2031,12 @@ test("chatCore emits final SSE metadata comments before [DONE] on streaming resp
   const streamText = await result.response.text();
 
   assert.equal(result.success, true);
-  assert.equal(result.response.headers.get("X-OmniRoute-Provider"), "openai");
-  assert.equal(result.response.headers.get("X-OmniRoute-Model"), "gpt-4o-mini");
-  assert.match(streamText, /: x-omniroute-response-cost=\d+\.\d{10}/);
-  assert.match(streamText, /: x-omniroute-tokens-in=\d+/);
-  assert.match(streamText, /: x-omniroute-tokens-out=\d+/);
-  assert.ok(
-    streamText.indexOf(": x-omniroute-response-cost=") < streamText.indexOf("data: [DONE]")
-  );
+  assert.equal(result.response.headers.get("X-OzRouter-Provider"), "openai");
+  assert.equal(result.response.headers.get("X-OzRouter-Model"), "gpt-4o-mini");
+  assert.match(streamText, /: x-ozrouter-response-cost=\d+\.\d{10}/);
+  assert.match(streamText, /: x-ozrouter-tokens-in=\d+/);
+  assert.match(streamText, /: x-ozrouter-tokens-out=\d+/);
+  assert.ok(streamText.indexOf(": x-ozrouter-response-cost=") < streamText.indexOf("data: [DONE]"));
 });
 
 test("chatCore maps upstream aborts to request-aborted errors", async () => {
@@ -2245,7 +2243,7 @@ test("chatCore caches streaming response and serves cache HIT on repeat", async 
 
   assert.equal(upstreamHits, 1, "upstream should be called only once");
   assert.equal(second.calls.length, 0, "second request should not reach upstream");
-  assert.equal(second.result.response.headers.get("X-OmniRoute-Cache"), "HIT");
+  assert.equal(second.result.response.headers.get("X-OzRouter-Cache"), "HIT");
 
   const payload = (await second.result.response.json()) as any;
   assert.ok(payload.choices, "cached response should have choices");
@@ -2293,7 +2291,7 @@ test("chatCore does not cache streaming response when temperature > 0", async ()
   assert.equal(second.calls.length, 1, "second request should reach upstream");
 });
 
-test("chatCore skips streaming cache when X-OmniRoute-No-Cache header is set", async () => {
+test("chatCore skips streaming cache when X-OzRouter-No-Cache header is set", async () => {
   let upstreamHits = 0;
   const sharedBody = {
     model: "gpt-4o-mini",
@@ -2306,7 +2304,7 @@ test("chatCore skips streaming cache when X-OmniRoute-No-Cache header is set", a
     provider: "openai",
     model: "gpt-4o-mini",
     accept: "text/event-stream",
-    requestHeaders: { "x-omniroute-no-cache": "true" },
+    requestHeaders: { "x-ozrouter-no-cache": "true" },
     body: sharedBody,
     responseFormat: "openai",
     responseFactory() {
@@ -2327,7 +2325,7 @@ test("chatCore skips streaming cache when X-OmniRoute-No-Cache header is set", a
     provider: "openai",
     model: "gpt-4o-mini",
     accept: "text/event-stream",
-    requestHeaders: { "x-omniroute-no-cache": "true" },
+    requestHeaders: { "x-ozrouter-no-cache": "true" },
     body: sharedBody,
     responseFormat: "openai",
     responseFactory() {
@@ -2372,7 +2370,7 @@ test("chatCore returns cache HIT as JSON even when client requests SSE", async (
   });
 
   assert.equal(second.calls.length, 0, "cached response should prevent upstream call");
-  assert.equal(second.result.response.headers.get("X-OmniRoute-Cache"), "HIT");
+  assert.equal(second.result.response.headers.get("X-OzRouter-Cache"), "HIT");
   assert.equal(
     second.result.response.headers.get("Content-Type"),
     "application/json",

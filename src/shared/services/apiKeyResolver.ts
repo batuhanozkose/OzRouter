@@ -13,12 +13,12 @@ export async function resolveApiKey(
       /* fall through */
     }
   }
-  return apiKey || "sk_omniroute";
+  return apiKey || "sk_ozrouter";
 }
 
 /**
  * Get or create a DB-backed API key for CLI tool setup.
- * Returns a valid OmniRoute API key (not a placeholder like "sk_omniroute").
+ * Returns a valid OzRouter API key (not a placeholder like "sk_ozrouter").
  * Used when user has not explicitly selected a key from API Manager.
  */
 export async function getOrCreateApiKey(apiKeyId?: string | null): Promise<string> {

@@ -1,37 +1,13 @@
 {
-  "name": "omniroute",
+  "name": "ozrouter",
   "version": "3.7.8",
-  "description": "Smart AI Router with auto fallback — route to FREE & cheap models, zero downtime. Works with Cursor, Cline, Claude Desktop, Codex, and any OpenAI-compatible tool.",
+  "private": true,
+  "description": "Local AI gateway for routing OpenAI-compatible clients across multiple providers, accounts, and fallback chains.",
   "type": "module",
   "bin": {
-    "omniroute": "bin/omniroute.mjs",
-    "omniroute-reset-password": "bin/reset-password.mjs"
+    "ozrouter": "bin/ozrouter.mjs",
+    "ozrouter-reset-password": "bin/reset-password.mjs"
   },
-  "files": [
-    "bin/",
-    "app/",
-    "open-sse/mcp-server/index.ts",
-    "open-sse/mcp-server/server.ts",
-    "open-sse/mcp-server/httpTransport.ts",
-    "open-sse/mcp-server/audit.ts",
-    "open-sse/mcp-server/runtimeHeartbeat.ts",
-    "open-sse/mcp-server/scopeEnforcement.ts",
-    "open-sse/mcp-server/schemas/",
-    "open-sse/mcp-server/tools/",
-    "open-sse/mcp-server/README.md",
-    "src/shared/contracts/",
-    "src/shared/utils/nodeRuntimeSupport.ts",
-    ".env.example",
-    "scripts/postinstall.mjs",
-    "scripts/postinstallSupport.mjs",
-    "scripts/responses-ws-proxy.mjs",
-    "scripts/check-supported-node-runtime.ts",
-    "scripts/sync-env.mjs",
-    "scripts/native-binary-compat.mjs",
-    "scripts/build-next-isolated.mjs",
-    "README.md",
-    "LICENSE"
-  ],
   "workspaces": [
     "open-sse"
   ],
@@ -54,16 +30,15 @@
     "auto-fallback"
   ],
   "license": "MIT",
-  "author": "diegosouzapw",
+  "author": "Batuhan Özköse",
   "repository": {
     "type": "git",
-    "url": "https://github.com/diegosouzapw/OmniRoute"
+    "url": "https://github.com/batuhanozkose/OzRouter"
   },
-  "homepage": "https://omniroute.online",
+  "homepage": "https://github.com/batuhanozkose/OzRouter",
   "scripts": {
     "dev": "node scripts/run-next.mjs dev",
     "build": "node scripts/build-next-isolated.mjs",
-    "build:cli": "node --import tsx/esm scripts/prepublish.ts",
     "start": "node scripts/run-next.mjs start",
     "lint": "eslint .",
     "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:20128 && cd electron && npm run dev\"",
@@ -82,7 +57,6 @@
     "check:any-budget:t11": "node scripts/check-t11-any-budget.mjs",
     "check:docs-sync": "node scripts/check-docs-sync.mjs",
     "check:node-runtime": "node --import tsx/esm scripts/check-supported-node-runtime.ts",
-    "check:pack-artifact": "node --import tsx/esm scripts/validate-pack-artifact.ts",
     "typecheck:core": "tsc --pretty false -p tsconfig.typecheck-core.json",
     "typecheck:noimplicit:core": "tsc --pretty false -p tsconfig.typecheck-noimplicit-core.json",
     "env:sync": "node scripts/sync-env.mjs",
@@ -99,8 +73,6 @@
     "coverage:report:legacy": "c8 report --output-dir coverage --exclude=open-sse --reporter=text --reporter=text-summary",
     "test:all": "npm run test:unit && npm run test:vitest && npm run test:ecosystem && npm run test:e2e",
     "check": "npm run lint && npm run test",
-    "prepublishOnly": "npm run build:cli && npm run check:pack-artifact",
-    "postinstall": "node scripts/postinstall.mjs",
     "uninstall": "node scripts/uninstall.mjs",
     "uninstall:full": "node scripts/uninstall.mjs --full",
     "prepare": "husky",
@@ -196,7 +168,7 @@
       "@swc/core",
       "better-sqlite3",
       "esbuild",
-      "omniroute",
+      "ozrouter",
       "sharp"
     ]
   },

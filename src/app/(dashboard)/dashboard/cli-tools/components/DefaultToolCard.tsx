@@ -49,7 +49,7 @@ export default function DefaultToolCard({
   const selectedKeyObj = apiKeys?.find((k) => k.id === selectedApiKeyId);
 
   const resolveApiKeyValue = useCallback(
-    () => selectedKeyObj?.rawKey || (!cloudEnabled ? "sk_omniroute" : t("yourApiKeyPlaceholder")),
+    () => selectedKeyObj?.rawKey || (!cloudEnabled ? "sk_ozrouter" : t("yourApiKeyPlaceholder")),
     [cloudEnabled, selectedKeyObj?.rawKey, t]
   );
 
@@ -97,7 +97,7 @@ export default function DefaultToolCard({
 
   // Persist and restore model selection per tool via localStorage
   useEffect(() => {
-    const savedModel = localStorage.getItem(`omniroute-cli-model-${toolId}`);
+    const savedModel = localStorage.getItem(`ozrouter-cli-model-${toolId}`);
     if (savedModel) {
       if (isMultiModelTool) {
         try {
@@ -118,7 +118,7 @@ export default function DefaultToolCard({
         setModelValue(savedModel);
       }
     }
-    const savedKey = localStorage.getItem(`omniroute-cli-key-${toolId}`);
+    const savedKey = localStorage.getItem(`ozrouter-cli-key-${toolId}`);
     // (#523) localStorage may contain a masked key string from before the fix —
     // match by prefix/suffix against known keys to find the id.
     if (savedKey && apiKeys?.length > 0) {
@@ -137,9 +137,9 @@ export default function DefaultToolCard({
     (value) => {
       setModelValue(value);
       if (value) {
-        localStorage.setItem(`omniroute-cli-model-${toolId}`, value);
+        localStorage.setItem(`ozrouter-cli-model-${toolId}`, value);
       } else {
-        localStorage.removeItem(`omniroute-cli-model-${toolId}`);
+        localStorage.removeItem(`ozrouter-cli-model-${toolId}`);
       }
     },
     [toolId]
@@ -155,9 +155,9 @@ export default function DefaultToolCard({
       setModelValue(normalized[0] || "");
 
       if (normalized.length > 0) {
-        localStorage.setItem(`omniroute-cli-model-${toolId}`, JSON.stringify(normalized));
+        localStorage.setItem(`ozrouter-cli-model-${toolId}`, JSON.stringify(normalized));
       } else {
-        localStorage.removeItem(`omniroute-cli-model-${toolId}`);
+        localStorage.removeItem(`ozrouter-cli-model-${toolId}`);
       }
     },
     [toolId]
@@ -168,7 +168,7 @@ export default function DefaultToolCard({
       setSelectedApiKeyId(value);
       if (value) {
         // (#523) Store the key id in localStorage for persistence
-        localStorage.setItem(`omniroute-cli-key-${toolId}`, value);
+        localStorage.setItem(`ozrouter-cli-key-${toolId}`, value);
       }
     },
     [toolId]
@@ -268,7 +268,7 @@ export default function DefaultToolCard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           baseUrl: baseUrlWithV1,
-          apiKey: !cloudEnabled ? "sk_omniroute" : null,
+          apiKey: !cloudEnabled ? "sk_ozrouter" : null,
           keyId: selectedKeyId,
           model: modelValue,
           models: isMultiModelTool ? getSelectedModels() : undefined,
@@ -325,7 +325,7 @@ export default function DefaultToolCard({
           </>
         ) : (
           <span className="text-sm text-text-muted">
-            {cloudEnabled ? t("noApiKeysCreateOne") : "sk_omniroute"}
+            {cloudEnabled ? t("noApiKeysCreateOne") : "sk_ozrouter"}
           </span>
         )}
       </div>

@@ -221,7 +221,7 @@ export default function CLIToolsPageClient({ machineId: _machineId }) {
     if (cloudEnabled && CLOUD_URL) {
       return CLOUD_URL;
     }
-    // Use window.location.origin directly — works correctly in Docker/reverse-proxy
+    // Use window.location.origin directly so reverse-proxy deployments keep the right origin.
     // Per @alpgul feedback: don't use baseUrl prop (has port duplication issues)
     if (typeof window !== "undefined") {
       return window.location.origin;

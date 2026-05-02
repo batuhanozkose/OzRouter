@@ -11,7 +11,7 @@
  *
  * 3. **Context Caching Protection** (#401): If the combo enables
  *    `context_cache_protection`, the proxy:
- *    a. On response: injects `<omniModel>provider/model</omniModel>` tag into
+ *    a. On response: injects `<ozModel>provider/model</ozModel>` tag into
  *       the first assistant message content string.
  *    b. On request: scans the message history for the tag, and if found,
  *       overrides the requested model with the pinned one.
@@ -35,10 +35,10 @@ interface Message {
 // ── Context Caching Tag ─────────────────────────────────────────────────────
 
 // Handles both actual newlines (U+000A) and literal \n sequences injected
-// by combo.ts streaming around the <omniModel> tag (#531). Non-global so that
+// by combo.ts streaming around the <ozModel> tag (#531). Non-global so that
 // .exec() and .test() stay stateless; callers that need full replacement use
 // String.prototype.replace() which replaces all non-overlapping matches.
-const CACHE_TAG_PATTERN = /(?:\\n|\n|\r)*<omniModel>([^<]+)<\/omniModel>(?:\\n|\n|\r)*/;
+const CACHE_TAG_PATTERN = /(?:\\n|\n|\r)*<ozModel>([^<]+)<\/ozModel>(?:\\n|\n|\r)*/;
 
 /**
  * Inject the model tag into the last assistant message (or append a new one).
@@ -60,7 +60,7 @@ export function injectModelTag(messages: Message[], providerModel: string): Mess
   // #474: If no assistant message exists yet (first turn), append a synthetic one
   // so the tag is present when the client sends the next request with the response.
   if (lastAssistantIdx === -1) {
-    return [...cleaned, { role: "assistant", content: `<omniModel>${providerModel}</omniModel>` }];
+    return [...cleaned, { role: "assistant", content: `<ozModel>${providerModel}</ozModel>` }];
   }
 
   const msg = cleaned[lastAssistantIdx];
@@ -70,13 +70,13 @@ export function injectModelTag(messages: Message[], providerModel: string): Mess
   if (typeof msg.content !== "string") {
     // If the message has tool_calls but no string content, append a new assistant
     // message with the tag rather than silently failing.
-    return [...cleaned, { role: "assistant", content: `<omniModel>${providerModel}</omniModel>` }];
+    return [...cleaned, { role: "assistant", content: `<ozModel>${providerModel}</ozModel>` }];
   }
 
   const tagged = [...cleaned];
   tagged[lastAssistantIdx] = {
     ...msg,
-    content: `${msg.content}<omniModel>${providerModel}</omniModel>`,
+    content: `${msg.content}<ozModel>${providerModel}</ozModel>`,
   };
   return tagged;
 }
@@ -140,8 +140,8 @@ export function applyToolFilter(
 }
 
 /**
- * Strip all <omniModel> tags from message content before forwarding to the provider.
- * The tag is an internal OmniRoute marker; providers must never see it or their
+ * Strip all <ozModel> tags from message content before forwarding to the provider.
+ * The tag is an internal OzRouter marker; providers must never see it or their
  * cache will treat every tagged request as a new session (#454).
  */
 export function stripModelTags(messages: Message[]): Message[] {
@@ -173,7 +173,7 @@ export function applyComboAgentMiddleware(
   if (comboConfig.context_cache_protection) {
     pinnedModel = extractPinnedModel(messages);
     if (pinnedModel) {
-      // (#535) Model is pinned via <omniModel> tag — override body.model so the combo
+      // (#535) Model is pinned via <ozModel> tag — override body.model so the combo
       // router uses exactly this model instead of picking a different one. Without this,
       // the extracted pinnedModel is returned but body.model is unchanged, breaking
       // context cache sessions by sending subsequent turns to a different model.
@@ -192,8 +192,8 @@ export function applyComboAgentMiddleware(
     comboConfig.tool_filter_regex
   );
 
-  // 4. Strip internal <omniModel> tags before forwarding to provider (#454)
-  //    These tags are OmniRoute-internal markers and must never reach the provider
+  // 4. Strip internal <ozModel> tags before forwarding to provider (#454)
+  //    These tags are OzRouter-internal markers and must never reach the provider
   //    since providers would treat each tagged request as a new cache session.
   messages = stripModelTags(messages);
 

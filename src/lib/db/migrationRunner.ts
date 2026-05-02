@@ -25,7 +25,7 @@ import type Database from "better-sqlite3";
  * `file://` URL, causing `fileURLToPath` to throw `ERR_INVALID_FILE_URL_PATH`.
  */
 function resolveMigrationsDir(): string {
-  const configuredDir = process.env.OMNIROUTE_MIGRATIONS_DIR;
+  const configuredDir = process.env.OZROUTER_MIGRATIONS_DIR;
   if (typeof configuredDir === "string" && configuredDir.trim().length > 0) {
     return path.resolve(configuredDir);
   }
@@ -63,7 +63,7 @@ function resolveMigrationsDir(): string {
   }
 
   throw new Error(
-    "[Migration] Could not resolve migrations directory. Set OMNIROUTE_MIGRATIONS_DIR."
+    "[Migration] Could not resolve migrations directory. Set OZROUTER_MIGRATIONS_DIR."
   );
 }
 
@@ -133,7 +133,7 @@ const INITIAL_SCHEMA_SENTINELS = ["provider_connections", "combos", "call_logs"]
  */
 function ensureMigrationsTable(db: Database.Database): void {
   db.exec(`
-    CREATE TABLE IF NOT EXISTS _omniroute_migrations (
+    CREATE TABLE IF NOT EXISTS _ozrouter_migrations (
       version TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       applied_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -167,7 +167,7 @@ function getMigrationFiles(): Array<{ version: string; name: string; path: strin
  * Get list of already-applied migration versions.
  */
 function getAppliedVersions(db: Database.Database): Set<string> {
-  const rows = db.prepare("SELECT version FROM _omniroute_migrations").all() as Array<{
+  const rows = db.prepare("SELECT version FROM _ozrouter_migrations").all() as Array<{
     version: string;
   }>;
   return new Set(rows.map((r) => r.version));
@@ -178,7 +178,7 @@ function getAppliedVersions(db: Database.Database): Set<string> {
  */
 function getAppliedRecords(db: Database.Database): Array<{ version: string; name: string }> {
   return db
-    .prepare("SELECT version, name FROM _omniroute_migrations ORDER BY version")
+    .prepare("SELECT version, name FROM _ozrouter_migrations ORDER BY version")
     .all() as Array<{
     version: string;
     name: string;
@@ -336,7 +336,7 @@ function reconcileRenumberedMigrations(
     }
 
     const legacyRow = db
-      .prepare("SELECT version, name FROM _omniroute_migrations WHERE version = ? AND name = ?")
+      .prepare("SELECT version, name FROM _ozrouter_migrations WHERE version = ? AND name = ?")
       .get(compatibility.fromVersion, compatibility.fromName) as
       | { version: string; name: string }
       | undefined;
@@ -345,18 +345,18 @@ function reconcileRenumberedMigrations(
     }
 
     const targetRow = db
-      .prepare("SELECT version FROM _omniroute_migrations WHERE version = ?")
+      .prepare("SELECT version FROM _ozrouter_migrations WHERE version = ?")
       .get(compatibility.toVersion) as { version: string } | undefined;
 
     const applyRepair = db.transaction(() => {
       if (targetRow) {
-        db.prepare("DELETE FROM _omniroute_migrations WHERE version = ? AND name = ?").run(
+        db.prepare("DELETE FROM _ozrouter_migrations WHERE version = ? AND name = ?").run(
           compatibility.fromVersion,
           compatibility.fromName
         );
       } else {
         db.prepare(
-          "UPDATE _omniroute_migrations SET version = ?, name = ? WHERE version = ? AND name = ?"
+          "UPDATE _ozrouter_migrations SET version = ?, name = ? WHERE version = ? AND name = ?"
         ).run(
           compatibility.toVersion,
           compatibility.toName,
@@ -379,7 +379,7 @@ function reconcileRenumberedMigrations(
     // placed at that version number — e.g. 028_create_files_and_batches.sql
     // would be skipped because getAppliedVersions() still sees version "028".
     const residualRow = db
-      .prepare("SELECT version, name FROM _omniroute_migrations WHERE version = ?")
+      .prepare("SELECT version, name FROM _ozrouter_migrations WHERE version = ?")
       .get(compatibility.fromVersion) as { version: string; name: string } | undefined;
     if (residualRow) {
       console.warn(
@@ -387,7 +387,7 @@ function reconcileRenumberedMigrations(
           `(name: "${residualRow.name}") still present after compat rewrite — ` +
           `removing to unblock new migration at this version slot.`
       );
-      db.prepare("DELETE FROM _omniroute_migrations WHERE version = ?").run(
+      db.prepare("DELETE FROM _ozrouter_migrations WHERE version = ?").run(
         compatibility.fromVersion
       );
     }
@@ -410,7 +410,7 @@ function rehomeLegacyVersionSlotMigrations(
     }
 
     const legacyRow = db
-      .prepare("SELECT version, name FROM _omniroute_migrations WHERE version = ? AND name = ?")
+      .prepare("SELECT version, name FROM _ozrouter_migrations WHERE version = ? AND name = ?")
       .get(legacy.version, legacy.name) as { version: string; name: string } | undefined;
     if (!legacyRow) {
       continue;
@@ -419,18 +419,18 @@ function rehomeLegacyVersionSlotMigrations(
     const legacyVersion = `legacy-${legacy.version}-${legacy.name}`;
     const applyRepair = db.transaction(() => {
       const existingLegacyRow = db
-        .prepare("SELECT version FROM _omniroute_migrations WHERE version = ?")
+        .prepare("SELECT version FROM _ozrouter_migrations WHERE version = ?")
         .get(legacyVersion) as { version: string } | undefined;
 
       if (existingLegacyRow) {
-        db.prepare("DELETE FROM _omniroute_migrations WHERE version = ? AND name = ?").run(
+        db.prepare("DELETE FROM _ozrouter_migrations WHERE version = ? AND name = ?").run(
           legacy.version,
           legacy.name
         );
         return;
       }
 
-      db.prepare("UPDATE _omniroute_migrations SET version = ? WHERE version = ? AND name = ?").run(
+      db.prepare("UPDATE _ozrouter_migrations SET version = ? WHERE version = ? AND name = ?").run(
         legacyVersion,
         legacy.version,
         legacy.name
@@ -512,7 +512,7 @@ export function runMigrations(db: Database.Database, options?: { isNewDb?: boole
     );
     console.error(
       `[Migration] The version-only tracking will skip these (version already applied), ` +
-        `but please report this to the OmniRoute maintainers.`
+        `but please report this to the OzRouter maintainers.`
     );
   }
 
@@ -586,7 +586,7 @@ export function runMigrations(db: Database.Database, options?: { isNewDb?: boole
         const sql = fs.readFileSync(migration.path, "utf-8");
         db.exec(sql);
       }
-      db.prepare("INSERT INTO _omniroute_migrations (version, name) VALUES (?, ?)").run(
+      db.prepare("INSERT INTO _ozrouter_migrations (version, name) VALUES (?, ?)").run(
         migration.version,
         migration.name
       );
@@ -620,7 +620,7 @@ export function getMigrationStatus(db: Database.Database): {
   ensureMigrationsTable(db);
 
   const appliedRows = db
-    .prepare("SELECT version, name, applied_at FROM _omniroute_migrations ORDER BY version")
+    .prepare("SELECT version, name, applied_at FROM _ozrouter_migrations ORDER BY version")
     .all() as Array<{ version: string; name: string; applied_at: string }>;
 
   const appliedVersions = new Set(appliedRows.map((r) => r.version));

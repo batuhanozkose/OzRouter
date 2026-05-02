@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { RequestPipelinePayloads } from "@omniroute/open-sse/utils/requestLogger.ts";
+import type { RequestPipelinePayloads } from "@ozrouter/open-sse/utils/requestLogger.ts";
 import { resolveDataDir } from "../dataPaths";
 import { getCallLogPipelineMaxSizeBytes } from "../logEnv";
 
@@ -109,7 +109,7 @@ function omitOversizedPipeline(artifact: CallLogArtifact): CallLogArtifact {
     ...artifact,
     pipeline: {
       error: {
-        _omniroute_truncated: true,
+        _ozrouter_truncated: true,
         reason: SIZE_LIMIT_EXCEEDED_REASON,
       },
     },
@@ -129,7 +129,7 @@ function buildMinimalArtifactForSizeLimit(artifact: CallLogArtifact) {
     error: artifact.error ? OMITTED_FOR_SIZE_LIMIT : null,
     pipeline: {
       error: {
-        _omniroute_truncated: true,
+        _ozrouter_truncated: true,
         reason: SIZE_LIMIT_EXCEEDED_REASON,
       },
     },
@@ -144,7 +144,7 @@ function serializeFinalSizeLimitFallback(artifact: CallLogArtifact, maxBytes: nu
 
   return JSON.stringify({
     schemaVersion: artifact.schemaVersion,
-    _omniroute_truncated: true,
+    _ozrouter_truncated: true,
     reason: SIZE_LIMIT_EXCEEDED_REASON,
   });
 }

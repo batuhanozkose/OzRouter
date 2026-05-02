@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-const TEST_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "omniroute-combo-routing-"));
+const TEST_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "ozrouter-combo-routing-"));
 const ORIGINAL_DATA_DIR = process.env.DATA_DIR;
 process.env.DATA_DIR = TEST_DATA_DIR;
 
@@ -64,7 +64,7 @@ function providerBreakerOpenResponse() {
       status: 503,
       headers: {
         "content-type": "application/json",
-        "x-omniroute-provider-breaker": "open",
+        "x-ozrouter-provider-breaker": "open",
       },
     }
   );
@@ -1594,7 +1594,7 @@ test("handleComboChat context cache protection pins the model and tags tool-call
       messages: [
         {
           role: "assistant",
-          content: "cached\n<omniModel>claude/claude-sonnet-4-6</omniModel>",
+          content: "cached\n<ozModel>claude/claude-sonnet-4-6</ozModel>",
         },
       ],
     },
@@ -1633,10 +1633,7 @@ test("handleComboChat context cache protection pins the model and tags tool-call
   const payload = (await result.json()) as any;
   assert.equal(result.ok, true);
   assert.deepEqual(calls, ["claude/claude-sonnet-4-6"]);
-  assert.match(
-    payload.choices[0].message.content,
-    /<omniModel>claude\/claude-sonnet-4-6<\/omniModel>/
-  );
+  assert.match(payload.choices[0].message.content, /<ozModel>claude\/claude-sonnet-4-6<\/ozModel>/);
 });
 
 test("handleComboChat context cache protection sanitizes streamed text tags from client output", async () => {
@@ -1663,9 +1660,9 @@ test("handleComboChat context cache protection sanitizes streamed text tags from
 
   const text = await result.text();
   assert.equal(result.ok, true);
-  assert.equal(result.headers.get("X-OmniRoute-Model"), "openai/gpt-4o-mini");
+  assert.equal(result.headers.get("X-OzRouter-Model"), "openai/gpt-4o-mini");
   assert.match(text, /hello world/);
-  assert.doesNotMatch(text, /<omniModel>/);
+  assert.doesNotMatch(text, /<ozModel>/);
 });
 
 test("handleComboChat context cache protection injects a hidden tag for tool-call-only streams", async () => {
@@ -1693,7 +1690,7 @@ test("handleComboChat context cache protection injects a hidden tag for tool-cal
   const text = await result.text();
   assert.equal(result.ok, true);
   assert.match(text, /"finish_reason":"tool_calls"/);
-  assert.doesNotMatch(text, /<omniModel>/);
+  assert.doesNotMatch(text, /<ozModel>/);
 });
 
 test("handleComboChat context cache protection flushes cleanly when a stream ends without content", async () => {
@@ -1715,10 +1712,10 @@ test("handleComboChat context cache protection flushes cleanly when a stream end
 
   const text = await result.text();
   assert.equal(result.ok, true);
-  assert.equal(result.headers.get("X-OmniRoute-Model"), "openai/gpt-4o-mini");
+  assert.equal(result.headers.get("X-OzRouter-Model"), "openai/gpt-4o-mini");
   assert.match(text, /data: \[DONE\]/);
   assert.match(text, /"content":""/);
-  assert.doesNotMatch(text, /<omniModel>/);
+  assert.doesNotMatch(text, /<ozModel>/);
 });
 
 test("handleComboChat round-robin resolves nested combos and returns inactive when every target is skipped", async () => {

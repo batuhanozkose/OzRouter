@@ -4,7 +4,7 @@ import { ANTIGRAVITY_CONFIG } from "../constants/oauth";
 import {
   getAntigravityHeaders,
   getAntigravityLoadCodeAssistMetadata,
-} from "@omniroute/open-sse/services/antigravityHeaders.ts";
+} from "@ozrouter/open-sse/services/antigravityHeaders.ts";
 import { getServerCredentials } from "../config/index";
 import { startLocalServer } from "../utils/server";
 import { spinner as createSpinner } from "../utils/ui";

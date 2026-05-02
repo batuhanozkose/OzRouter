@@ -1,5 +1,5 @@
 /**
- * Shared Node.js runtime support policy for OmniRoute.
+ * Shared Node.js runtime support policy for OzRouter.
  *
  * This module is intentionally plain ESM JavaScript so it can be reused by:
  * - runtime CLI entrypoints under bin/
@@ -104,8 +104,8 @@ export function getNodeRuntimeWarning(version: string = process.versions.node): 
   }
 
   if (support.reason === "unreleased-major") {
-    return `Node.js ${support.nodeVersion} is outside the supported LTS lines. OmniRoute currently supports Node.js 20.x, 22.x, and 24.x.`;
+    return `Node.js ${support.nodeVersion} is outside the supported LTS lines. OzRouter currently supports Node.js 20.x, 22.x, and 24.x.`;
   }
 
-  return `Node.js ${support.nodeVersion} is outside OmniRoute's approved secure runtime policy.`;
+  return `Node.js ${support.nodeVersion} is outside OzRouter's approved secure runtime policy.`;
 }

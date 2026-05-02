@@ -1,9 +1,9 @@
 /**
- * OmniRoute MCP Compression Tools — Manage and monitor prompt compression.
+ * OzRouter MCP Compression Tools — Manage and monitor prompt compression.
  *
  * Tools:
- *   1. omniroute_compression_status   — Get compression config, analytics, and cache stats
- *   2. omniroute_compression_configure — Update compression settings
+ *   1. ozrouter_compression_status   — Get compression config, analytics, and cache stats
+ *   2. ozrouter_compression_configure — Update compression settings
  */
 
 import { logToolCall } from "../audit.ts";
@@ -73,14 +73,14 @@ export async function handleCompressionStatus(
     };
 
     const duration = Date.now() - start;
-    await logToolCall("omniroute_compression_status", args, result, duration, true);
+    await logToolCall("ozrouter_compression_status", args, result, duration, true);
 
     return result;
   } catch (error) {
     const duration = Date.now() - start;
     const errorMessage = error instanceof Error ? error.message : String(error);
     await logToolCall(
-      "omniroute_compression_status",
+      "ozrouter_compression_status",
       args,
       { error: errorMessage },
       duration,
@@ -146,14 +146,14 @@ export async function handleCompressionConfigure(
     };
 
     const duration = Date.now() - start;
-    await logToolCall("omniroute_compression_configure", args, result, duration, true);
+    await logToolCall("ozrouter_compression_configure", args, result, duration, true);
 
     return result;
   } catch (error) {
     const duration = Date.now() - start;
     const errorMessage = error instanceof Error ? error.message : String(error);
     await logToolCall(
-      "omniroute_compression_configure",
+      "ozrouter_compression_configure",
       args,
       { error: errorMessage },
       duration,
@@ -168,15 +168,15 @@ import { z } from "zod";
 import { compressionStatusInput, compressionConfigureInput } from "../schemas/tools.ts";
 
 export const compressionTools = {
-  omniroute_compression_status: {
-    name: "omniroute_compression_status",
+  ozrouter_compression_status: {
+    name: "ozrouter_compression_status",
     description:
       "Returns current compression configuration, strategy, analytics summary (requests compressed, tokens saved, avg ratio), and provider-aware cache statistics.",
     inputSchema: compressionStatusInput,
     handler: (args: z.infer<typeof compressionStatusInput>) => handleCompressionStatus(args),
   },
-  omniroute_compression_configure: {
-    name: "omniroute_compression_configure",
+  ozrouter_compression_configure: {
+    name: "ozrouter_compression_configure",
     description:
       "Configure compression settings at runtime. Supports enabling/disabling compression, changing strategy (none/standard/aggressive/ultra), adjusting maxTokens threshold, targetRatio, and aggressiveness level.",
     inputSchema: compressionConfigureInput,

@@ -678,7 +678,7 @@ export const REGISTRY: Record<string, RegistryEntry> = {
     defaultContextLength: 128000,
     headers: {
       "HTTP-Referer": "https://endpoint-proxy.local",
-      "X-Title": "OmniRoute",
+      "X-Title": "OzRouter",
     },
     models: [{ id: "auto", name: "Auto (Best Available)" }],
   },
@@ -2158,7 +2158,7 @@ const LOCAL_HOSTNAMES = new Set([
  * Detect if a base URL points to a local inference backend.
  * Used for shorter 404 cooldowns (model-only, not connection) and health check targets.
  *
- * Operators can extend via LOCAL_HOSTNAMES env var (comma-separated) for Docker
+ * Operators can extend via LOCAL_HOSTNAMES env var (comma-separated) for local
  * hostnames (e.g., LOCAL_HOSTNAMES=omlx,mlx-audio).
  */
 export function isLocalProvider(baseUrl?: string | null): boolean {
@@ -2166,7 +2166,7 @@ export function isLocalProvider(baseUrl?: string | null): boolean {
   try {
     const url = new URL(baseUrl);
     const hostname = url.hostname;
-    // Strictly matching 172.16.0.0/12 (Docker/local) and explicitly blocking ::1 per SSRF hardening
+    // Strictly matching 172.16.0.0/12 private/local ranges and explicitly blocking ::1 per SSRF hardening
     return (
       LOCAL_HOSTNAMES.has(hostname) ||
       /^172\.(1[6-9]|2[0-9]|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(hostname)

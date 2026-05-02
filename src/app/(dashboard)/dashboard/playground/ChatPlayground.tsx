@@ -79,7 +79,7 @@ export default function ChatPlayground({
     try {
       const fetchHeaders: Record<string, string> = { "Content-Type": "application/json" };
       if (selectedConnection) {
-        fetchHeaders["X-OmniRoute-Connection"] = selectedConnection;
+        fetchHeaders["X-OzRouter-Connection"] = selectedConnection;
       }
 
       const res = await fetch("/api/v1/chat/completions", {

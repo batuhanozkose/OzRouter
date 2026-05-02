@@ -551,7 +551,7 @@ export class BaseExecutor {
           if (!tb.metadata || typeof tb.metadata !== "object") {
             tb.metadata = {
               user_id: JSON.stringify({
-                device_id: createHash("sha256").update("omniroute").digest("hex").slice(0, 24),
+                device_id: createHash("sha256").update("ozrouter").digest("hex").slice(0, 24),
                 account_uuid: "",
                 session_id: randomUUID(),
               }),

@@ -269,7 +269,7 @@ test("Chat -> Responses preserves prompt_cache_key and session affinity fields",
     {
       messages: [{ role: "user", content: "Hello" }],
       prompt_cache_key: "cache-key-1",
-      session_id: "omniroute-session-abc",
+      session_id: "ozrouter-session-abc",
       conversation_id: "conv-123",
     },
     false,
@@ -277,7 +277,7 @@ test("Chat -> Responses preserves prompt_cache_key and session affinity fields",
   );
 
   (assert as any).equal((result as any).prompt_cache_key, "cache-key-1");
-  (assert as any).equal((result as any).session_id, "omniroute-session-abc");
+  (assert as any).equal((result as any).session_id, "ozrouter-session-abc");
   assert.equal((result as any).conversation_id, "conv-123");
   assert.equal((result as any).store, undefined);
 });

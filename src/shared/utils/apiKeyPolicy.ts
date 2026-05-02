@@ -11,8 +11,8 @@
 import { extractApiKey } from "@/sse/services/auth";
 import { getApiKeyMetadata, isModelAllowedForKey } from "@/lib/localDb";
 import { checkBudget } from "@/domain/costRules";
-import { errorResponse } from "@omniroute/open-sse/utils/error.ts";
-import { HTTP_STATUS } from "@omniroute/open-sse/config/constants.ts";
+import { errorResponse } from "@ozrouter/open-sse/utils/error.ts";
+import { HTTP_STATUS } from "@ozrouter/open-sse/config/constants.ts";
 import * as log from "@/sse/utils/logger";
 
 interface AccessSchedule {

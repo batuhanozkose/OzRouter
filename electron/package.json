@@ -1,14 +1,13 @@
 {
-  "name": "omniroute-desktop",
+  "name": "ozrouter-desktop",
   "version": "3.7.8",
-  "description": "OmniRoute Desktop Application",
+  "description": "Desktop wrapper for the OzRouter local AI gateway.",
   "main": "main.js",
   "author": {
-    "name": "OmniRoute Team",
-    "email": "support@omniroute.online"
+    "name": "Batuhan Özköse"
   },
   "license": "MIT",
-  "homepage": "https://omniroute.online",
+  "homepage": "https://github.com/batuhanozkose/OzRouter",
   "scripts": {
     "start": "electron .",
     "dev": "electron . --no-sandbox",
@@ -34,17 +33,17 @@
     "plist": "^4.0.0"
   },
   "build": {
-    "appId": "online.omniroute.desktop",
-    "productName": "OmniRoute",
-    "copyright": "Copyright © 2025 OmniRoute",
+    "appId": "online.ozrouter.desktop",
+    "productName": "OzRouter",
+    "copyright": "Copyright © 2025 OzRouter",
     "directories": {
       "output": "dist-electron",
       "buildResources": "assets"
     },
     "publish": {
       "provider": "github",
-      "owner": "diegosouzapw",
-      "repo": "OmniRoute"
+      "owner": "batuhanozkose",
+      "repo": "OzRouter"
     },
     "files": [
       "main.js",

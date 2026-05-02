@@ -5,7 +5,7 @@ import { PROVIDERS } from "../config/constants.ts";
  * PollinationsExecutor — OpenAI-compatible Pollinations text endpoint.
  *
  * Pollinations currently exposes a public endpoint and an optional key-backed tier.
- * OmniRoute sends the bearer token when configured, but no auth header is required
+ * OzRouter sends the bearer token when configured, but no auth header is required
  * for the anonymous endpoint.
  *
  * Endpoint: https://text.pollinations.ai/openai/chat/completions

@@ -12,7 +12,7 @@ const { syncEnv } = (await import("../../scripts/sync-env.mjs")) as {
 };
 
 function createTempRoot(): string {
-  return fs.mkdtempSync(path.join(os.tmpdir(), "omniroute-sync-env-"));
+  return fs.mkdtempSync(path.join(os.tmpdir(), "ozrouter-sync-env-"));
 }
 
 function writeEnvExample(rootDir: string) {
@@ -55,7 +55,7 @@ test("syncEnv creates .env from .env.example and generates blank secrets", () =>
   const rootDir = createTempRoot();
 
   // Temporarily override DATA_DIR so the encrypted-credentials guard doesn't
-  // find the user's real DB at ~/.omniroute/ during tests
+  // find the user's real DB at ~/.ozrouter/ during tests
   const origDataDir = process.env.DATA_DIR;
   try {
     writeEnvExample(rootDir);
@@ -68,7 +68,7 @@ test("syncEnv creates .env from .env.example and generates blank secrets", () =>
     assert.match(envContent, /^JWT_SECRET=.{32,}$/m);
     assert.match(envContent, /^API_KEY_SECRET=.{32,}$/m);
     assert.match(envContent, /^STORAGE_ENCRYPTION_KEY=.{32,}$/m);
-    assert.match(envContent, /^MACHINE_ID_SALT=omniroute-/m);
+    assert.match(envContent, /^MACHINE_ID_SALT=ozrouter-/m);
     assert.match(envContent, /^CLAUDE_OAUTH_CLIENT_ID=claude-default$/m);
     assert.match(envContent, /^CODEX_OAUTH_CLIENT_ID=codex-default$/m);
     assert.doesNotMatch(envContent, /^COMMENTED_KEY=/m);
@@ -103,7 +103,7 @@ test("syncEnv appends only missing keys and preserves existing values", () => {
     assert.match(envContent, /^CLAUDE_OAUTH_CLIENT_ID=custom-claude$/m);
     assert.match(envContent, /^API_KEY_SECRET=.{32,}$/m);
     assert.match(envContent, /^STORAGE_ENCRYPTION_KEY=.{32,}$/m);
-    assert.match(envContent, /^MACHINE_ID_SALT=omniroute-/m);
+    assert.match(envContent, /^MACHINE_ID_SALT=ozrouter-/m);
     assert.match(envContent, /^CODEX_OAUTH_CLIENT_ID=codex-default$/m);
     assert.match(envContent, /Auto-added by sync-env/);
   } finally {

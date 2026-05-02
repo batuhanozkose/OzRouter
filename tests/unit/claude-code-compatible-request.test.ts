@@ -37,7 +37,7 @@ test("Claude Code compatible URL helpers cover empty values, version trimming an
     "https://api.example.com/models"
   );
   assert.equal(
-    resolveClaudeCodeCompatibleSessionId({ "x-omniroute-session": " session-from-proxy " }),
+    resolveClaudeCodeCompatibleSessionId({ "x-ozrouter-session": " session-from-proxy " }),
     "session-from-proxy"
   );
 });

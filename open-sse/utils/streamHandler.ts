@@ -2,7 +2,7 @@ import { trackPendingRequest } from "@/lib/usageDb";
 
 // Stream handler with disconnect detection - shared for all providers
 
-const PENDING_REQUEST_CLEARED_MARKER = "__omniroutePendingRequestCleared";
+const PENDING_REQUEST_CLEARED_MARKER = "__ozrouterPendingRequestCleared";
 
 type StreamDisconnectEvent = {
   reason: string;

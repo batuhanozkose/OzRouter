@@ -8,7 +8,7 @@ type GotoDashboardRouteOptions = {
 const DEFAULT_TIMEOUT_MS = 300_000;
 const APP_ROUTE_PATTERN = /\/(login|dashboard)(\/[^?#]*)?([?#].*)?$/;
 const E2E_PASSWORD =
-  process.env.OMNIROUTE_E2E_PASSWORD || process.env.INITIAL_PASSWORD || "omniroute-e2e-password";
+  process.env.OZROUTER_E2E_PASSWORD || process.env.INITIAL_PASSWORD || "ozrouter-e2e-password";
 
 async function waitForAppRoute(page: Page, timeoutMs: number) {
   await page.waitForURL(APP_ROUTE_PATTERN, { timeout: timeoutMs });

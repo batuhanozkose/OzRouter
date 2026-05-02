@@ -6,21 +6,21 @@ import { GEMINI_CONFIG } from "@/lib/oauth/constants/oauth";
 import {
   getGitHubCopilotInternalUserHeaders,
   getKiroServiceHeaders,
-} from "@omniroute/open-sse/config/providerHeaderProfiles.ts";
+} from "@ozrouter/open-sse/config/providerHeaderProfiles.ts";
 import {
   getAntigravityHeaders,
   antigravityUserAgent,
   googApiClientHeader,
-} from "@omniroute/open-sse/services/antigravityHeaders.ts";
+} from "@ozrouter/open-sse/services/antigravityHeaders.ts";
 import {
   getAntigravityFetchAvailableModelsUrls,
   ANTIGRAVITY_BASE_URLS,
-} from "@omniroute/open-sse/config/antigravityUpstream.ts";
+} from "@ozrouter/open-sse/config/antigravityUpstream.ts";
 import {
   getAntigravityRemainingCredits,
   updateAntigravityRemainingCredits,
-} from "@omniroute/open-sse/executors/antigravity.ts";
-import { getCreditsMode } from "@omniroute/open-sse/services/antigravityCredits.ts";
+} from "@ozrouter/open-sse/executors/antigravity.ts";
+import { getCreditsMode } from "@ozrouter/open-sse/services/antigravityCredits.ts";
 
 /**
  * Get usage data for a provider connection
@@ -386,7 +386,7 @@ async function getAntigravityUsage(
 
 /**
  * Claude Usage (legacy fallback)
- * Real Claude OAuth quota windows are fetched in @omniroute/open-sse/services/usage.ts.
+ * Real Claude OAuth quota windows are fetched in @ozrouter/open-sse/services/usage.ts.
  */
 async function getClaudeUsage(accessToken?: string) {
   try {

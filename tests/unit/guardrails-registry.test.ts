@@ -94,7 +94,7 @@ test("resolveDisabledGuardrails merges api key, body metadata, and headers", () 
   const disabled = resolveDisabledGuardrails({
     apiKeyInfo: { disabledGuardrails: ["pii-masker"] },
     body: { metadata: { disabledGuardrails: ["prompt_injection"] } },
-    headers: { "x-omniroute-disabled-guardrails": "custom-rule" },
+    headers: { "x-ozrouter-disabled-guardrails": "custom-rule" },
   });
 
   assert.deepEqual(disabled, ["pii-masker", "prompt-injection", "custom-rule"]);

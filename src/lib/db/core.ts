@@ -96,7 +96,7 @@ if (!isCloud && !fs.existsSync(DATA_DIR)) {
     console.warn(
       `[DB] Cannot create data directory '${DATA_DIR}': ${msg}\n` +
         `[DB] Set the DATA_DIR environment variable to a writable path, e.g.:\n` +
-        `[DB]   DATA_DIR=/path/to/writable/dir omniroute`
+        `[DB]   DATA_DIR=/path/to/writable/dir ozrouter`
     );
   }
 }
@@ -417,18 +417,18 @@ export function cleanNulls(obj: unknown): JsonRecord {
 // Module-level `let` resets on every webpack recompile, causing connection leaks.
 
 declare global {
-  var __omnirouteDb: import("better-sqlite3").Database | undefined;
+  var __ozrouterDb: import("better-sqlite3").Database | undefined;
 }
 
 function getDb(): SqliteDatabase | null {
-  return globalThis.__omnirouteDb ?? null;
+  return globalThis.__ozrouterDb ?? null;
 }
 
 function setDb(db: SqliteDatabase | null): void {
   if (db) {
-    globalThis.__omnirouteDb = db;
+    globalThis.__ozrouterDb = db;
   } else {
-    delete globalThis.__omnirouteDb;
+    delete globalThis.__ozrouterDb;
   }
 }
 
@@ -921,7 +921,7 @@ function isAutomatedTestProcess(): boolean {
 }
 
 function shouldRunStartupDbHealthCheck(): boolean {
-  if (process.env.OMNIROUTE_FORCE_DB_HEALTHCHECK === "1") return true;
+  if (process.env.OZROUTER_FORCE_DB_HEALTHCHECK === "1") return true;
   return !isAutomatedTestProcess();
 }
 
@@ -952,7 +952,7 @@ function createHealthCheckBackup(db: SqliteDatabase): boolean {
 let dbHealthCheckTimer: NodeJS.Timeout | null = null;
 
 function getDbHealthCheckIntervalMs(): number {
-  const rawValue = process.env.OMNIROUTE_DB_HEALTHCHECK_INTERVAL_MS;
+  const rawValue = process.env.OZROUTER_DB_HEALTHCHECK_INTERVAL_MS;
   if (typeof rawValue === "string" && rawValue.trim().length > 0) {
     const parsed = Number(rawValue);
     if (Number.isFinite(parsed) && parsed >= 0) {
@@ -1074,7 +1074,7 @@ export function getDbInstance(): SqliteDatabase {
     }
   }
 
-  // Track whether the DB file is brand new (fresh DATA_DIR / Docker volume).
+  // Track whether the DB file is brand new (fresh DATA_DIR).
   // This is needed so the migration runner skips the mass-migration safety abort
   // that would otherwise trigger because heuristic seeding marks some migrations
   // as applied, making the fresh DB look like a wiped existing DB (#1328).
@@ -1189,34 +1189,34 @@ export function getDbInstance(): SqliteDatabase {
   // Auto-seed 001 as applied (the inline SCHEMA_SQL already created these tables)
   // then run any new migrations (002+)
   db.exec(`
-    CREATE TABLE IF NOT EXISTS _omniroute_migrations (
+    CREATE TABLE IF NOT EXISTS _ozrouter_migrations (
       version TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       applied_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
-    INSERT OR IGNORE INTO _omniroute_migrations (version, name)
+    INSERT OR IGNORE INTO _ozrouter_migrations (version, name)
     VALUES ('001', 'initial_schema');
   `);
   if (hasColumn(db, "combos", "sort_order")) {
-    db.prepare("INSERT OR IGNORE INTO _omniroute_migrations (version, name) VALUES (?, ?)").run(
+    db.prepare("INSERT OR IGNORE INTO _ozrouter_migrations (version, name) VALUES (?, ?)").run(
       "020",
       "combo_sort_order"
     );
   }
   if (hasColumn(db, "provider_connections", "max_concurrent")) {
-    db.prepare("INSERT OR IGNORE INTO _omniroute_migrations (version, name) VALUES (?, ?)").run(
+    db.prepare("INSERT OR IGNORE INTO _ozrouter_migrations (version, name) VALUES (?, ?)").run(
       "029",
       "provider_connection_max_concurrent"
     );
   }
   if (hasColumn(db, "call_logs", "request_type")) {
-    db.prepare("INSERT OR IGNORE INTO _omniroute_migrations (version, name) VALUES (?, ?)").run(
+    db.prepare("INSERT OR IGNORE INTO _ozrouter_migrations (version, name) VALUES (?, ?)").run(
       "007",
       "search_request_type"
     );
   }
   if (hasColumn(db, "call_logs", "requested_model")) {
-    db.prepare("INSERT OR IGNORE INTO _omniroute_migrations (version, name) VALUES (?, ?)").run(
+    db.prepare("INSERT OR IGNORE INTO _ozrouter_migrations (version, name) VALUES (?, ?)").run(
       "009",
       "requested_model"
     );
@@ -1226,7 +1226,7 @@ export function getDbInstance(): SqliteDatabase {
     hasColumn(db, "call_logs", "tokens_cache_creation") &&
     hasColumn(db, "call_logs", "tokens_reasoning")
   ) {
-    db.prepare("INSERT OR IGNORE INTO _omniroute_migrations (version, name) VALUES (?, ?)").run(
+    db.prepare("INSERT OR IGNORE INTO _ozrouter_migrations (version, name) VALUES (?, ?)").run(
       "018",
       "call_logs_detailed_tokens"
     );
@@ -1235,7 +1235,7 @@ export function getDbInstance(): SqliteDatabase {
     hasColumn(db, "call_logs", "combo_step_id") &&
     hasColumn(db, "call_logs", "combo_execution_key")
   ) {
-    db.prepare("INSERT OR IGNORE INTO _omniroute_migrations (version, name) VALUES (?, ?)").run(
+    db.prepare("INSERT OR IGNORE INTO _ozrouter_migrations (version, name) VALUES (?, ?)").run(
       "021",
       "combo_call_log_targets"
     );
@@ -1243,24 +1243,24 @@ export function getDbInstance(): SqliteDatabase {
   const hasCacheSource = hasColumn(db, "call_logs", "cache_source");
   if (hasCacheSource) {
     const cacheSourceLegacy = db
-      .prepare("SELECT version FROM _omniroute_migrations WHERE version = ? AND name = ?")
+      .prepare("SELECT version FROM _ozrouter_migrations WHERE version = ? AND name = ?")
       .get("022", "call_logs_cache_source") as { version?: string } | undefined;
     if (cacheSourceLegacy) {
       const cacheSourceCurrent = db
-        .prepare("SELECT version FROM _omniroute_migrations WHERE version = ?")
+        .prepare("SELECT version FROM _ozrouter_migrations WHERE version = ?")
         .get("026") as { version?: string } | undefined;
       if (cacheSourceCurrent) {
-        db.prepare("DELETE FROM _omniroute_migrations WHERE version = ? AND name = ?").run(
+        db.prepare("DELETE FROM _ozrouter_migrations WHERE version = ? AND name = ?").run(
           "022",
           "call_logs_cache_source"
         );
       } else {
         db.prepare(
-          "UPDATE _omniroute_migrations SET version = ?, name = ? WHERE version = ? AND name = ?"
+          "UPDATE _ozrouter_migrations SET version = ?, name = ? WHERE version = ? AND name = ?"
         ).run("026", "call_logs_cache_source", "022", "call_logs_cache_source");
       }
     }
-    db.prepare("INSERT OR IGNORE INTO _omniroute_migrations (version, name) VALUES (?, ?)").run(
+    db.prepare("INSERT OR IGNORE INTO _ozrouter_migrations (version, name) VALUES (?, ?)").run(
       "026",
       "call_logs_cache_source"
     );
@@ -1274,7 +1274,7 @@ export function getDbInstance(): SqliteDatabase {
     !hasColumn(db, "call_logs", "response_body") &&
     !hasColumn(db, "call_logs", "error")
   ) {
-    db.prepare("INSERT OR IGNORE INTO _omniroute_migrations (version, name) VALUES (?, ?)").run(
+    db.prepare("INSERT OR IGNORE INTO _ozrouter_migrations (version, name) VALUES (?, ?)").run(
       "025",
       "call_logs_summary_storage"
     );

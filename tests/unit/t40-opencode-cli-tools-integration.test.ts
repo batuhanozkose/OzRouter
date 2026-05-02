@@ -66,8 +66,8 @@ test("T40: OpenCode config generator includes endpoint and selected API key", ()
     }
   );
   assert.ok(mergedConfig.provider.custom);
-  assert.equal(mergedConfig.provider.omniroute.options.baseURL, "http://localhost:20128/v1");
-  assert.equal(mergedConfig.provider.omniroute.options.apiKey, "sk_test_opencode");
+  assert.equal(mergedConfig.provider.ozrouter.options.baseURL, "http://localhost:20128/v1");
+  assert.equal(mergedConfig.provider.ozrouter.options.apiKey, "sk_test_opencode");
 });
 
 test("T40: OpenCode config document uses current provider schema", () => {
@@ -82,22 +82,19 @@ test("T40: OpenCode config document uses current provider schema", () => {
   });
 
   assert.equal(configDocument.$schema, "https://opencode.ai/config.json");
-  assert.ok(configDocument.provider.omniroute);
-  assert.equal(configDocument.provider.omniroute.npm, "@ai-sdk/openai-compatible");
-  assert.equal(configDocument.provider.omniroute.options.baseURL, "http://localhost:20128/v1");
-  assert.equal(configDocument.provider.omniroute.options.apiKey, "sk_test_opencode");
-  assert.deepEqual(Object.keys(configDocument.provider.omniroute.models), [
+  assert.ok(configDocument.provider.ozrouter);
+  assert.equal(configDocument.provider.ozrouter.npm, "@ai-sdk/openai-compatible");
+  assert.equal(configDocument.provider.ozrouter.options.baseURL, "http://localhost:20128/v1");
+  assert.equal(configDocument.provider.ozrouter.options.apiKey, "sk_test_opencode");
+  assert.deepEqual(Object.keys(configDocument.provider.ozrouter.models), [
     "cc/claude-sonnet-4-20250514",
     "gg/gemini-2.5-pro",
   ]);
   assert.equal(
-    configDocument.provider.omniroute.models["cc/claude-sonnet-4-20250514"].name,
+    configDocument.provider.ozrouter.models["cc/claude-sonnet-4-20250514"].name,
     "Claude Sonnet 4.5"
   );
-  assert.equal(
-    configDocument.provider.omniroute.models["gg/gemini-2.5-pro"].name,
-    "Gemini 2.5 Pro"
-  );
+  assert.equal(configDocument.provider.ozrouter.models["gg/gemini-2.5-pro"].name, "Gemini 2.5 Pro");
   assert.equal(configDocument.providers, undefined);
 });
 
@@ -118,14 +115,14 @@ test("T40: OpenCode explicit multi-model selection overrides fallback defaults",
   assert.equal(providerConfig.models["custom/provider-b"].name, "Provider B");
 });
 
-test("T40: OpenCode merge preserves unrelated config and updates only provider.omniroute", () => {
+test("T40: OpenCode merge preserves unrelated config and updates only provider.ozrouter", () => {
   const mergedConfig = mergeOpenCodeConfig(
     {
       $schema: "https://opencode.ai/config.json",
       provider: {
         custom: { name: "Custom Provider" },
-        omniroute: {
-          name: "Old OmniRoute",
+        ozrouter: {
+          name: "Old OzRouter",
           options: { baseURL: "http://old-host/v1", apiKey: "old-key" },
         },
       },
@@ -145,7 +142,7 @@ test("T40: OpenCode merge preserves unrelated config and updates only provider.o
   assert.deepEqual(mergedConfig.mcpServers, {
     github: { command: "npx", args: ["-y", "@modelcontextprotocol/server-github"] },
   });
-  assert.deepEqual(mergedConfig.provider.omniroute.models, {
+  assert.deepEqual(mergedConfig.provider.ozrouter.models, {
     "cx/gpt-5.4": { name: "GPT-5.4" },
   });
 });

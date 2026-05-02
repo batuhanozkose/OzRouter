@@ -1,5 +1,5 @@
 /**
- * OmniRoute Electron Desktop App - Preload Script
+ * OzRouter Electron Desktop App - Preload Script
  *
  * Secure bridge between renderer (Next.js) and main process (Electron).
  * Uses contextIsolation: true for maximum security.

@@ -10,7 +10,7 @@ import { validateProviderApiKey } from "@/lib/providers/validation";
 import { getProxyForLevel, resolveProxyForProvider } from "@/lib/localDb";
 import { validateProviderApiKeySchema } from "@/shared/validation/schemas";
 import { isValidationFailure, validateBody } from "@/shared/validation/helpers";
-import { runWithProxyContext } from "@omniroute/open-sse/utils/proxyFetch.ts";
+import { runWithProxyContext } from "@ozrouter/open-sse/utils/proxyFetch.ts";
 
 function sanitizeAuditUrl(url: string | null | undefined) {
   if (!url) return null;

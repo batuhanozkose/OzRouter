@@ -9,7 +9,7 @@ import net from "node:net";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-const TEST_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "omniroute-resilience-http-e2e-"));
+const TEST_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "ozrouter-resilience-http-e2e-"));
 const DASHBOARD_PORT = await getFreePort();
 const REPO_ROOT = fileURLToPath(new URL("../..", import.meta.url));
 
@@ -198,11 +198,11 @@ function createServerProcess(dataDir: string, port: number) {
       DISABLE_SQLITE_AUTO_BACKUP: "true",
       INITIAL_PASSWORD: "",
       NEXT_TELEMETRY_DISABLED: "1",
-      OMNIROUTE_DISABLE_BACKGROUND_SERVICES: "true",
-      OMNIROUTE_DISABLE_TOKEN_HEALTHCHECK: "true",
-      OMNIROUTE_DISABLE_LOCAL_HEALTHCHECK: "true",
-      OMNIROUTE_HIDE_HEALTHCHECK_LOGS: "true",
-      OMNIROUTE_E2E_BOOTSTRAP_MODE: "open",
+      OZROUTER_DISABLE_BACKGROUND_SERVICES: "true",
+      OZROUTER_DISABLE_TOKEN_HEALTHCHECK: "true",
+      OZROUTER_DISABLE_LOCAL_HEALTHCHECK: "true",
+      OZROUTER_HIDE_HEALTHCHECK_LOGS: "true",
+      OZROUTER_E2E_BOOTSTRAP_MODE: "open",
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -246,7 +246,7 @@ async function waitForServer(
     if (logs.exitInfo) {
       throw new Error(
         [
-          `OmniRoute exited before it became ready (code=${logs.exitInfo.code}, signal=${logs.exitInfo.signal})`,
+          `OzRouter exited before it became ready (code=${logs.exitInfo.code}, signal=${logs.exitInfo.signal})`,
           "--- stdout ---",
           ...logs.stdoutLines.slice(-40),
           "--- stderr ---",
@@ -269,7 +269,7 @@ async function waitForServer(
 
   throw new Error(
     [
-      `Timed out waiting for OmniRoute to start: ${lastError}`,
+      `Timed out waiting for OzRouter to start: ${lastError}`,
       "--- stdout ---",
       ...logs.stdoutLines.slice(-40),
       "--- stderr ---",

@@ -16,9 +16,9 @@
   --desktop-safe-bottom: 0px;
   color-scheme: light;
 
-  /* Primary - Coral Red (OpenClaw) */
-  --color-primary: #e54d5e;
-  --color-primary-hover: #c93d4e;
+  /* Primary - OzRouter */
+  --color-primary: #7289da;
+  --color-primary-hover: #5a72c9;
 
   /* Accent - Indigo/Violet (buttons, links, gradients) */
   --color-accent: #6366f1;
@@ -50,7 +50,7 @@
 
   /* Shadows */
   --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.02), 0 4px 12px rgba(0, 0, 0, 0.015);
-  --shadow-warm: 0 2px 12px -2px rgba(229, 77, 94, 0.12);
+  --shadow-warm: 0 2px 12px -2px rgba(114, 137, 218, 0.12);
   --shadow-elevated: 0 12px 28px -4px rgba(20, 20, 40, 0.06);
 }
 
@@ -71,7 +71,7 @@
 
   /* Dark shadows */
   --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1);
-  --shadow-warm: 0 2px 12px -2px rgba(229, 77, 94, 0.15);
+  --shadow-warm: 0 2px 12px -2px rgba(114, 137, 218, 0.15);
   --shadow-elevated: 0 12px 28px -4px rgba(0, 0, 0, 0.3);
 }
 
@@ -166,7 +166,7 @@ body.electron-macos {
 
 /* Selection — with fallback for browsers that don't support color-mix() */
 ::selection {
-  background-color: rgba(229, 77, 94, 0.22);
+  background-color: rgba(114, 137, 218, 0.22);
   background-color: color-mix(in srgb, var(--color-primary) 22%, transparent);
   color: var(--color-primary);
 }
@@ -298,15 +298,15 @@ button .material-symbols-outlined,
   0%,
   100% {
     box-shadow:
-      0 0 5px rgba(229, 77, 94, 0.3),
-      0 0 10px rgba(229, 77, 94, 0.2);
-    border-color: rgba(229, 77, 94, 0.5);
+      0 0 5px rgba(114, 137, 218, 0.3),
+      0 0 10px rgba(114, 137, 218, 0.2);
+    border-color: rgba(114, 137, 218, 0.5);
   }
   50% {
     box-shadow:
-      0 0 10px rgba(229, 77, 94, 0.5),
-      0 0 20px rgba(229, 77, 94, 0.3);
-    border-color: rgba(229, 77, 94, 0.8);
+      0 0 10px rgba(114, 137, 218, 0.5),
+      0 0 20px rgba(114, 137, 218, 0.3);
+    border-color: rgba(114, 137, 218, 0.8);
   }
 }
 

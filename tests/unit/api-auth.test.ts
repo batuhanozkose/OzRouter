@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { SignJWT } from "jose";
 
-const TEST_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "omniroute-api-auth-"));
+const TEST_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "ozrouter-api-auth-"));
 process.env.DATA_DIR = TEST_DATA_DIR;
 process.env.API_KEY_SECRET = "test-api-key-secret";
 
@@ -199,9 +199,9 @@ test("isAuthRequired stays enabled when INITIAL_PASSWORD is present", async () =
   delete process.env.INITIAL_PASSWORD;
 });
 
-test("getApiKeyMetadata recognizes OMNIROUTE_API_KEY environment variable", async () => {
+test("getApiKeyMetadata recognizes OZROUTER_API_KEY environment variable", async () => {
   const envKey = "sk-test-env-key-" + Date.now();
-  process.env.OMNIROUTE_API_KEY = envKey;
+  process.env.OZROUTER_API_KEY = envKey;
 
   const metadata = await apiKeysDb.getApiKeyMetadata(envKey);
 
@@ -209,7 +209,7 @@ test("getApiKeyMetadata recognizes OMNIROUTE_API_KEY environment variable", asyn
   assert.equal(metadata.id, "env-key");
   assert.equal(metadata.name, "Environment Key");
 
-  delete process.env.OMNIROUTE_API_KEY;
+  delete process.env.OZROUTER_API_KEY;
 });
 
 test("getApiKeyMetadata recognizes ROUTER_API_KEY environment variable", async () => {

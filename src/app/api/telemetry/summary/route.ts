@@ -7,8 +7,8 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const windowMs = parseInt(searchParams.get("windowMs") || "300000", 10);
     const summary = getTelemetrySummary(windowMs);
-    const { getQuotaMonitorSummary } = await import("@omniroute/open-sse/services/quotaMonitor.ts");
-    const { getActiveSessions } = await import("@omniroute/open-sse/services/sessionManager.ts");
+    const { getQuotaMonitorSummary } = await import("@ozrouter/open-sse/services/quotaMonitor.ts");
+    const { getActiveSessions } = await import("@ozrouter/open-sse/services/sessionManager.ts");
     const quotaMonitorSummary = getQuotaMonitorSummary();
     const activeSessions = getActiveSessions();
     const payload = buildTelemetryPayload({

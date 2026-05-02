@@ -2,8 +2,7 @@
  * Graceful Shutdown — E-2 Critical Fix
  *
  * Handles SIGTERM / SIGINT to drain in-flight requests before exit.
- * Critical for Docker containers and Kubernetes pods where hard kills
- * can drop active SSE streams.
+ * Critical for process supervisors where hard kills can drop active SSE streams.
  *
  * Usage:
  *   import { initGracefulShutdown } from "@/lib/gracefulShutdown";
@@ -16,16 +15,16 @@
 const SHUTDOWN_TIMEOUT_MS = parseInt(process.env.SHUTDOWN_TIMEOUT_MS || "30000", 10);
 
 declare global {
-  var __omnirouteShutdown:
+  var __ozrouterShutdown:
     | { init: boolean; shuttingDown: boolean; activeRequests: number }
     | undefined;
 }
 
 function getShutdownState() {
-  if (!globalThis.__omnirouteShutdown) {
-    globalThis.__omnirouteShutdown = { init: false, shuttingDown: false, activeRequests: 0 };
+  if (!globalThis.__ozrouterShutdown) {
+    globalThis.__ozrouterShutdown = { init: false, shuttingDown: false, activeRequests: 0 };
   }
-  return globalThis.__omnirouteShutdown;
+  return globalThis.__ozrouterShutdown;
 }
 
 /**
@@ -98,7 +97,7 @@ async function cleanup(): Promise<void> {
   try {
     const [{ closeAuditDb }, { closeDbInstance }, { flushSpendBatchWriter }, { closeLogRotation }] =
       await Promise.all([
-        import("@omniroute/open-sse/mcp-server/audit.ts"),
+        import("@ozrouter/open-sse/mcp-server/audit.ts"),
         import("@/lib/db/core"),
         import("@/lib/spend/batchWriter"),
         import("@/lib/logRotation"),

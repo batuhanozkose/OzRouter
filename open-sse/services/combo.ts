@@ -1084,12 +1084,12 @@ export async function handleComboChat({
           return res;
         }
 
-        // Streaming (Fix #490 + #511): prepend omniModel tag into the first
+        // Streaming (Fix #490 + #511): prepend ozModel tag into the first
         // non-empty content chunk so it arrives BEFORE finish_reason:stop.
         // SDKs close the connection on finish_reason, so anything sent after
         // that marker is silently dropped.
         if (!res.body) return res;
-        const tagContent = `<omniModel>${modelStr}</omniModel>`;
+        const tagContent = `<ozModel>${modelStr}</ozModel>`;
         const encoder = new TextEncoder();
         const decoder = new TextDecoder();
         let tagInjected = false;
@@ -1161,7 +1161,7 @@ export async function handleComboChat({
           },
         });
 
-        // FIX #585: Sanitize outbound stream — strip <omniModel> tags from
+        // FIX #585: Sanitize outbound stream — strip <ozModel> tags from
         // visible content so they don't leak to the user. The tag is still
         // present in the full response for round-trip context pinning, but
         // we clean it from each SSE chunk's content field before delivery.
@@ -1174,9 +1174,9 @@ export async function handleComboChat({
           transform(chunk, controller) {
             const text = sanitizeDecoder.decode(chunk, { stream: true });
             if (text) {
-              if (text.includes("<omniModel>")) {
+              if (text.includes("<ozModel>")) {
                 const cleaned = text.replace(
-                  /(?:\\n|\n|\r)*<omniModel>[^<]+<\/omniModel>(?:\\n|\n|\r)*/g,
+                  /(?:\\n|\n|\r)*<ozModel>[^<]+<\/ozModel>(?:\\n|\n|\r)*/g,
                   ""
                 );
                 if (cleaned) controller.enqueue(encoder.encode(cleaned));
@@ -1188,9 +1188,9 @@ export async function handleComboChat({
           flush(controller) {
             const tail = sanitizeDecoder.decode();
             if (tail) {
-              if (tail.includes("<omniModel>")) {
+              if (tail.includes("<ozModel>")) {
                 const cleaned = tail.replace(
-                  /(?:\\n|\n|\r)*<omniModel>[^<]+<\/omniModel>(?:\\n|\n|\r)*/g,
+                  /(?:\\n|\n|\r)*<ozModel>[^<]+<\/ozModel>(?:\\n|\n|\r)*/g,
                   ""
                 );
                 if (cleaned) controller.enqueue(encoder.encode(cleaned));
@@ -1204,7 +1204,7 @@ export async function handleComboChat({
         const transformedStream = res.body.pipeThrough(transform).pipeThrough(sanitize);
         // Add model info as response header for clients that support it
         const headers = new Headers(res.headers);
-        headers.set("X-OmniRoute-Model", modelStr);
+        headers.set("X-OzRouter-Model", modelStr);
         return new Response(transformedStream, {
           status: res.status,
           headers,

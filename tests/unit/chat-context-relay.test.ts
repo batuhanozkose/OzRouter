@@ -129,7 +129,7 @@ test("handleChat generates and injects context-relay handoffs across Codex accou
     const body = init.body ? JSON.parse(String(init.body)) : {};
     const serializedBody = JSON.stringify(body);
     const isSummaryRequest =
-      body._omnirouteInternalRequest === "context-handoff" ||
+      body._ozrouterInternalRequest === "context-handoff" ||
       serializedBody.includes("You are a context summarizer");
 
     if (isSummaryRequest) {
@@ -243,7 +243,7 @@ test("handleChat injects context-relay handoffs during live failover for Respons
     const body = init.body ? JSON.parse(String(init.body)) : {};
     const serializedBody = JSON.stringify(body);
     const isSummaryRequest =
-      body._omnirouteInternalRequest === "context-handoff" ||
+      body._ozrouterInternalRequest === "context-handoff" ||
       serializedBody.includes("You are a context summarizer");
 
     if (isSummaryRequest) {
@@ -278,7 +278,7 @@ test("handleChat injects context-relay handoffs during live failover for Respons
       url: "http://localhost/v1/responses",
       headers: {
         "X-Session-Id": "relay-live-session",
-        "X-OmniRoute-No-Cache": "true",
+        "X-OzRouter-No-Cache": "true",
       },
       body: {
         model: "relay-live-combo",
@@ -310,7 +310,7 @@ test("handleChat injects context-relay handoffs during live failover for Respons
       url: "http://localhost/v1/responses",
       headers: {
         "X-Session-Id": "relay-live-session",
-        "X-OmniRoute-No-Cache": "true",
+        "X-OzRouter-No-Cache": "true",
       },
       body: {
         model: "relay-live-combo",

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { IMAGE_PROVIDERS } from "@omniroute/open-sse/config/imageRegistry.ts";
+import { IMAGE_PROVIDERS } from "@ozrouter/open-sse/config/imageRegistry.ts";
 import { AI_PROVIDERS } from "@/shared/constants/providers";
 
 type Modality = "image" | "video" | "music" | "speech" | "transcription";
@@ -67,7 +67,7 @@ const MODALITY_CONFIG: Record<
     icon: "record_voice_over",
     endpoint: "/api/v1/audio/speech",
     label: "Text to Speech",
-    placeholder: "Hello! Welcome to OmniRoute, your intelligent AI gateway...",
+    placeholder: "Hello! Welcome to OzRouter, your intelligent AI gateway...",
     color: "from-green-500 to-teal-500",
     textLabel: "Text",
     needsCredentials: ["openai", "elevenlabs", "deepgram", "xiaomi-mimo"],

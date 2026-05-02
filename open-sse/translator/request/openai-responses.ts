@@ -10,7 +10,7 @@ import { generateToolCallId } from "../helpers/toolCallHelper.ts";
 import { register } from "../registry.ts";
 
 type JsonRecord = Record<string, unknown>;
-const RESPONSES_STORE_MARKER = "_omnirouteResponsesStore";
+const RESPONSES_STORE_MARKER = "_ozrouterResponsesStore";
 
 function toRecord(value: unknown): JsonRecord {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as JsonRecord) : {};
@@ -71,7 +71,7 @@ export function openaiResponsesToOpenAIRequest(
         !tool.function
       ) {
         throw unsupportedFeature(
-          `Unsupported Responses API feature: ${toolType} tool type is not supported by omniroute`
+          `Unsupported Responses API feature: ${toolType} tool type is not supported by ozrouter`
         );
       }
     }
@@ -79,7 +79,7 @@ export function openaiResponsesToOpenAIRequest(
 
   if (root.background) {
     throw unsupportedFeature(
-      "Unsupported Responses API feature: background mode is not supported by omniroute"
+      "Unsupported Responses API feature: background mode is not supported by ozrouter"
     );
   }
 
@@ -277,7 +277,7 @@ export function openaiResponsesToOpenAIRequest(
     } else if (tcType && tcType !== "function" && tcType !== "allowed_tools") {
       // Built-in tool types (web_search_preview, file_search, etc.) have no Chat equivalent
       throw unsupportedFeature(
-        `Unsupported Responses API feature: tool_choice type '${tcType}' is not supported by omniroute`
+        `Unsupported Responses API feature: tool_choice type '${tcType}' is not supported by ozrouter`
       );
     }
   }

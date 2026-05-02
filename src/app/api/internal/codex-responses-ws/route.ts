@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createHash, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
-import { CodexExecutor } from "@omniroute/open-sse/executors/codex.ts";
+import { CodexExecutor } from "@ozrouter/open-sse/executors/codex.ts";
 import { getApiKeyMetadata } from "@/lib/db/apiKeys";
 import { authorizeWebSocketHandshake, extractWsTokenFromRequest } from "@/lib/ws/handshake";
 import { getModelInfo } from "@/sse/services/model";
@@ -27,7 +27,7 @@ function isRecord(value: unknown): value is JsonRecord {
 }
 
 function getBridgeSecret(): string {
-  return process.env.OMNIROUTE_WS_BRIDGE_SECRET || "";
+  return process.env.OZROUTER_WS_BRIDGE_SECRET || "";
 }
 
 function hashBridgeSecret(value: string): Buffer {
@@ -44,7 +44,7 @@ export function bridgeSecretMatches(expectedSecret: string, receivedSecret: stri
 function getAuthRequest(body: JsonRecord): Request {
   const requestUrl = typeof body.requestUrl === "string" ? body.requestUrl : "/api/v1/responses";
   const headers = isRecord(body.headers) ? body.headers : {};
-  const url = new URL(requestUrl, "http://omniroute.local");
+  const url = new URL(requestUrl, "http://ozrouter.local");
   const requestHeaders = new Headers();
 
   for (const [key, value] of Object.entries(headers)) {
@@ -182,7 +182,7 @@ async function prepare(body: JsonRecord) {
 
 export async function POST(request: Request) {
   const expectedSecret = getBridgeSecret();
-  const receivedSecret = request.headers.get("x-omniroute-ws-bridge-secret") || "";
+  const receivedSecret = request.headers.get("x-ozrouter-ws-bridge-secret") || "";
   if (!bridgeSecretMatches(expectedSecret, receivedSecret)) {
     return jsonError(403, "internal_bridge_forbidden", "Forbidden");
   }

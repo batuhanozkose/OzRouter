@@ -64,7 +64,7 @@ export const OAUTH_PROVIDERS = {
     textIcon: "GL",
     website: "https://docs.gitlab.com/user/duo_agent_platform/code_suggestions/",
     authHint:
-      "OAuth application with ai_features + read_user scopes. Configure GITLAB_DUO_OAUTH_CLIENT_ID and optionally GITLAB_DUO_OAUTH_CLIENT_SECRET on this OmniRoute instance.",
+      "OAuth application with ai_features + read_user scopes. Configure GITLAB_DUO_OAUTH_CLIENT_ID and optionally GITLAB_DUO_OAUTH_CLIENT_SECRET on this OzRouter instance.",
   },
   cursor: { id: "cursor", alias: "cu", name: "Cursor IDE", icon: "edit_note", color: "#00D4AA" },
   "kimi-coding": {
@@ -319,7 +319,7 @@ export const APIKEY_PROVIDERS = {
     authHint:
       "Use your Azure AI Foundry key. Base URL can be https://<resource>.services.ai.azure.com/openai/v1/ or https://<resource>.openai.azure.com/openai/v1/.",
     apiHint:
-      "Foundry uses the OpenAI v1 surface with deployment names as models. OmniRoute normalizes root resource URLs to the v1 chat and /models endpoints.",
+      "Foundry uses the OpenAI v1 surface with deployment names as models. OzRouter normalizes root resource URLs to the v1 chat and /models endpoints.",
     passthroughModels: true,
   },
   bedrock: {
@@ -331,7 +331,7 @@ export const APIKEY_PROVIDERS = {
     textIcon: "BR",
     website: "https://aws.amazon.com/bedrock/",
     authHint:
-      "Use your Amazon Bedrock API key in Authorization: Bearer <key>. OmniRoute defaults to the OpenAI-compatible bedrock-mantle endpoint in us-east-1; set a regional base URL if your account uses another region or the bedrock-runtime /openai/v1 path.",
+      "Use your Amazon Bedrock API key in Authorization: Bearer <key>. OzRouter defaults to the OpenAI-compatible bedrock-mantle endpoint in us-east-1; set a regional base URL if your account uses another region or the bedrock-runtime /openai/v1 path.",
     apiHint:
       "This integration targets Amazon Bedrock's current OpenAI-compatible surface. bedrock-mantle is the default for /models and chat; advanced users can also point baseUrl to bedrock-runtime/.../openai/v1 for runtime-specific model IDs.",
     passthroughModels: true,
@@ -361,7 +361,7 @@ export const APIKEY_PROVIDERS = {
     authHint:
       "Use your OCI Generative AI API key or IAM bearer token. Base URL can be https://inference.generativeai.<region>.oci.oraclecloud.com/openai/v1/.",
     apiHint:
-      "OCI exposes OpenAI-compatible chat and responses endpoints. Project ID is optional in OmniRoute but may be required for Responses and agentic workflows.",
+      "OCI exposes OpenAI-compatible chat and responses endpoints. Project ID is optional in OzRouter but may be required for Responses and agentic workflows.",
     passthroughModels: true,
   },
   sap: {
@@ -390,7 +390,7 @@ export const APIKEY_PROVIDERS = {
     authHint:
       "Use the bearer token that protects your Modal deployment, if enabled. Base URL should point to your OpenAI-compatible Modal app, for example https://<workspace>--<app>.modal.run/v1.",
     apiHint:
-      "Modal commonly serves user-hosted OpenAI-compatible apps on /v1. OmniRoute will probe /v1/models and route chat traffic to /v1/chat/completions.",
+      "Modal commonly serves user-hosted OpenAI-compatible apps on /v1. OzRouter will probe /v1/models and route chat traffic to /v1/chat/completions.",
     hasFree: true,
     freeNote: "$30/month free credits for new accounts",
     passthroughModels: true,
@@ -404,9 +404,9 @@ export const APIKEY_PROVIDERS = {
     textIcon: "RK",
     website: "https://docs.reka.ai/chat/overview",
     authHint:
-      "Use your Reka API key. OmniRoute supports the OpenAI-compatible base URL https://api.reka.ai/v1 and sends both Authorization and X-Api-Key headers for compatibility.",
+      "Use your Reka API key. OzRouter supports the OpenAI-compatible base URL https://api.reka.ai/v1 and sends both Authorization and X-Api-Key headers for compatibility.",
     apiHint:
-      "Reka Chat is OpenAI-compatible on /v1. OmniRoute probes /v1/models and routes chat traffic to /v1/chat/completions.",
+      "Reka Chat is OpenAI-compatible on /v1. OzRouter probes /v1/models and routes chat traffic to /v1/chat/completions.",
     hasFree: true,
     freeNote: "$10/month recurring free API credits",
     passthroughModels: true,
@@ -420,9 +420,9 @@ export const APIKEY_PROVIDERS = {
     textIcon: "NLPC",
     website: "https://docs.nlpcloud.com",
     authHint:
-      "Use your NLP Cloud API key in Authorization: Token <key>. OmniRoute targets the chatbot endpoint on https://api.nlpcloud.io/v1/gpu/<model>/chatbot by default.",
+      "Use your NLP Cloud API key in Authorization: Token <key>. OzRouter targets the chatbot endpoint on https://api.nlpcloud.io/v1/gpu/<model>/chatbot by default.",
     apiHint:
-      "NLP Cloud uses a proprietary chatbot API instead of OpenAI chat/completions. OmniRoute adapts OpenAI messages to input/context/history and exposes a local catalog of supported chatbot models.",
+      "NLP Cloud uses a proprietary chatbot API instead of OpenAI chat/completions. OzRouter adapts OpenAI messages to input/context/history and exposes a local catalog of supported chatbot models.",
     hasFree: true,
     freeNote: "Trial credits for new accounts",
   },
@@ -435,9 +435,9 @@ export const APIKEY_PROVIDERS = {
     textIcon: "RW",
     website: "https://docs.dev.runwayml.com",
     authHint:
-      "Use your Runway API key in Authorization: Bearer <key>. OmniRoute targets the current Runway API at https://api.dev.runwayml.com/v1 and sends the required X-Runway-Version header automatically.",
+      "Use your Runway API key in Authorization: Bearer <key>. OzRouter targets the current Runway API at https://api.dev.runwayml.com/v1 and sends the required X-Runway-Version header automatically.",
     apiHint:
-      "Runway video generation is task-based. OmniRoute submits text-to-video or image-to-video jobs, polls /v1/tasks/{id}, and normalizes the finished video outputs back into the OpenAI-like /v1/videos/generations response.",
+      "Runway video generation is task-based. OzRouter submits text-to-video or image-to-video jobs, polls /v1/tasks/{id}, and normalizes the finished video outputs back into the OpenAI-like /v1/videos/generations response.",
   },
   anthropic: {
     id: "anthropic",
@@ -974,7 +974,7 @@ export const APIKEY_PROVIDERS = {
     textIcon: "CF",
     website: "https://docs.clarifai.com",
     authHint:
-      "Use your Clarifai PAT or app-specific API key. OmniRoute targets the OpenAI-compatible endpoint at https://api.clarifai.com/v2/ext/openai/v1 and authenticates with Authorization: Key <token>.",
+      "Use your Clarifai PAT or app-specific API key. OzRouter targets the OpenAI-compatible endpoint at https://api.clarifai.com/v2/ext/openai/v1 and authenticates with Authorization: Key <token>.",
     apiHint:
       "Clarifai exposes OpenAI-compatible chat, responses and /models on /v2/ext/openai/v1. Public/community models typically require a PAT; app-scoped keys only work for resources inside that app.",
     passthroughModels: true,
@@ -1236,7 +1236,7 @@ export const APIKEY_PROVIDERS = {
     textIcon: "NO",
     website: "https://portal.nousresearch.com/help",
     authHint:
-      "Use your Nous Portal API key. OmniRoute targets the official OpenAI-compatible inference endpoint at https://inference-api.nousresearch.com/v1.",
+      "Use your Nous Portal API key. OzRouter targets the official OpenAI-compatible inference endpoint at https://inference-api.nousresearch.com/v1.",
     apiHint:
       "Nous exposes an OpenAI-compatible /v1 surface with a large remote /models catalog. The /chat/completions endpoint requires a valid API key for programmatic inference.",
     hasFree: true,
@@ -1253,7 +1253,7 @@ export const APIKEY_PROVIDERS = {
     authHint:
       "No API key is required for the public research endpoint. Leave the field blank, or provide a bearer token if your self-hosted Petals gateway uses auth.",
     apiHint:
-      "Petals exposes a public HTTP API at https://chat.petals.dev/api/v1/generate and a WebSocket API at /api/v2/generate. OmniRoute targets the HTTP generate endpoint and supports self-hosted base URLs.",
+      "Petals exposes a public HTTP API at https://chat.petals.dev/api/v1/generate and a WebSocket API at /api/v2/generate. OzRouter targets the HTTP generate endpoint and supports self-hosted base URLs.",
   },
   poe: {
     id: "poe",
@@ -1477,19 +1477,6 @@ export const LOCAL_PROVIDERS = {
     authHint:
       "API key optional. Configure the Triton OpenAI-compatible base URL (default: http://localhost:8000/v1).",
     localDefault: "http://localhost:8000/v1",
-    passthroughModels: true,
-  },
-  "docker-model-runner": {
-    id: "docker-model-runner",
-    alias: "dmr",
-    name: "Docker Model Runner",
-    icon: "inventory_2",
-    color: "#2496ED",
-    textIcon: "DM",
-    website: "https://docs.docker.com/ai/model-runner/",
-    authHint:
-      "API key optional. Configure the local Docker Model Runner OpenAI-compatible base URL (default: http://localhost:12434/v1).",
-    localDefault: "http://localhost:12434/v1",
     passthroughModels: true,
   },
   xinference: {
@@ -1765,7 +1752,6 @@ export const SELF_HOSTED_CHAT_PROVIDER_IDS = new Set([
   "lemonade",
   "llamafile",
   "triton",
-  "docker-model-runner",
   "xinference",
   "oobabooga",
 ]);

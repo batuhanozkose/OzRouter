@@ -1,7 +1,7 @@
 /**
  * Agent Card Endpoint — /.well-known/agent.json
  *
- * Serves the OmniRoute A2A Agent Card for discovery by other agents.
+ * Serves the OzRouter A2A Agent Card for discovery by other agents.
  * Conforms to A2A Protocol v0.3.
  *
  * The Agent Card is dynamically generated to include the current version
@@ -11,17 +11,17 @@
 import { NextResponse } from "next/server";
 
 const PACKAGE_VERSION = process.env.npm_package_version || "1.8.1";
-const BASE_URL = process.env.OMNIROUTE_BASE_URL || "http://localhost:20128";
+const BASE_URL = process.env.OZROUTER_BASE_URL || "http://localhost:20128";
 
 /**
  * GET /.well-known/agent.json
  *
- * Returns the OmniRoute Agent Card that describes this gateway's
+ * Returns the OzRouter Agent Card that describes this gateway's
  * capabilities as an A2A agent.
  */
 export async function GET() {
   const agentCard = {
-    name: "OmniRoute AI Gateway",
+    name: "OzRouter AI Gateway",
     description:
       "Intelligent AI routing gateway with 36+ providers, smart fallback, " +
       "quota tracking, format translation, and auto-managed combos. " +

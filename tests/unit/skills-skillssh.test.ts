@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "omniroute-skillssh-"));
+const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "ozrouter-skillssh-"));
 const originalDataDir = process.env.DATA_DIR;
 process.env.DATA_DIR = tmpDir;
 
@@ -153,20 +153,20 @@ test("fetchSkillMd throws on 404", async () => {
 
 test("skillssh search route returns skills from the API", async () => {
   const mockPayload = {
-    query: "docker",
+    query: "python",
     searchType: "text",
     skills: [
       {
-        id: "o/r/docker-skill",
-        skillId: "docker-skill",
-        name: "Docker Skill",
+        id: "o/r/python-skill",
+        skillId: "python-skill",
+        name: "Python Skill",
         installs: 5,
         source: "o/r",
       },
       {
-        id: "o/r/compose-skill",
-        skillId: "compose-skill",
-        name: "Compose Skill",
+        id: "o/r/testing-skill",
+        skillId: "testing-skill",
+        name: "Testing Skill",
         installs: 3,
         source: "o/r",
       },
@@ -177,14 +177,14 @@ test("skillssh search route returns skills from the API", async () => {
 
   globalThis.fetch = async () => new Response(JSON.stringify(mockPayload), { status: 200 });
 
-  const req = new Request("http://localhost/api/skills/skillssh?q=docker&limit=10");
+  const req = new Request("http://localhost/api/skills/skillssh?q=python&limit=10");
   const res = await searchRoute.GET(req);
   const body = (await res.json()) as any;
 
   assert.equal(res.status, 200);
   assert.equal(body.skills.length, 2);
-  assert.equal(body.skills[0].name, "Docker Skill");
-  assert.equal(body.skills[1].skillId, "compose-skill");
+  assert.equal(body.skills[0].name, "Python Skill");
+  assert.equal(body.skills[1].skillId, "testing-skill");
 });
 
 test("skillssh search route returns 500 when upstream fails", async () => {
@@ -201,7 +201,7 @@ test("skillssh search route returns 500 when upstream fails", async () => {
 // ── POST /api/skills/skillssh/install route tests ──
 
 test("skillssh install route registers a skill from skills.sh", async () => {
-  const mdContent = "# Docker Best Practices\nContent here.";
+  const mdContent = "# Python Best Practices\nContent here.";
 
   globalThis.fetch = async (url) => {
     if (new URL(url.toString()).hostname === "raw.githubusercontent.com") {
@@ -214,10 +214,10 @@ test("skillssh install route registers a skill from skills.sh", async () => {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
-      name: "docker-best-practices",
-      description: "Docker best practices skill",
+      name: "python-best-practices",
+      description: "Python best practices skill",
       source: "owner/repo",
-      skillId: "docker-best-practices",
+      skillId: "python-best-practices",
       version: "1.0.0",
     }),
   });
@@ -231,7 +231,7 @@ test("skillssh install route registers a skill from skills.sh", async () => {
 
   // Verify the skill was registered with correct metadata
   const skills = skillRegistry.list();
-  const installed = skills.find((s) => s.name === "docker-best-practices");
+  const installed = skills.find((s) => s.name === "python-best-practices");
   assert.ok(installed);
   assert.equal(installed.apiKeyId, "skillssh");
   assert.ok(installed.handler.includes("Installed from skills.sh"));

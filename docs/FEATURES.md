@@ -1,8 +1,8 @@
-# OmniRoute — Dashboard Features Gallery
+# OzRouter — Dashboard Features Gallery
 
 🌐 **Languages:** 🇺🇸 [English](FEATURES.md) | 🇧🇷 [Português (Brasil)](i18n/pt-BR/FEATURES.md) | 🇪🇸 [Español](i18n/es/FEATURES.md) | 🇫🇷 [Français](i18n/fr/FEATURES.md) | 🇮🇹 [Italiano](i18n/it/FEATURES.md) | 🇷🇺 [Русский](i18n/ru/FEATURES.md) | 🇨🇳 [中文 (简体)](i18n/zh-CN/FEATURES.md) | 🇩🇪 [Deutsch](i18n/de/FEATURES.md) | 🇮🇳 [हिन्दी](i18n/in/FEATURES.md) | 🇹🇭 [ไทย](i18n/th/FEATURES.md) | 🇺🇦 [Українська](i18n/uk-UA/FEATURES.md) | 🇸🇦 [العربية](i18n/ar/FEATURES.md) | 🇯🇵 [日本語](i18n/ja/FEATURES.md) | 🇻🇳 [Tiếng Việt](i18n/vi/FEATURES.md) | 🇧🇬 [Български](i18n/bg/FEATURES.md) | 🇩🇰 [Dansk](i18n/da/FEATURES.md) | 🇫🇮 [Suomi](i18n/fi/FEATURES.md) | 🇮🇱 [עברית](i18n/he/FEATURES.md) | 🇭🇺 [Magyar](i18n/hu/FEATURES.md) | 🇮🇩 [Bahasa Indonesia](i18n/id/FEATURES.md) | 🇰🇷 [한국어](i18n/ko/FEATURES.md) | 🇲🇾 [Bahasa Melayu](i18n/ms/FEATURES.md) | 🇳🇱 [Nederlands](i18n/nl/FEATURES.md) | 🇳🇴 [Norsk](i18n/no/FEATURES.md) | 🇵🇹 [Português (Portugal)](i18n/pt/FEATURES.md) | 🇷🇴 [Română](i18n/ro/FEATURES.md) | 🇵🇱 [Polski](i18n/pl/FEATURES.md) | 🇸🇰 [Slovenčina](i18n/sk/FEATURES.md) | 🇸🇪 [Svenska](i18n/sv/FEATURES.md) | 🇵🇭 [Filipino](i18n/phi/FEATURES.md) | 🇨🇿 [Čeština](i18n/cs/FEATURES.md)
 
-Visual guide to every section of the OmniRoute dashboard.
+Visual guide to every section of the OzRouter dashboard.
 
 ---
 
@@ -101,7 +101,7 @@ Dashboard for discovering and managing CLI agents. Shows a grid of 14 built-in a
 
 ## 🔗 Context Relay _(v3.5.5+)_
 
-A combo strategy that preserves session continuity when account rotation happens mid-conversation. Before the active account is exhausted, OmniRoute generates a structured handoff summary in the background. After the next request resolves to a different account, the summary is injected as a system message so the new account continues with full context.
+A combo strategy that preserves session continuity when account rotation happens mid-conversation. Before the active account is exhausted, OzRouter generates a structured handoff summary in the background. After the next request resolves to a different account, the summary is injected as a system message so the new account continues with full context.
 
 Configurable via combo-level or global settings:
 
@@ -156,7 +156,7 @@ Clean removal scripts for all installation methods:
 
 | Command                  | Action                                                                              |
 | ------------------------ | ----------------------------------------------------------------------------------- |
-| `npm run uninstall`      | Removes the system app but **keeps your DB and configurations** in `~/.omniroute`.  |
+| `npm run uninstall`      | Removes the system app but **keeps your DB and configurations** in `~/.ozrouter`.   |
 | `npm run uninstall:full` | Removes the app AND permanently **erases all configurations, keys, and databases**. |
 
 ---
@@ -197,7 +197,7 @@ Administrative action tracking with filtering by action type, actor, target, IP 
 
 ## 🖥️ Desktop Application
 
-Native Electron desktop app for Windows, macOS, and Linux. Run OmniRoute as a standalone application with system tray integration, offline support, auto-update, and one-click install.
+Native Electron desktop app for Windows, macOS, and Linux. Run OzRouter as a standalone application with system tray integration, offline support, auto-update, and one-click install.
 
 Key features:
 
@@ -216,7 +216,7 @@ Key features:
 
 ## 🌐 V1 WebSocket Bridge _(v3.6.6+)_
 
-OmniRoute now supports **OpenAI-compatible WebSocket clients** via the `/v1/ws` upgrade endpoint. The custom `scripts/v1-ws-bridge.mjs` server wraps Next.js and upgrades WS connections to full bidirectional streaming sessions. Authentication uses the same API key or session cookie as HTTP requests.
+OzRouter now supports **OpenAI-compatible WebSocket clients** via the `/v1/ws` upgrade endpoint. The custom `scripts/v1-ws-bridge.mjs` server wraps Next.js and upgrades WS connections to full bidirectional streaming sessions. Authentication uses the same API key or session cookie as HTTP requests.
 
 Key behaviours:
 
@@ -242,7 +242,7 @@ The config bundle is built by `src/lib/sync/bundle.ts`. Consumers compare the `E
 
 **GLM Thinking (`glmt`)** is now a registered first-class provider: 65 536 max output tokens, 24 576 thinking budget, 900 s default timeout, Claude-compatible API format, and shared usage sync with the GLM family.
 
-**Hybrid token counting** also lands in v3.6.6: when a Claude-compatible provider exposes `/messages/count_tokens`, OmniRoute calls it before large requests with graceful estimation fallback.
+**Hybrid token counting** also lands in v3.6.6: when a Claude-compatible provider exposes `/messages/count_tokens`, OzRouter calls it before large requests with graceful estimation fallback.
 
 ---
 

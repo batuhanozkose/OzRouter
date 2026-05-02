@@ -91,7 +91,7 @@ describe("Semantic Cache", () => {
     });
 
     it("returns false when no-cache header is set", () => {
-      const headers = new Headers({ "x-omniroute-no-cache": "true" });
+      const headers = new Headers({ "x-ozrouter-no-cache": "true" });
       assert.equal(isCacheable({ stream: false, temperature: 0 }, headers), false);
     });
 

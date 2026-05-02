@@ -37,11 +37,11 @@ const MAX_ENTRIES = 200;
 // Per-entry images cap at 8 MB (enforced upstream in the executor) so 32 MB
 // covers ~4 large images. The byte cap matters more than entry count: a hot
 // loop of 8 MB images would otherwise pin 1.6 GB of RSS before count
-// eviction kicked in. Tune via OMNIROUTE_CGPT_WEB_IMAGE_CACHE_MAX_MB.
+// eviction kicked in. Tune via OZROUTER_CGPT_WEB_IMAGE_CACHE_MAX_MB.
 const DEFAULT_MAX_BYTES = 256 * 1024 * 1024;
 
 function configuredMaxBytes(): number {
-  const raw = Number(process.env.OMNIROUTE_CGPT_WEB_IMAGE_CACHE_MAX_MB);
+  const raw = Number(process.env.OZROUTER_CGPT_WEB_IMAGE_CACHE_MAX_MB);
   if (!Number.isFinite(raw) || raw <= 0) return DEFAULT_MAX_BYTES;
   return Math.floor(raw * 1024 * 1024);
 }

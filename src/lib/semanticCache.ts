@@ -7,7 +7,7 @@
  * Two-tier: in-memory LRU (fast) + SQLite (persistent across restarts).
  *
  * Cache key = SHA-256(model + normalized messages + temperature + top_p)
- * Bypass: X-OmniRoute-No-Cache: true
+ * Bypass: X-OzRouter-No-Cache: true
  *
  * @module lib/semanticCache
  */
@@ -399,7 +399,7 @@ export function getCacheStats() {
  * @deprecated Use isCacheableForRead instead.
  */
 export function isCacheable(body, headers) {
-  if ((getHeaderValue(headers, "x-omniroute-no-cache") || "").toLowerCase() === "true") {
+  if ((getHeaderValue(headers, "x-ozrouter-no-cache") || "").toLowerCase() === "true") {
     return false;
   }
   if (body.stream !== false) return false;
@@ -413,7 +413,7 @@ export function isCacheable(body, headers) {
  * Omitted temperature defaults to 0 for read (matching existing cache entries).
  */
 export function isCacheableForRead(body, headers) {
-  if ((getHeaderValue(headers, "x-omniroute-no-cache") || "").toLowerCase() === "true") {
+  if ((getHeaderValue(headers, "x-ozrouter-no-cache") || "").toLowerCase() === "true") {
     return false;
   }
   if ((body.temperature ?? 0) !== 0) return false;
@@ -427,7 +427,7 @@ export function isCacheableForRead(body, headers) {
  * because the provider default may be non-deterministic.
  */
 export function isCacheableForWrite(body, headers) {
-  if ((getHeaderValue(headers, "x-omniroute-no-cache") || "").toLowerCase() === "true") {
+  if ((getHeaderValue(headers, "x-ozrouter-no-cache") || "").toLowerCase() === "true") {
     return false;
   }
   if (body.temperature !== 0) return false;

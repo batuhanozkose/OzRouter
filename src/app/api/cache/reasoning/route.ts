@@ -5,7 +5,7 @@ import {
   deleteReasoningCacheEntry,
   getReasoningCacheServiceEntries,
   getReasoningCacheServiceStats,
-} from "@omniroute/open-sse/services/reasoningCache.ts";
+} from "@ozrouter/open-sse/services/reasoningCache.ts";
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);

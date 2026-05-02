@@ -2,7 +2,7 @@ import { ANTIGRAVITY_CONFIG } from "../constants/oauth";
 import {
   getAntigravityHeaders,
   getAntigravityLoadCodeAssistMetadata,
-} from "@omniroute/open-sse/services/antigravityHeaders.ts";
+} from "@ozrouter/open-sse/services/antigravityHeaders.ts";
 
 export const antigravity = {
   config: ANTIGRAVITY_CONFIG,

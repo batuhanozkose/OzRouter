@@ -3,7 +3,7 @@ import { isIP } from "node:net";
 const TRUE_ENV_VALUES = new Set(["1", "true", "yes", "on"]);
 
 export const PROVIDER_URL_BLOCKED_MESSAGE = "Blocked private or local provider URL";
-export const PRIVATE_PROVIDER_URLS_ENV = "OMNIROUTE_ALLOW_PRIVATE_PROVIDER_URLS";
+export const PRIVATE_PROVIDER_URLS_ENV = "OZROUTER_ALLOW_PRIVATE_PROVIDER_URLS";
 
 export type OutboundUrlGuardMode = "none" | "public-only";
 export type OutboundUrlGuardErrorCode = "OUTBOUND_URL_GUARD_BLOCKED" | "OUTBOUND_URL_INVALID";

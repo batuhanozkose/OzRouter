@@ -76,8 +76,8 @@ export function getNodeRuntimeWarning(version = process.versions.node) {
   }
 
   if (support.reason === "unreleased-major") {
-    return `Node.js ${support.nodeVersion} is outside the supported LTS lines. OmniRoute currently supports Node.js 20.x, 22.x, and 24.x.`;
+    return `Node.js ${support.nodeVersion} is outside the supported LTS lines. OzRouter currently supports Node.js 20.x, 22.x, and 24.x.`;
   }
 
-  return `Node.js ${support.nodeVersion} is outside OmniRoute's approved secure runtime policy.`;
+  return `Node.js ${support.nodeVersion} is outside OzRouter's approved secure runtime policy.`;
 }

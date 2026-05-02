@@ -18,7 +18,7 @@ const MAX_TASK_PROGRESS_LENGTH = 1200;
 const MAX_DECISIONS = 8;
 const MAX_ENTITIES = 10;
 const DEFAULT_TTL_MS = 5 * 60 * 60 * 1000;
-const OMNI_MODEL_TAG_PATTERN = /(?:\\n|\n|\r)*<omniModel>[^<]+<\/omniModel>(?:\\n|\n|\r)*/g;
+const OZ_MODEL_TAG_PATTERN = /(?:\\n|\n|\r)*<ozModel>[^<]+<\/ozModel>(?:\\n|\n|\r)*/g;
 const inflightHandoffGenerations = new Set<string>();
 
 const HANDOFF_PROMPT_TEMPLATE = `You are a context summarizer. Analyze the conversation below and generate a structured handoff summary.
@@ -147,7 +147,7 @@ function normalizeStringArray(value: unknown, maxItems: number, maxLength = 240)
 }
 
 function sanitizeJsonCandidate(content: string): string {
-  return content.replace(OMNI_MODEL_TAG_PATTERN, "").trim();
+  return content.replace(OZ_MODEL_TAG_PATTERN, "").trim();
 }
 
 function extractJsonCandidate(content: string): string {
@@ -267,8 +267,8 @@ async function generateHandoffAsync(options: {
     stream: false,
     max_tokens: DEFAULT_SUMMARY_RESPONSE_TOKENS,
     temperature: 0.1,
-    _omnirouteSkipContextRelay: true,
-    _omnirouteInternalRequest: "context-handoff",
+    _ozrouterSkipContextRelay: true,
+    _ozrouterInternalRequest: "context-handoff",
   };
 
   const response = await options.handleSingleModel(summaryBody, summaryModel);

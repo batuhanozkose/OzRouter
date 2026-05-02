@@ -119,10 +119,10 @@ test("Test 3: handleChat returns cached response directly for Semantic Cache hit
 
   assert.equal(fetchCount, 1, "Should have hit the semantic cache without calling fetch again");
   assert.equal(json2.choices[0].message.content, "Cache Generation 1");
-  assert.equal(res2.headers.get("X-OmniRoute-Cache"), "HIT");
+  assert.equal(res2.headers.get("X-OzRouter-Cache"), "HIT");
 });
 
-test("Test 4: handleChat supports X-OmniRoute-Progress tracking header for streams", async () => {
+test("Test 4: handleChat supports X-OzRouter-Progress tracking header for streams", async () => {
   await seedConnection("openai", { apiKey: "sk-openai-progress" });
 
   globalThis.fetch = async () => {
@@ -143,7 +143,7 @@ test("Test 4: handleChat supports X-OmniRoute-Progress tracking header for strea
   const response = await handleChat(
     buildRequest({
       headers: {
-        "X-OmniRoute-Progress": "true",
+        "X-OzRouter-Progress": "true",
       },
       body: {
         model: "openai/gpt-4",
@@ -154,7 +154,7 @@ test("Test 4: handleChat supports X-OmniRoute-Progress tracking header for strea
   );
 
   assert.equal(response.status, 200);
-  assert.equal(response.headers.get("X-OmniRoute-Progress"), "enabled");
+  assert.equal(response.headers.get("X-OzRouter-Progress"), "enabled");
 
   const raw = await response.text();
   assert.match(raw, /event: progress/); // check that progress chunks were injected
@@ -209,7 +209,7 @@ test("handleChat returns cached response directly for Idempotency hits", async (
 
   const json2 = (await response2.json()) as any;
   assert.equal(response2.status, 200);
-  assert.equal(response2.headers.get("X-OmniRoute-Idempotent"), "true");
+  assert.equal(response2.headers.get("X-OzRouter-Idempotent"), "true");
   assert.equal(json2.choices[0].message.content, "Original response");
 });
 
@@ -271,6 +271,6 @@ test("handleChat returns Semantic Cache hit", async () => {
 
   const json2 = (await response2.json()) as any;
   assert.equal(response2.status, 200);
-  assert.equal(response2.headers.get("X-OmniRoute-Cache"), "HIT");
+  assert.equal(response2.headers.get("X-OzRouter-Cache"), "HIT");
   assert.equal(json2.choices[0].message.content, "Semantic API response");
 });

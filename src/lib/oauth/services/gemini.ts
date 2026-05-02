@@ -3,7 +3,7 @@ import open from "open";
 import {
   ANTIGRAVITY_LOAD_CODE_ASSIST_API_CLIENT,
   ANTIGRAVITY_LOAD_CODE_ASSIST_USER_AGENT,
-} from "@omniroute/open-sse/services/antigravityHeaders.ts";
+} from "@ozrouter/open-sse/services/antigravityHeaders.ts";
 import { GEMINI_CONFIG } from "../constants/oauth";
 import { getServerCredentials } from "../config/index";
 import { startLocalServer } from "../utils/server";

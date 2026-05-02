@@ -70,7 +70,7 @@ function getLegacyKey(): Buffer | null {
   const secret = process.env.STORAGE_ENCRYPTION_KEY;
   if (!secret || typeof secret !== "string" || secret.trim().length === 0) return null;
 
-  const legacySalt = "omniroute-field-encryption-v1";
+  const legacySalt = "ozrouter-field-encryption-v1";
   try {
     _legacyDerivedKey = scryptSync(secret, legacySalt, KEY_LENGTH);
   } catch {
@@ -242,7 +242,7 @@ export function validateEncryptionConfig(): { valid: boolean; error?: string } {
 
   // Try deriving a key to verify it works
   try {
-    scryptSync(secret, "omniroute-field-encryption-v1", KEY_LENGTH);
+    scryptSync(secret, "ozrouter-field-encryption-v1", KEY_LENGTH);
     return { valid: true };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);

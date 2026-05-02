@@ -18,8 +18,8 @@
     "forceConsistentCasingInFileNames": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@omniroute/open-sse": ["./open-sse"],
-      "@omniroute/open-sse/*": ["./open-sse/*"]
+      "@ozrouter/open-sse": ["./open-sse"],
+      "@ozrouter/open-sse/*": ["./open-sse/*"]
     },
     "plugins": [
       {
@@ -49,7 +49,7 @@
     "_tasks",
     "_mono_repo",
     "_references",
-    "omnirouteCloud",
-    "omnirouteSite"
+    "ozrouterCloud",
+    "ozrouterSite"
   ]
 }

@@ -1,11 +1,11 @@
-export const OMNIROUTE_RESPONSE_HEADERS = {
-  cache: "X-OmniRoute-Cache",
-  cacheHit: "X-OmniRoute-Cache-Hit",
-  latencyMs: "X-OmniRoute-Latency-Ms",
-  model: "X-OmniRoute-Model",
-  progress: "X-OmniRoute-Progress",
-  provider: "X-OmniRoute-Provider",
-  responseCost: "X-OmniRoute-Response-Cost",
-  tokensIn: "X-OmniRoute-Tokens-In",
-  tokensOut: "X-OmniRoute-Tokens-Out",
+export const OZROUTER_RESPONSE_HEADERS = {
+  cache: "X-OzRouter-Cache",
+  cacheHit: "X-OzRouter-Cache-Hit",
+  latencyMs: "X-OzRouter-Latency-Ms",
+  model: "X-OzRouter-Model",
+  progress: "X-OzRouter-Progress",
+  provider: "X-OzRouter-Provider",
+  responseCost: "X-OzRouter-Response-Cost",
+  tokensIn: "X-OzRouter-Tokens-In",
+  tokensOut: "X-OzRouter-Tokens-Out",
 } as const;

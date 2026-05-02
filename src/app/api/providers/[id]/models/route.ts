@@ -5,7 +5,7 @@ import {
   isOpenAICompatibleProvider,
   isSelfHostedChatProvider,
 } from "@/shared/constants/providers";
-import { getRegistryEntry } from "@omniroute/open-sse/config/providerRegistry.ts";
+import { getRegistryEntry } from "@ozrouter/open-sse/config/providerRegistry.ts";
 import { getModelsByProviderId } from "@/shared/constants/models";
 import {
   getProviderConnectionById,
@@ -18,45 +18,45 @@ import {
   safeOutboundFetch,
 } from "@/shared/network/safeOutboundFetch";
 import { getProviderOutboundGuard } from "@/shared/network/outboundUrlGuard";
-import { getStaticQoderModels } from "@omniroute/open-sse/services/qoderCli.ts";
-import { getAntigravityHeaders } from "@omniroute/open-sse/services/antigravityHeaders.ts";
-import { getAntigravityModelsDiscoveryUrls } from "@omniroute/open-sse/config/antigravityUpstream.ts";
-import { getGlmModelsUrl } from "@omniroute/open-sse/config/glmProvider.ts";
-import { getImageProvider } from "@omniroute/open-sse/config/imageRegistry.ts";
-import { getVideoProvider } from "@omniroute/open-sse/config/videoRegistry.ts";
-import { resolveAntigravityVersion } from "@omniroute/open-sse/services/antigravityVersion.ts";
+import { getStaticQoderModels } from "@ozrouter/open-sse/services/qoderCli.ts";
+import { getAntigravityHeaders } from "@ozrouter/open-sse/services/antigravityHeaders.ts";
+import { getAntigravityModelsDiscoveryUrls } from "@ozrouter/open-sse/config/antigravityUpstream.ts";
+import { getGlmModelsUrl } from "@ozrouter/open-sse/config/glmProvider.ts";
+import { getImageProvider } from "@ozrouter/open-sse/config/imageRegistry.ts";
+import { getVideoProvider } from "@ozrouter/open-sse/config/videoRegistry.ts";
+import { resolveAntigravityVersion } from "@ozrouter/open-sse/services/antigravityVersion.ts";
 import {
   AZURE_AI_DEFAULT_BASE_URL,
   buildAzureAiModelsUrl,
-} from "@omniroute/open-sse/config/azureAi.ts";
-import { normalizeBedrockBaseUrl } from "@omniroute/open-sse/config/bedrock.ts";
+} from "@ozrouter/open-sse/config/azureAi.ts";
+import { normalizeBedrockBaseUrl } from "@ozrouter/open-sse/config/bedrock.ts";
 import {
   DATAROBOT_DEFAULT_BASE_URL,
   buildDataRobotCatalogUrl,
   isDataRobotDeploymentUrl,
-} from "@omniroute/open-sse/config/datarobot.ts";
-import { OCI_DEFAULT_BASE_URL, buildOciModelsUrl } from "@omniroute/open-sse/config/oci.ts";
+} from "@ozrouter/open-sse/config/datarobot.ts";
+import { OCI_DEFAULT_BASE_URL, buildOciModelsUrl } from "@ozrouter/open-sse/config/oci.ts";
 import {
   SAP_DEFAULT_BASE_URL,
   buildSapModelsUrl,
   getSapResourceGroup,
-} from "@omniroute/open-sse/config/sap.ts";
+} from "@ozrouter/open-sse/config/sap.ts";
 import {
   WATSONX_DEFAULT_BASE_URL,
   buildWatsonxModelsUrl,
-} from "@omniroute/open-sse/config/watsonx.ts";
+} from "@ozrouter/open-sse/config/watsonx.ts";
 import {
   ANTIGRAVITY_PUBLIC_MODELS,
   getClientVisibleAntigravityModelName,
   isUserCallableAntigravityModelId,
   toClientAntigravityModelId,
-} from "@omniroute/open-sse/config/antigravityModelAliases.ts";
-import { getEmbeddingProvider } from "@omniroute/open-sse/config/embeddingRegistry.ts";
-import { getRerankProvider } from "@omniroute/open-sse/config/rerankRegistry.ts";
+} from "@ozrouter/open-sse/config/antigravityModelAliases.ts";
+import { getEmbeddingProvider } from "@ozrouter/open-sse/config/embeddingRegistry.ts";
+import { getRerankProvider } from "@ozrouter/open-sse/config/rerankRegistry.ts";
 import {
   getSpeechProvider,
   getTranscriptionProvider,
-} from "@omniroute/open-sse/config/audioRegistry.ts";
+} from "@ozrouter/open-sse/config/audioRegistry.ts";
 import {
   getCachedDiscoveredModels,
   isAutoFetchModelsEnabled,

@@ -19,8 +19,8 @@ import { pickMaskedDisplayValue, pickDisplayValue } from "@/shared/utils/maskEma
 import useEmailPrivacyStore from "@/store/emailPrivacyStore";
 import EmailPrivacyToggle from "@/shared/components/EmailPrivacyToggle";
 
-const LS_GROUP_BY = "omniroute:limits:groupBy";
-const LS_EXPANDED_GROUPS = "omniroute:limits:expandedGroups";
+const LS_GROUP_BY = "ozrouter:limits:groupBy";
+const LS_EXPANDED_GROUPS = "ozrouter:limits:expandedGroups";
 
 const MIN_FETCH_INTERVAL_MS = 30000; // Debounce per-connection fetches
 const QUOTA_BAR_GREEN_THRESHOLD = 50;
@@ -497,10 +497,10 @@ export default function ProviderLimits() {
               className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold cursor-pointer"
               style={{
                 border: active
-                  ? "1px solid var(--color-primary, #E54D5E)"
+                  ? "1px solid var(--color-primary, #7289DA)"
                   : "1px solid var(--color-border)",
-                background: active ? "rgba(229,77,94,0.1)" : "transparent",
-                color: active ? "var(--color-primary, #E54D5E)" : "var(--color-text-muted)",
+                background: active ? "rgba(114,137,218,0.1)" : "transparent",
+                color: active ? "var(--color-primary, #7289DA)" : "var(--color-text-muted)",
               }}
             >
               <span>{t(tier.labelKey)}</span>

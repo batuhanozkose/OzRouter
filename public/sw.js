@@ -1,4 +1,4 @@
-const CACHE_NAME = "omniroute-pwa-v2";
+const CACHE_NAME = "ozrouter-pwa-v2";
 const APP_SHELL = [
   "/",
   "/offline",

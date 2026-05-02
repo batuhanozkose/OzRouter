@@ -124,7 +124,7 @@ async function getClient(): Promise<{
         const TLSClient = (mod as { TLSClient: new (opts?: Record<string, unknown>) => unknown })
           .TLSClient;
         // Native mode loads the shared library directly via koffi, avoiding the
-        // managed sidecar's localhost HTTP calls that OmniRoute's global fetch
+        // managed sidecar's localhost HTTP calls that OzRouter's global fetch
         // proxy patch interferes with.
         const client = new TLSClient({ runtimeMode: "native" }) as {
           start: () => Promise<void>;

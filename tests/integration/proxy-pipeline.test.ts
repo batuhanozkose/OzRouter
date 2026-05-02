@@ -365,7 +365,7 @@ describe("Migration System — files exist", () => {
     const src = readSrc("lib/db/core.ts");
     assert.ok(src);
     assert.match(src, /runMigrations/);
-    assert.match(src, /_omniroute_migrations/);
+    assert.match(src, /_ozrouter_migrations/);
   });
 });
 

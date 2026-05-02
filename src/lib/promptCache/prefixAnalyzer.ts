@@ -79,7 +79,7 @@ export function shouldInjectCacheControl(analysis: PrefixAnalysis, minTokens = 1
 export function generatePromptCacheKey(messages: Message[]): string {
   const analysis = analyzePrefix(messages);
   if (analysis.prefixHash) {
-    return `omni-${analysis.prefixHash.slice(0, 32)}`;
+    return `oz-${analysis.prefixHash.slice(0, 32)}`;
   }
   return "";
 }

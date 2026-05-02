@@ -24,7 +24,7 @@ interface AuditDatabase {
 }
 
 declare global {
-  var __omnirouteMcpAuditDb: AuditDatabase | null | undefined;
+  var __ozrouterMcpAuditDb: AuditDatabase | null | undefined;
 }
 
 interface AuditStatsRow {
@@ -129,11 +129,11 @@ function buildAuditFilterSql(filters: McpAuditQuery): { whereSql: string; params
 }
 
 function getCachedAuditDb(): AuditDatabase | null {
-  return globalThis.__omnirouteMcpAuditDb ?? null;
+  return globalThis.__ozrouterMcpAuditDb ?? null;
 }
 
 function setCachedAuditDb(database: AuditDatabase | null): void {
-  globalThis.__omnirouteMcpAuditDb = database;
+  globalThis.__ozrouterMcpAuditDb = database;
 }
 
 function toNumber(value: unknown, fallback = 0): number {
@@ -152,7 +152,7 @@ function toString(value: unknown): string {
 
 /**
  * Lazy-load the database connection.
- * Uses the same SQLite database as the main OmniRoute app.
+ * Uses the same SQLite database as the main OzRouter app.
  */
 async function getDb(): Promise<AuditDatabase | null> {
   const cachedDb = getCachedAuditDb();
@@ -166,7 +166,7 @@ async function getDb(): Promise<AuditDatabase | null> {
 
     const dbPath = process.env.DATA_DIR
       ? join(process.env.DATA_DIR, "storage.sqlite")
-      : join(homedir(), ".omniroute", "storage.sqlite");
+      : join(homedir(), ".ozrouter", "storage.sqlite");
 
     if (!existsSync(dbPath)) {
       console.error(`[MCP Audit] Database not found at ${dbPath} — audit logging disabled`);
@@ -235,7 +235,7 @@ export async function logToolCall(
 
     const inputHash = await hashInput(input);
     const outputSummary = summarizeOutput(output);
-    const apiKeyId = process.env.OMNIROUTE_API_KEY_ID || null;
+    const apiKeyId = process.env.OZROUTER_API_KEY_ID || null;
 
     database
       .prepare(

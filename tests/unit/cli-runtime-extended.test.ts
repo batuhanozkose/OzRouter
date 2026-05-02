@@ -109,7 +109,7 @@ test("getCliRuntimeStatus rejects unsafe env overrides and reports validated run
 });
 
 test("getCliRuntimeStatus reports not_executable for absolute env override files without execute permission", async () => {
-  const tempDir = createTempDir("omniroute-cli-notexec-");
+  const tempDir = createTempDir("ozrouter-cli-notexec-");
   const scriptName = process.platform === "win32" ? "codex.cmd" : "codex";
   const scriptPath = writeScript(
     tempDir,
@@ -136,7 +136,7 @@ test("getCliRuntimeStatus reports not_executable for absolute env override files
 });
 
 test("getCliRuntimeStatus reports healthcheck_failed when a binary exists but does not answer version probes", async () => {
-  const tempDir = createTempDir("omniroute-cli-healthcheck-");
+  const tempDir = createTempDir("ozrouter-cli-healthcheck-");
   const scriptName = process.platform === "win32" ? "qodercli.cmd" : "qodercli";
   const scriptPath = writeScript(
     tempDir,
@@ -158,7 +158,7 @@ test("getCliRuntimeStatus reports healthcheck_failed when a binary exists but do
 });
 
 test("getCliRuntimeStatus discovers binaries from CLI_EXTRA_PATHS during PATH lookup", async () => {
-  const tempDir = createTempDir("omniroute-cli-extra-path-");
+  const tempDir = createTempDir("ozrouter-cli-extra-path-");
   const scriptName = process.platform === "win32" ? "qodercli.cmd" : "qodercli";
   writeScript(
     tempDir,
@@ -184,7 +184,7 @@ test("getCliRuntimeStatus discovers binaries from CLI_EXTRA_PATHS during PATH lo
 });
 
 test("getCliRuntimeStatus resolves known binaries from npm global prefix discovered via npm config", async () => {
-  const prefixDir = createTempDir("omniroute-cli-prefix-");
+  const prefixDir = createTempDir("ozrouter-cli-prefix-");
   const scriptName = process.platform === "win32" ? "qodercli.cmd" : "qodercli";
   const scriptPath = writeScript(
     path.join(prefixDir, process.platform === "win32" ? "" : "bin"),
@@ -213,7 +213,7 @@ test("getCliRuntimeStatus resolves known binaries from npm global prefix discove
 });
 
 test("getCliRuntimeStatus ignores suspicious known-path binaries and symlink escapes", async () => {
-  const prefixDir = createTempDir("omniroute-cli-suspicious-");
+  const prefixDir = createTempDir("ozrouter-cli-suspicious-");
   const binDir = path.join(prefixDir, process.platform === "win32" ? "" : "bin");
   const scriptName = process.platform === "win32" ? "qodercli.exe" : "qodercli";
   fs.mkdirSync(binDir, { recursive: true });
@@ -229,9 +229,9 @@ test("getCliRuntimeStatus ignores suspicious known-path binaries and symlink esc
   assert.equal(suspiciousStatus.reason, "suspicious_size");
 
   if (process.platform !== "win32") {
-    const escapePrefix = createTempDir("omniroute-cli-escape-");
+    const escapePrefix = createTempDir("ozrouter-cli-escape-");
     const escapeBinDir = path.join(escapePrefix, "bin");
-    const outsideDir = createTempDir("omniroute-cli-outside-");
+    const outsideDir = createTempDir("ozrouter-cli-outside-");
     const outsideTarget = writeScript(
       outsideDir,
       "qodercli",
@@ -251,7 +251,7 @@ test("getCliRuntimeStatus ignores suspicious known-path binaries and symlink esc
 });
 
 test("getCliRuntimeStatus tolerates spawn errors during healthcheck and marks the tool as not runnable", async () => {
-  const tempDir = createTempDir("omniroute-cli-spawn-error-");
+  const tempDir = createTempDir("ozrouter-cli-spawn-error-");
   const scriptName = process.platform === "win32" ? "cline.cmd" : "cline";
   const scriptPath = writeScript(
     tempDir,

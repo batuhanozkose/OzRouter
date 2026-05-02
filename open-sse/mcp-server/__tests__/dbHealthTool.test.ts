@@ -17,7 +17,7 @@ vi.mock("../../../src/lib/db/core.ts", () => ({
   runManagedDbHealthCheck: mockRunManagedDbHealthCheck,
 }));
 
-describe("omniroute_db_health_check MCP tool", () => {
+describe("ozrouter_db_health_check MCP tool", () => {
   let client: Client;
 
   beforeEach(async () => {
@@ -43,8 +43,8 @@ describe("omniroute_db_health_check MCP tool", () => {
   });
 
   it("is registered in the MCP tool map", () => {
-    expect(MCP_TOOL_MAP["omniroute_db_health_check"]).toBeDefined();
-    expect(MCP_TOOL_MAP["omniroute_db_health_check"]?.phase).toBe(2);
+    expect(MCP_TOOL_MAP["ozrouter_db_health_check"]).toBeDefined();
+    expect(MCP_TOOL_MAP["ozrouter_db_health_check"]?.phase).toBe(2);
   });
 
   it("validates empty input and explicit autoRepair requests", () => {
@@ -55,7 +55,7 @@ describe("omniroute_db_health_check MCP tool", () => {
 
   it("runs the database repair flow directly when autoRepair=true", async () => {
     const result = await client.callTool({
-      name: "omniroute_db_health_check",
+      name: "ozrouter_db_health_check",
       arguments: { autoRepair: true },
     });
 

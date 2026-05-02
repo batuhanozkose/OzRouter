@@ -208,8 +208,8 @@ describe("OpencodeExecutor", () => {
       assert.equal(mimoPro.url, "https://opencode.ai/zen/go/v1/chat/completions");
 
       // mimo-v2-omni
-      const mimoOmni = await goExecutor.execute(createInput("mimo-v2-omni"));
-      assert.equal(mimoOmni.url, "https://opencode.ai/zen/go/v1/chat/completions");
+      const mimoV2Omni = await goExecutor.execute(createInput("mimo-v2-omni"));
+      assert.equal(mimoV2Omni.url, "https://opencode.ai/zen/go/v1/chat/completions");
 
       // qwen3.6-plus
       const qwen36 = await goExecutor.execute(createInput("qwen3.6-plus"));

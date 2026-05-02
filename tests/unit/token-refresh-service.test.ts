@@ -305,7 +305,7 @@ test("refreshKimiCodingToken adds provider-specific headers and fields", async (
   );
 
   assert.equal(calls[0].url, PROVIDERS["kimi-coding"].refreshUrl);
-  assert.equal(calls[0].options.headers["X-Msh-Platform"], "omniroute");
+  assert.equal(calls[0].options.headers["X-Msh-Platform"], "ozrouter");
   assert.equal(calls[0].options.headers["X-Msh-Version"], "2.1.2");
   assert.match(calls[0].options.headers["X-Msh-Device-Id"], /^kimi-refresh-/);
   assert.match(bodyToString(calls[0].options.body), /grant_type=refresh_token/);

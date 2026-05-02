@@ -1,4 +1,4 @@
-import { handleVideoGeneration } from "@omniroute/open-sse/handlers/videoGeneration.ts";
+import { handleVideoGeneration } from "@ozrouter/open-sse/handlers/videoGeneration.ts";
 import {
   getProviderCredentials,
   clearRecoveredProviderState,
@@ -9,9 +9,9 @@ import {
   parseVideoModel,
   getAllVideoModels,
   getVideoProvider,
-} from "@omniroute/open-sse/config/videoRegistry.ts";
-import { errorResponse } from "@omniroute/open-sse/utils/error.ts";
-import { HTTP_STATUS } from "@omniroute/open-sse/config/constants.ts";
+} from "@ozrouter/open-sse/config/videoRegistry.ts";
+import { errorResponse } from "@ozrouter/open-sse/utils/error.ts";
+import { HTTP_STATUS } from "@ozrouter/open-sse/config/constants.ts";
 import * as log from "@/sse/utils/logger";
 import { toJsonErrorPayload } from "@/shared/utils/upstreamError";
 import { enforceApiKeyPolicy } from "@/shared/utils/apiKeyPolicy";

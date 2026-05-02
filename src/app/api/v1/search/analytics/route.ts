@@ -6,7 +6,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { SEARCH_PROVIDERS } from "@omniroute/open-sse/config/searchRegistry.ts";
+import { SEARCH_PROVIDERS } from "@ozrouter/open-sse/config/searchRegistry.ts";
 import { getDbInstance } from "@/lib/db/core";
 import { enforceApiKeyPolicy } from "@/shared/utils/apiKeyPolicy";
 

@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "omniroute-memory-tools-"));
+const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "ozrouter-memory-tools-"));
 const originalDataDir = process.env.DATA_DIR;
 process.env.DATA_DIR = tmpDir;
 
@@ -30,7 +30,7 @@ test.after(() => {
 });
 
 test("memory add stores entries with default session and metadata", async () => {
-  const result = await memoryTools.omniroute_memory_add.handler({
+  const result = await memoryTools.ozrouter_memory_add.handler({
     apiKeyId: "key-add",
     type: "factual",
     key: "pref:language",
@@ -49,7 +49,7 @@ test("memory add stores entries with default session and metadata", async () => 
 });
 
 test("memory search filters by type, enforces limit, and reports token totals", async () => {
-  await memoryTools.omniroute_memory_add.handler({
+  await memoryTools.ozrouter_memory_add.handler({
     apiKeyId: "key-search",
     sessionId: "search",
     type: "factual",
@@ -57,7 +57,7 @@ test("memory search filters by type, enforces limit, and reports token totals", 
     content: "TypeScript and Node.js are used for backend work.",
     metadata: { source: "user" },
   });
-  await memoryTools.omniroute_memory_add.handler({
+  await memoryTools.ozrouter_memory_add.handler({
     apiKeyId: "key-search",
     sessionId: "search",
     type: "semantic",
@@ -65,7 +65,7 @@ test("memory search filters by type, enforces limit, and reports token totals", 
     content: "Gardening is a weekend hobby.",
     metadata: { source: "user" },
   });
-  await memoryTools.omniroute_memory_add.handler({
+  await memoryTools.ozrouter_memory_add.handler({
     apiKeyId: "key-search",
     sessionId: "search",
     type: "factual",
@@ -74,7 +74,7 @@ test("memory search filters by type, enforces limit, and reports token totals", 
     metadata: { source: "user" },
   });
 
-  const result = await memoryTools.omniroute_memory_search.handler({
+  const result = await memoryTools.ozrouter_memory_search.handler({
     apiKeyId: "key-search",
     query: "typescript backend",
     type: "factual",
@@ -120,7 +120,7 @@ test("memory clear deletes only older filtered entries and reports the deleted c
     newer.id
   );
 
-  const result = await memoryTools.omniroute_memory_clear.handler({
+  const result = await memoryTools.ozrouter_memory_clear.handler({
     apiKeyId: "key-clear",
     type: "factual",
     olderThan: cutoff.toISOString(),

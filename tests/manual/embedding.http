@@ -1,7 +1,7 @@
 ###
 # @name Embedding - Test embedding response
-POST {{omniroute-address}}/v1/embeddings
-Authorization: Bearer {{OMNIROUTE_API_KEY}}
+POST {{ozrouter-address}}/v1/embeddings
+Authorization: Bearer {{OZROUTER_API_KEY}}
 Content-Type: application/json
 
 {

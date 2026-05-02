@@ -142,11 +142,11 @@ const parsedInterval = parseInt(process.env.MODELS_DEV_SYNC_INTERVAL || "86400",
 const SYNC_INTERVAL_MS =
   Number.isFinite(parsedInterval) && parsedInterval > 0 ? parsedInterval * 1000 : 86400 * 1000;
 
-// ─── Provider mapping: models.dev provider ID → OmniRoute provider IDs/aliases ──
+// ─── Provider mapping: models.dev provider ID → OzRouter provider IDs/aliases ──
 //
 // models.dev uses canonical provider IDs (e.g. "openai", "anthropic", "google").
-// OmniRoute uses both full IDs and short aliases (e.g. "cc" for claude, "cx" for codex).
-// We map each models.dev provider to ALL OmniRoute identifiers that should receive
+// OzRouter uses both full IDs and short aliases (e.g. "cc" for claude, "cx" for codex).
+// We map each models.dev provider to ALL OzRouter identifiers that should receive
 // its pricing/capability data.
 
 const MODELS_DEV_PROVIDER_MAP: Record<string, string[]> = {
@@ -172,7 +172,7 @@ const MODELS_DEV_PROVIDER_MAP: Record<string, string[]> = {
   perplexity: ["pplx", "perplexity"],
   // OAuth / special providers
   bedrock: ["kiro", "kr"], // kr = Kiro (AWS Bedrock)
-  // Additional providers that may overlap with OmniRoute
+  // Additional providers that may overlap with OzRouter
   alibaba: ["ali", "alibaba", "bcp", "alicode", "alicode-intl"],
   zai: ["zai", "glm"], // GLM models via Z.AI
   moonshot: ["moonshot", "kimi", "kimi-coding", "kmc", "kmca"],
@@ -192,7 +192,7 @@ const MODELS_DEV_PROVIDER_MAP: Record<string, string[]> = {
 };
 
 /**
- * Map a models.dev provider ID to OmniRoute provider IDs.
+ * Map a models.dev provider ID to OzRouter provider IDs.
  * Returns array of provider identifiers (may include aliases).
  */
 export function mapProviderId(modelsDevProviderId: string): string[] {
@@ -289,16 +289,16 @@ export async function fetchModelsDev(signal?: AbortSignal): Promise<ModelsDevDat
 // ─── Transform: Pricing ──────────────────────────────────
 
 /**
- * Transform models.dev raw data → OmniRoute PricingByProvider format.
+ * Transform models.dev raw data → OzRouter PricingByProvider format.
  *
- * models.dev costs are already in $/1M tokens (same as OmniRoute format).
+ * models.dev costs are already in $/1M tokens (same as OzRouter format).
  * Maps: cache_read → cached, cache_write → cache_creation.
  */
 export function transformModelsDevToPricing(raw: ModelsDevData): PricingByProvider {
   const result: PricingByProvider = {};
 
   for (const [providerId, providerData] of Object.entries(raw)) {
-    const omniRouteProviders = mapProviderId(providerId);
+    const ozRouteProviders = mapProviderId(providerId);
 
     for (const [modelId, model] of Object.entries(providerData.models || {})) {
       if (!model.cost) continue;
@@ -321,10 +321,10 @@ export function transformModelsDevToPricing(raw: ModelsDevData): PricingByProvid
         entry.reasoning = model.cost.reasoning;
       }
 
-      // Write to ALL mapped OmniRoute providers
-      for (const omniProvider of omniRouteProviders) {
-        if (!result[omniProvider]) result[omniProvider] = {};
-        result[omniProvider][modelId] = entry;
+      // Write to ALL mapped OzRouter providers
+      for (const ozProvider of ozRouteProviders) {
+        if (!result[ozProvider]) result[ozProvider] = {};
+        result[ozProvider][modelId] = entry;
       }
     }
   }
@@ -341,7 +341,7 @@ export function transformModelsDevToCapabilities(raw: ModelsDevData): Capabiliti
   const result: CapabilitiesByProvider = {};
 
   for (const [providerId, providerData] of Object.entries(raw)) {
-    const omniRouteProviders = mapProviderId(providerId);
+    const ozRouteProviders = mapProviderId(providerId);
 
     for (const [modelId, model] of Object.entries(providerData.models || {})) {
       const cap: ModelCapabilityEntry = {
@@ -369,9 +369,9 @@ export function transformModelsDevToCapabilities(raw: ModelsDevData): Capabiliti
               : null,
       };
 
-      for (const omniProvider of omniRouteProviders) {
-        if (!result[omniProvider]) result[omniProvider] = {};
-        result[omniProvider][modelId] = cap;
+      for (const ozProvider of ozRouteProviders) {
+        if (!result[ozProvider]) result[ozProvider] = {};
+        result[ozProvider][modelId] = cap;
       }
     }
   }

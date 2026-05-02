@@ -11,18 +11,18 @@ import {
   lockModel,
   recordModelLockoutFailure,
   isDailyQuotaExhausted,
-} from "@omniroute/open-sse/services/accountFallback.ts";
+} from "@ozrouter/open-sse/services/accountFallback.ts";
 import { getModelInfo, getComboForModel } from "../services/model";
-import { errorResponse } from "@omniroute/open-sse/utils/error.ts";
-import { handleComboChat } from "@omniroute/open-sse/services/combo.ts";
-import { resolveComboConfig } from "@omniroute/open-sse/services/comboConfig.ts";
-import { injectHandoffIntoBody } from "@omniroute/open-sse/services/contextHandoff.ts";
-import { HTTP_STATUS } from "@omniroute/open-sse/config/constants.ts";
-import { getTargetFormat } from "@omniroute/open-sse/services/provider.ts";
+import { errorResponse } from "@ozrouter/open-sse/utils/error.ts";
+import { handleComboChat } from "@ozrouter/open-sse/services/combo.ts";
+import { resolveComboConfig } from "@ozrouter/open-sse/services/comboConfig.ts";
+import { injectHandoffIntoBody } from "@ozrouter/open-sse/services/contextHandoff.ts";
+import { HTTP_STATUS } from "@ozrouter/open-sse/config/constants.ts";
+import { getTargetFormat } from "@ozrouter/open-sse/services/provider.ts";
 import {
   getModelTargetFormat,
   PROVIDER_ID_TO_ALIAS,
-} from "@omniroute/open-sse/config/providerModels.ts";
+} from "@ozrouter/open-sse/config/providerModels.ts";
 import * as log from "../utils/logger";
 import { checkAndRefreshToken } from "../services/tokenRefresh";
 import { deleteHandoff, getHandoff } from "@/lib/db/contextHandoffs";
@@ -53,7 +53,7 @@ import { cloneLogPayload } from "@/lib/logPayloads";
 import {
   applyTaskAwareRouting,
   getTaskRoutingConfig,
-} from "@omniroute/open-sse/services/taskAwareRouter.ts";
+} from "@ozrouter/open-sse/services/taskAwareRouter.ts";
 import {
   generateSessionId as generateStableSessionId,
   touchSession,
@@ -61,18 +61,18 @@ import {
   checkSessionLimit,
   registerKeySession,
   isSessionRegisteredForKey,
-} from "@omniroute/open-sse/services/sessionManager.ts";
-import { startQuotaMonitor } from "@omniroute/open-sse/services/quotaMonitor.ts";
+} from "@ozrouter/open-sse/services/sessionManager.ts";
+import { startQuotaMonitor } from "@ozrouter/open-sse/services/quotaMonitor.ts";
 import {
   isFallbackDecision,
   shouldUseFallback,
-} from "@omniroute/open-sse/services/emergencyFallback.ts";
+} from "@ozrouter/open-sse/services/emergencyFallback.ts";
 import {
   registerCodexConnection,
   registerCodexQuotaFetcher,
-} from "@omniroute/open-sse/services/codexQuotaFetcher.ts";
-import { registerBailianCodingPlanQuotaFetcher } from "@omniroute/open-sse/services/bailianQuotaFetcher.ts";
-import { registerCrofUsageFetcher } from "@omniroute/open-sse/services/crofUsageFetcher.ts";
+} from "@ozrouter/open-sse/services/codexQuotaFetcher.ts";
+import { registerBailianCodingPlanQuotaFetcher } from "@ozrouter/open-sse/services/bailianQuotaFetcher.ts";
+import { registerCrofUsageFetcher } from "@ozrouter/open-sse/services/crofUsageFetcher.ts";
 import {
   getCooldownAwareRetryDecision,
   resolveCooldownAwareRetrySettings,
@@ -189,7 +189,7 @@ export async function handleChat(request: any, clientRawRequest: any = null) {
   // T04: client-provided external session header has priority over generated fingerprint.
   const externalSessionId = extractExternalSessionId(request.headers);
   const sessionId = externalSessionId || generateStableSessionId(body);
-  const requestedConnectionId = request.headers.get("x-omniroute-connection")?.trim() || null;
+  const requestedConnectionId = request.headers.get("x-ozrouter-connection")?.trim() || null;
   if (sessionId) {
     touchSession(sessionId);
   }
@@ -637,7 +637,7 @@ async function handleSingleModelChat(
         comboStrategy === "context-relay" &&
         comboName &&
         runtimeOptions.sessionId &&
-        body?._omnirouteSkipContextRelay !== true
+        body?._ozrouterSkipContextRelay !== true
       ) {
         const handoff = getHandoff(runtimeOptions.sessionId, comboName);
         if (handoff && handoff.fromAccount !== credentials.connectionId) {
@@ -675,7 +675,7 @@ async function handleSingleModelChat(
           ...(workspaceId ? { workspaceId } : {}),
         });
       }
-      if (runtimeOptions.sessionId && body?._omnirouteInternalRequest !== "context-handoff") {
+      if (runtimeOptions.sessionId && body?._ozrouterInternalRequest !== "context-handoff") {
         touchSession(runtimeOptions.sessionId, credentials.connectionId);
         startQuotaMonitor(
           runtimeOptions.sessionId,

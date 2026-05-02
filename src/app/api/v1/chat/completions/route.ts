@@ -1,7 +1,7 @@
 import { CORS_HEADERS, handleCorsOptions } from "@/shared/utils/cors";
 import { callCloudWithMachineId } from "@/shared/utils/cloud";
 import { handleChat } from "@/sse/handlers/chat";
-import { initTranslators } from "@omniroute/open-sse/translator/index.ts";
+import { initTranslators } from "@ozrouter/open-sse/translator/index.ts";
 import { createInjectionGuard } from "@/middleware/promptInjectionGuard";
 
 let initPromise = null;
@@ -33,8 +33,8 @@ export async function POST(request) {
 
   // One-line marker for diagnosing 413 / Server-Action interceptions.
   // Logs only when Content-Length is present so debug noise stays low for
-  // typical chat payloads. Toggle off via OMNIROUTE_LOG_REQUEST_SHAPE=0.
-  if (process.env.OMNIROUTE_LOG_REQUEST_SHAPE !== "0") {
+  // typical chat payloads. Toggle off via OZROUTER_LOG_REQUEST_SHAPE=0.
+  if (process.env.OZROUTER_LOG_REQUEST_SHAPE !== "0") {
     const ct = request.headers.get("content-type") ?? "";
     const cl = request.headers.get("content-length");
     if (cl && Number(cl) > 256 * 1024) {

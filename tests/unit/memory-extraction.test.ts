@@ -52,10 +52,10 @@ test("extractFactsFromText: detects 'I chose' decision", () => {
 });
 
 test("extractFactsFromText: detects 'I decided to' decision", () => {
-  const facts = extractFactsFromText("I decided to migrate to Docker.");
+  const facts = extractFactsFromText("I decided to migrate to SQLite.");
   const dec = facts.find((f) => f.category === "decision");
   assert.ok(dec);
-  assert.ok(dec.content.toLowerCase().includes("migrate to docker"));
+  assert.ok(dec.content.toLowerCase().includes("migrate to sqlite"));
 });
 
 test("extractFactsFromText: detects 'I went with' decision", () => {

@@ -243,7 +243,7 @@ export class AntigravityExecutor extends BaseExecutor {
       Authorization: `Bearer ${credentials.accessToken}`,
       "User-Agent": antigravityUserAgent(),
       Accept: "text/event-stream",
-      "X-OmniRoute-Source": "omniroute",
+      "X-OzRouter-Source": "ozrouter",
     };
     // Scrub proxy/fingerprint headers that reveal non-native traffic
     return scrubProxyAndFingerprintHeaders(raw);
@@ -255,11 +255,11 @@ export class AntigravityExecutor extends BaseExecutor {
     // Antigravity accounts may have more stable project IDs, but the risk exists.
     const bodyProjectId = body?.project;
     const credentialsProjectId = credentials?.projectId;
-    const allowBodyProjectOverride = process.env.OMNIROUTE_ALLOW_BODY_PROJECT_OVERRIDE === "1";
+    const allowBodyProjectOverride = process.env.OZROUTER_ALLOW_BODY_PROJECT_OVERRIDE === "1";
 
     // Default: prefer OAuth-stored projectId over incoming body.project to avoid
     // stale/wrong client-side values causing 404/403 from Cloud Code endpoints.
-    // Opt-in escape hatch: set OMNIROUTE_ALLOW_BODY_PROJECT_OVERRIDE=1.
+    // Opt-in escape hatch: set OZROUTER_ALLOW_BODY_PROJECT_OVERRIDE=1.
     const projectId =
       allowBodyProjectOverride && bodyProjectId
         ? bodyProjectId
@@ -269,7 +269,7 @@ export class AntigravityExecutor extends BaseExecutor {
       // (#489) Return a structured error instead of throwing — gives the client a clear signal
       // to show a "Reconnect OAuth" prompt rather than an opaque "Internal Server Error".
       const errorMsg =
-        "Missing Google projectId for Antigravity account. Please reconnect OAuth in Providers → Antigravity so OmniRoute can fetch your Cloud Code project.";
+        "Missing Google projectId for Antigravity account. Please reconnect OAuth in Providers → Antigravity so OzRouter can fetch your Cloud Code project.";
       const errorBody = {
         error: {
           message: errorMsg,

@@ -72,7 +72,7 @@ function deviceIdFor(cookie: string): string {
   return id;
 }
 
-// OmniRoute model ID → ChatGPT internal slug. OmniRoute uses dot-form IDs
+// OzRouter model ID → ChatGPT internal slug. OzRouter uses dot-form IDs
 // (e.g. "gpt-5.3-instant"), ChatGPT's web routes use dash-form
 // (e.g. "gpt-5-3-instant"). The slug catalog comes from
 // /backend-api/models on a logged-in account; "gpt-5-4-t-mini" is ChatGPT's
@@ -452,7 +452,7 @@ const THINKING_EFFORT_CACHE_MAX = 400;
  * (the server accepts it but the routing-time read picks the wrong knob).
  *
  * Three branches because the input can arrive in three shapes:
- *   1. OmniRoute dot-form id (`gpt-5.4-thinking-mini`) — every thinking
+ *   1. OzRouter dot-form id (`gpt-5.4-thinking-mini`) — every thinking
  *      variant carries the literal "thinking" substring here.
  *   2. Resolved chatgpt.com slug containing "thinking" (`gpt-5-5-thinking`).
  *   3. Resolved chatgpt.com slug that drops the substring under abbreviation
@@ -971,7 +971,7 @@ interface ChatGptMessage {
  * Why a heuristic instead of always disabling Temporary Chat: when
  * `history_and_training_disabled: false`, every conversation gets saved to
  * the user's chatgpt.com history. For text-only chats that's noise — a
- * dozen "OmniRoute" entries clutter the sidebar and can interact with
+ * dozen "OzRouter" entries clutter the sidebar and can interact with
  * ChatGPT's memory. We pay that cost only when the user actually wants an
  * image, since Temporary Chat refuses image_gen with the message
  * "I cannot generate images in this chat".
@@ -1885,7 +1885,7 @@ function deriveHeaderBaseUrl(clientHeaders?: Record<string, string> | null): str
   // Default to http for IPs, localhost, and explicit host:port values where
   // TLS is not a safe assumption. Reverse proxies can override via
   // x-forwarded-proto, and deployments can force the exact value with
-  // OMNIROUTE_PUBLIC_BASE_URL.
+  // OZROUTER_PUBLIC_BASE_URL.
   const isPlain =
     host.includes("localhost") ||
     /^\d+\.\d+\.\d+\.\d+(:\d+)?$/.test(host) ||
@@ -1899,22 +1899,22 @@ function deriveHeaderBaseUrl(clientHeaders?: Record<string, string> | null): str
  * Build the absolute base URL the client should use to fetch our cached
  * images at /v1/chatgpt-web/image/<id>. The most reliable value is an
  * explicit browser-facing origin because relay clients such as Open WebUI
- * often reach OmniRoute from a container while the user's browser needs a
+ * often reach OzRouter from a container while the user's browser needs a
  * LAN, tunnel, or reverse-proxy URL.
  */
 function derivePublicBaseUrl(
   clientHeaders?: Record<string, string> | null,
   log?: { debug?: (tag: string, msg: string) => void }
 ): string {
-  const explicitPublicBase = normalizePublicBaseUrl(process.env.OMNIROUTE_PUBLIC_BASE_URL);
+  const explicitPublicBase = normalizePublicBaseUrl(process.env.OZROUTER_PUBLIC_BASE_URL);
   if (explicitPublicBase) {
-    log?.debug?.("CGPT-WEB", `derivePublicBaseUrl: using OMNIROUTE_PUBLIC_BASE_URL`);
+    log?.debug?.("CGPT-WEB", `derivePublicBaseUrl: using OZROUTER_PUBLIC_BASE_URL`);
     return explicitPublicBase;
   }
 
   const headerBase = deriveHeaderBaseUrl(clientHeaders);
   const configuredBase =
-    normalizePublicBaseUrl(process.env.OMNIROUTE_BASE_URL) ||
+    normalizePublicBaseUrl(process.env.OZROUTER_BASE_URL) ||
     normalizePublicBaseUrl(process.env.NEXT_PUBLIC_BASE_URL);
 
   log?.debug?.(
@@ -1994,13 +1994,13 @@ async function fetchDownloadUrl(endpoint: string, ctx: ResolverContext): Promise
 }
 
 /**
- * Download a chatgpt.com signed image URL and re-serve it from OmniRoute's
+ * Download a chatgpt.com signed image URL and re-serve it from OzRouter's
  * short-lived image cache. The URLs returned by /files/<id>/download and
  * /conversation/<cid>/attachment/<fid>/download point at chatgpt.com's
  * estuary endpoint, which 403s for any request without the user's session
  * cookie. Downstream clients (Open WebUI, OpenAI-compatible apps) won't
  * have those cookies, so we download once via the authenticated TLS client
- * and return a browser-fetchable OmniRoute URL.
+ * and return a browser-fetchable OzRouter URL.
  */
 const IMAGE_DOWNLOAD_MAX_BYTES = 8 * 1024 * 1024;
 
@@ -2303,7 +2303,7 @@ async function waitForImageViaWebSocket(
 const DEFAULT_ASYNC_IMAGE_TIMEOUT_MS = 180_000;
 
 function configuredAsyncImageTimeoutMs(): number {
-  const raw = Number(process.env.OMNIROUTE_CGPT_WEB_IMAGE_TIMEOUT_MS);
+  const raw = Number(process.env.OZROUTER_CGPT_WEB_IMAGE_TIMEOUT_MS);
   if (!Number.isFinite(raw) || raw <= 0) return DEFAULT_ASYNC_IMAGE_TIMEOUT_MS;
   return Math.floor(raw);
 }
@@ -2377,7 +2377,7 @@ function makeImageResolver(ctx: ResolverContext): ImageResolver {
       // user's current session — that URL 403s without the cookie, so
       // downstream clients can't fetch it directly. We download once via
       // the authenticated TLS client and expose the bytes through
-      // OmniRoute's short-lived image cache.
+      // OzRouter's short-lived image cache.
       //
       // /files/{id}/download is the historical path. It works for
       // chat-uploaded files and the older image_gen output format
@@ -2402,7 +2402,7 @@ function makeImageResolver(ctx: ResolverContext): ImageResolver {
     let finalUrl: string | null = null;
     if (signedUrl) {
       // chatgpt.com signed URLs require the user's session cookie to fetch,
-      // so we materialize the bytes into our own cache and emit an OmniRoute
+      // so we materialize the bytes into our own cache and emit an OzRouter
       // URL. If that fails (oversize, network error, etc.) we return null —
       // never the signed URL — because handing it back would emit broken
       // markdown that 403s for the client. Better to drop the image silently

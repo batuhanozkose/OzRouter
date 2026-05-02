@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/shared/utils/cn";
 import { getActiveSidebarHref } from "@/shared/utils/sidebarRouteMatch";
 import { APP_CONFIG } from "@/shared/constants/appConfig";
-import OmniRouteLogo from "./OmniRouteLogo";
+import OzRouterLogo from "./OzRouterLogo";
 import Button from "./Button";
 import { ConfirmModal } from "./Modal";
 import CloudSyncStatus from "./CloudSyncStatus";
@@ -18,7 +18,7 @@ import {
   normalizeHiddenSidebarItems,
 } from "@/shared/constants/sidebarVisibility";
 
-const isE2EMode = process.env.NEXT_PUBLIC_OMNIROUTE_E2E_MODE === "1";
+const isE2EMode = process.env.NEXT_PUBLIC_OZROUTER_E2E_MODE === "1";
 
 type SidebarProps = {
   onClose?: () => void;
@@ -131,7 +131,7 @@ export default function Sidebar({
       ...section,
       title: getSidebarLabel(section.titleKey, section.titleFallback),
       items: section.items
-        .map((item) => ({ ...item, label: t(item.i18nKey) }))
+        .map((item) => ({ ...item, label: getSidebarLabel(item.i18nKey, item.id) }))
         .filter((item) => !hiddenSidebarSet.has(item.id)),
     }))
     .filter((section) => section.items.length > 0);
@@ -206,40 +206,29 @@ export default function Sidebar({
         >
           Skip to content
         </a>
-        {(onToggleCollapse || !isMacElectron) && (
+        {onToggleCollapse && (
           <div
             className={cn(
-              "flex items-center gap-2 pb-2",
+              "flex items-center pb-2",
               isMacElectron ? "pt-3" : "pt-5",
-              collapsed ? "px-3 justify-center" : "px-6"
+              collapsed ? "px-3 justify-center" : "px-6 justify-end"
             )}
-            aria-hidden="true"
           >
-            {!isMacElectron && (
-              <>
-                <div className="w-3 h-3 rounded-full bg-[#FF5F56]" />
-                <div className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
-                <div className="w-3 h-3 rounded-full bg-[#27C93F]" />
-              </>
-            )}
-            {!collapsed && <div className="flex-1" />}
-            {onToggleCollapse && (
-              <button
-                onClick={onToggleCollapse}
-                title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-                aria-expanded={!collapsed}
-                aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-                className={cn(
-                  "rounded-md p-1 text-text-muted/50 transition-colors hover:bg-black/5 hover:text-text-muted dark:hover:bg-white/5",
-                  collapsed && !isMacElectron && "mt-2",
-                  isMacElectron && "ml-auto"
-                )}
-              >
-                <span className="material-symbols-outlined text-[16px]" aria-hidden="true">
-                  {collapsed ? "chevron_right" : "chevron_left"}
-                </span>
-              </button>
-            )}
+            <button
+              onClick={onToggleCollapse}
+              title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              aria-expanded={!collapsed}
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              className={cn(
+                "rounded-md p-1 text-text-muted/50 transition-colors hover:bg-black/5 hover:text-text-muted dark:hover:bg-white/5",
+                collapsed && !isMacElectron && "mt-2",
+                isMacElectron && "ml-auto"
+              )}
+            >
+              <span className="material-symbols-outlined text-[16px]" aria-hidden="true">
+                {collapsed ? "chevron_right" : "chevron_left"}
+              </span>
+            </button>
           </div>
         )}
 
@@ -248,7 +237,7 @@ export default function Sidebar({
             href="/dashboard"
             className={cn("flex items-center", collapsed ? "justify-center" : "gap-3")}
           >
-            <div className="flex items-center justify-center size-9 rounded bg-linear-to-br from-[#E54D5E] to-[#C93D4E] shrink-0">
+            <div className="flex items-center justify-center size-9 rounded bg-linear-to-br from-[#7289DA] to-[#5a72c9] shrink-0">
               {customLogo ? (
                 <img
                   src={customLogo}
@@ -256,7 +245,7 @@ export default function Sidebar({
                   className="size-5 object-contain"
                 />
               ) : (
-                <OmniRouteLogo size={20} className="text-white" />
+                <OzRouterLogo size={20} className="text-white" />
               )}
             </div>
             {!collapsed && (

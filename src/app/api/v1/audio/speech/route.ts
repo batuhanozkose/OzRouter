@@ -1,13 +1,13 @@
-import { handleAudioSpeech } from "@omniroute/open-sse/handlers/audioSpeech.ts";
+import { handleAudioSpeech } from "@ozrouter/open-sse/handlers/audioSpeech.ts";
 import { getProviderCredentials, clearRecoveredProviderState } from "@/sse/services/auth";
 import {
   parseSpeechModel,
   getSpeechProvider,
   buildDynamicAudioProvider,
   type ProviderNodeRow,
-} from "@omniroute/open-sse/config/audioRegistry.ts";
-import { errorResponse } from "@omniroute/open-sse/utils/error.ts";
-import { HTTP_STATUS } from "@omniroute/open-sse/config/constants.ts";
+} from "@ozrouter/open-sse/config/audioRegistry.ts";
+import { errorResponse } from "@ozrouter/open-sse/utils/error.ts";
+import { HTTP_STATUS } from "@ozrouter/open-sse/config/constants.ts";
 import { enforceApiKeyPolicy } from "@/shared/utils/apiKeyPolicy";
 import { getProviderNodes } from "@/lib/localDb";
 import { v1AudioSpeechSchema } from "@/shared/validation/schemas";
@@ -56,7 +56,7 @@ export async function POST(request) {
         if (n.apiType !== "chat" && n.apiType !== "responses") return false;
         try {
           const hostname = new URL(n.baseUrl).hostname;
-          // Strictly matching 172.16.0.0/12 (Docker/local) and explicitly blocking ::1 per SSRF hardening
+          // Strictly matching 172.16.0.0/12 private/local ranges and explicitly blocking ::1 per SSRF hardening
           return (
             hostname === "localhost" ||
             hostname === "127.0.0.1" ||

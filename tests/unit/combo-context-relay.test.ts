@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-const TEST_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "omniroute-combo-context-relay-"));
+const TEST_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "ozrouter-combo-context-relay-"));
 process.env.DATA_DIR = TEST_DATA_DIR;
 
 const { handleComboChat } = await import("../../open-sse/services/combo.ts");
@@ -49,7 +49,7 @@ function providerBreakerOpenResponse() {
       status: 503,
       headers: {
         "content-type": "application/json",
-        "x-omniroute-provider-breaker": "open",
+        "x-ozrouter-provider-breaker": "open",
       },
     }
   );
@@ -239,7 +239,7 @@ test("handleComboChat context-relay persists a handoff when codex quota reaches 
       config: { maxRetries: 0, handoffThreshold: 0.85, handoffProviders: ["codex"] },
     },
     handleSingleModel: async (body) => {
-      if (body._omnirouteInternalRequest === "context-handoff") {
+      if (body._ozrouterInternalRequest === "context-handoff") {
         summaryCalls += 1;
         return okResponse({
           choices: [
@@ -313,7 +313,7 @@ test("handleComboChat context-relay respects handoffProviders and skips generati
       config: { maxRetries: 0, handoffProviders: ["openai"] },
     },
     handleSingleModel: async (body) => {
-      if (body._omnirouteInternalRequest === "context-handoff") {
+      if (body._ozrouterInternalRequest === "context-handoff") {
         summaryCalls += 1;
       }
       return okResponse();

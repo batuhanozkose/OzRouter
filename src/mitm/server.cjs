@@ -9,7 +9,7 @@ const os = require("os");
 // This file runs as a standalone CommonJS process and cannot import the ES module.
 function getDataDir() {
   if (process.env.DATA_DIR) return path.resolve(process.env.DATA_DIR.trim());
-  return path.join(os.homedir(), ".omniroute");
+  return path.join(os.homedir(), ".ozrouter");
 }
 
 // Configuration
@@ -20,7 +20,7 @@ const LOCAL_PORT =
     ? parsedLocalPort
     : 443;
 const ROUTER_BASE_URL = (
-  process.env.OMNIROUTE_BASE_URL ||
+  process.env.OZROUTER_BASE_URL ||
   process.env.BASE_URL ||
   "http://localhost:20128"
 )
@@ -241,7 +241,7 @@ async function intercept(req, res, bodyBuffer, mappedModel) {
 
     if (!response.ok) {
       const errText = await response.text().catch(() => "");
-      throw new Error(`OmniRoute ${response.status}: ${errText}`);
+      throw new Error(`OzRouter ${response.status}: ${errText}`);
     }
 
     res.writeHead(200, {
@@ -279,8 +279,8 @@ const server = https.createServer(sslOptions, async (req, res) => {
   // Save request log if enabled
   if (bodyBuffer.length > 0) saveRequestLog(req.url, bodyBuffer);
 
-  // Anti-loop: requests from OmniRoute bypass interception
-  if (req.headers["x-omniroute-source"] === "omniroute") {
+  // Anti-loop: requests from OzRouter bypass interception
+  if (req.headers["x-ozrouter-source"] === "ozrouter") {
     return passthrough(req, res, bodyBuffer);
   }
 

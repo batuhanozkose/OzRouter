@@ -1,4 +1,4 @@
-import { wildcardMatch } from "@omniroute/open-sse/services/wildcardRouter.ts";
+import { wildcardMatch } from "@ozrouter/open-sse/services/wildcardRouter.ts";
 
 type JsonRecord = Record<string, unknown>;
 

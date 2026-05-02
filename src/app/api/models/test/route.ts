@@ -12,7 +12,7 @@ const testModelSchema = z.object({
 });
 
 const MODEL_TEST_TIMEOUT_MS = 20_000;
-const INTERNAL_ORIGIN = "http://omniroute.internal";
+const INTERNAL_ORIGIN = "http://ozrouter.internal";
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -65,7 +65,7 @@ function buildInternalChatRequest(testBody: Record<string, unknown>, signal: Abo
       "Content-Type": "application/json",
       // Reuse the existing strict-mode internal bypass for live health checks.
       "X-Internal-Test": "combo-health-check",
-      "X-OmniRoute-No-Cache": "true",
+      "X-OzRouter-No-Cache": "true",
       "X-Request-Id": `model-test-${randomUUID()}`,
     },
     body: JSON.stringify(testBody),

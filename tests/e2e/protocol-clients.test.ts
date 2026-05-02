@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 
-const BASE_URL = process.env.OMNIROUTE_BASE_URL || "http://localhost:20128";
-const API_KEY = process.env.OMNIROUTE_API_KEY || "";
+const BASE_URL = process.env.OZROUTER_BASE_URL || "http://localhost:20128";
+const API_KEY = process.env.OZROUTER_API_KEY || "";
 const REQUEST_TIMEOUT_MS = Number(process.env.ECOSYSTEM_REQUEST_TIMEOUT_MS || 30000);
 const TEST_TIMEOUT_MS = Number(process.env.ECOSYSTEM_TEST_TIMEOUT_MS || 60000);
 
@@ -95,8 +95,8 @@ describe("Protocol clients E2E", () => {
         args: ["--import", "tsx/esm", "open-sse/mcp-server/server.ts"],
         env: {
           ...process.env,
-          OMNIROUTE_BASE_URL: BASE_URL,
-          OMNIROUTE_API_KEY: API_KEY,
+          OZROUTER_BASE_URL: BASE_URL,
+          OZROUTER_API_KEY: API_KEY,
         } as Record<string, string>,
         stderr: "pipe",
       });
@@ -107,17 +107,17 @@ describe("Protocol clients E2E", () => {
       try {
         const listed = await client.listTools();
         const toolNames = listed.tools.map((tool) => tool.name);
-        expect(toolNames).toContain("omniroute_get_health");
-        expect(toolNames).toContain("omniroute_list_combos");
+        expect(toolNames).toContain("ozrouter_get_health");
+        expect(toolNames).toContain("ozrouter_list_combos");
 
         const healthResult = await client.callTool({
-          name: "omniroute_get_health",
+          name: "ozrouter_get_health",
           arguments: {},
         });
         expect(Array.isArray(healthResult.content)).toBe(true);
 
         const combosResult = await client.callTool({
-          name: "omniroute_list_combos",
+          name: "ozrouter_list_combos",
           arguments: { includeMetrics: false },
         });
         expect(Array.isArray(combosResult.content)).toBe(true);
@@ -125,13 +125,13 @@ describe("Protocol clients E2E", () => {
         await client.close();
       }
 
-      const auditRes = await apiFetch("/api/mcp/audit?limit=50&tool=omniroute_get_health");
+      const auditRes = await apiFetch("/api/mcp/audit?limit=50&tool=ozrouter_get_health");
       expect([200, 401]).toContain(auditRes.status);
       if (auditRes.status === 200) {
         expect(auditRes.ok).toBe(true);
         const auditJson = (await auditRes.json()) as any;
         const entries = Array.isArray(auditJson?.entries) ? auditJson.entries : [];
-        expect(entries.some((entry: any) => entry.toolName === "omniroute_get_health")).toBe(true);
+        expect(entries.some((entry: any) => entry.toolName === "ozrouter_get_health")).toBe(true);
       }
     },
     TEST_TIMEOUT_MS * 2

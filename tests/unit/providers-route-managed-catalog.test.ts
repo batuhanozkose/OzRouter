@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { makeManagementSessionRequest } from "../helpers/managementSession.ts";
 
-const TEST_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "omniroute-providers-managed-"));
+const TEST_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "ozrouter-providers-managed-"));
 process.env.DATA_DIR = TEST_DATA_DIR;
 process.env.JWT_SECRET = "test-jwt-secret-for-managed-providers";
 process.env.INITIAL_PASSWORD = "admin-secret";
@@ -287,16 +287,6 @@ test("providers route accepts managed local, audio, web-cookie and search provid
         name: "Triton Local",
         providerSpecificData: {
           baseUrl: "http://localhost:8000/v1",
-        },
-      },
-    },
-    {
-      provider: "docker-model-runner",
-      body: {
-        provider: "docker-model-runner",
-        name: "Docker Model Runner Local",
-        providerSpecificData: {
-          baseUrl: "http://localhost:12434/v1",
         },
       },
     },

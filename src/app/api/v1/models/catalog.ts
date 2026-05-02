@@ -8,14 +8,14 @@ import {
   getProviderNodes,
   getModelIsHidden,
 } from "@/lib/localDb";
-import { getAllEmbeddingModels } from "@omniroute/open-sse/config/embeddingRegistry.ts";
-import { getAllImageModels } from "@omniroute/open-sse/config/imageRegistry.ts";
-import { getAllRerankModels } from "@omniroute/open-sse/config/rerankRegistry.ts";
-import { getAllAudioModels } from "@omniroute/open-sse/config/audioRegistry.ts";
-import { getAllModerationModels } from "@omniroute/open-sse/config/moderationRegistry.ts";
-import { getAllVideoModels } from "@omniroute/open-sse/config/videoRegistry.ts";
-import { getAllMusicModels } from "@omniroute/open-sse/config/musicRegistry.ts";
-import { REGISTRY } from "@omniroute/open-sse/config/providerRegistry.ts";
+import { getAllEmbeddingModels } from "@ozrouter/open-sse/config/embeddingRegistry.ts";
+import { getAllImageModels } from "@ozrouter/open-sse/config/imageRegistry.ts";
+import { getAllRerankModels } from "@ozrouter/open-sse/config/rerankRegistry.ts";
+import { getAllAudioModels } from "@ozrouter/open-sse/config/audioRegistry.ts";
+import { getAllModerationModels } from "@ozrouter/open-sse/config/moderationRegistry.ts";
+import { getAllVideoModels } from "@ozrouter/open-sse/config/videoRegistry.ts";
+import { getAllMusicModels } from "@ozrouter/open-sse/config/musicRegistry.ts";
+import { REGISTRY } from "@ozrouter/open-sse/config/providerRegistry.ts";
 import { getAllSyncedAvailableModels } from "@/lib/db/models";
 import { getCompatibleFallbackModels } from "@/lib/providers/managedAvailableModels";
 import { hasEligibleConnectionForModel } from "@/domain/connectionModelRules";

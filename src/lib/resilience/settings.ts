@@ -1,4 +1,4 @@
-import { DEFAULT_API_LIMITS, PROVIDER_PROFILES } from "@omniroute/open-sse/config/constants";
+import { DEFAULT_API_LIMITS, PROVIDER_PROFILES } from "@ozrouter/open-sse/config/constants";
 
 type JsonRecord = Record<string, unknown>;
 type AuthCategory = "oauth" | "apikey";

@@ -1,4 +1,4 @@
-import { runWithProxyContext } from "@omniroute/open-sse/utils/proxyFetch.ts";
+import { runWithProxyContext } from "@ozrouter/open-sse/utils/proxyFetch.ts";
 import { FetchTimeoutError, fetchWithTimeout } from "@/shared/utils/fetchTimeout";
 import {
   OutboundUrlGuardError,

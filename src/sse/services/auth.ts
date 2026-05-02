@@ -24,15 +24,15 @@ import {
   hasPerModelQuota,
   getRuntimeProviderProfile,
   recordModelLockoutFailure,
-} from "@omniroute/open-sse/services/accountFallback.ts";
-import { isLocalProvider } from "@omniroute/open-sse/config/providerRegistry.ts";
-import { COOLDOWN_MS } from "@omniroute/open-sse/config/constants.ts";
-import { preflightQuota } from "@omniroute/open-sse/services/quotaPreflight.ts";
+} from "@ozrouter/open-sse/services/accountFallback.ts";
+import { isLocalProvider } from "@ozrouter/open-sse/config/providerRegistry.ts";
+import { COOLDOWN_MS } from "@ozrouter/open-sse/config/constants.ts";
+import { preflightQuota } from "@ozrouter/open-sse/services/quotaPreflight.ts";
 import {
   classifyProviderError,
   PROVIDER_ERROR_TYPES,
-} from "@omniroute/open-sse/services/errorClassifier.ts";
-import { getCodexModelScope } from "@omniroute/open-sse/executors/codex.ts";
+} from "@ozrouter/open-sse/services/errorClassifier.ts";
+import { getCodexModelScope } from "@ozrouter/open-sse/executors/codex.ts";
 import { getProviderAlias, resolveProviderId } from "@/shared/constants/providers";
 import { isModelExcludedByConnection } from "@/domain/connectionModelRules";
 import * as log from "../utils/logger";
@@ -1490,15 +1490,15 @@ export function extractApiKey(request: Request) {
 
 /**
  * Validate API key (optional - for local use can skip).
- * Feature #1350: Supports OMNIROUTE_API_KEY / ROUTER_API_KEY env vars as
- * persistent passthrough keys that always validate, surviving Docker
+ * Feature #1350: Supports OZROUTER_API_KEY / ROUTER_API_KEY env vars as
+ * persistent passthrough keys that always validate, surviving service
  * restarts and backup restores without DB dependency.
  */
 export async function isValidApiKey(apiKey: string) {
   if (!apiKey) return false;
 
   // Persistent env-var key — always valid regardless of DB state (#1350)
-  const envKey = process.env.OMNIROUTE_API_KEY || process.env.ROUTER_API_KEY;
+  const envKey = process.env.OZROUTER_API_KEY || process.env.ROUTER_API_KEY;
   if (envKey && apiKey === envKey) return true;
 
   return await validateApiKey(apiKey);

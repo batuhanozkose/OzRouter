@@ -7,16 +7,16 @@
 
 import type { A2ATask, TaskArtifact } from "../taskManager";
 import { normalizeQuotaResponse } from "@/shared/contracts/quota";
-import { resolveOmniRouteBaseUrl } from "@/shared/utils/resolveOmniRouteBaseUrl";
+import { resolveOzRouterBaseUrl } from "@/shared/utils/resolveOzRouterBaseUrl";
 
-const OMNIROUTE_BASE_URL = resolveOmniRouteBaseUrl();
-const OMNIROUTE_API_KEY = process.env.OMNIROUTE_API_KEY || "";
+const OZROUTER_BASE_URL = resolveOzRouterBaseUrl();
+const OZROUTER_API_KEY = process.env.OZROUTER_API_KEY || "";
 
 async function quotaFetch(path: string): Promise<any> {
-  const url = `${OMNIROUTE_BASE_URL}${path}`;
+  const url = `${OZROUTER_BASE_URL}${path}`;
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...(OMNIROUTE_API_KEY ? { Authorization: `Bearer ${OMNIROUTE_API_KEY}` } : {}),
+    ...(OZROUTER_API_KEY ? { Authorization: `Bearer ${OZROUTER_API_KEY}` } : {}),
   };
   const res = await fetch(url, { headers, signal: AbortSignal.timeout(10000) });
   if (!res.ok) throw new Error(`API [${res.status}]`);

@@ -19,7 +19,7 @@ import {
 } from "@/shared/constants/providers";
 import { useIsElectron } from "@/shared/hooks/useElectron";
 
-const isE2EMode = process.env.NEXT_PUBLIC_OMNIROUTE_E2E_MODE === "1";
+const isE2EMode = process.env.NEXT_PUBLIC_OZROUTER_E2E_MODE === "1";
 
 type HeaderProps = {
   onMenuClick?: () => void;

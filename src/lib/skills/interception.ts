@@ -1,7 +1,7 @@
 import { skillExecutor } from "./executor";
 import { builtinSkills } from "./builtins";
 import { detectProvider } from "./injection";
-import { OMNIROUTE_WEB_SEARCH_FALLBACK_TOOL_NAME } from "@omniroute/open-sse/services/webSearchFallback.ts";
+import { OZROUTER_WEB_SEARCH_FALLBACK_TOOL_NAME } from "@ozrouter/open-sse/services/webSearchFallback.ts";
 import { logger } from "../../../open-sse/utils/logger.ts";
 
 const log = logger("SKILLS_INTERCEPTION");
@@ -21,7 +21,7 @@ interface ExecutionContext {
 }
 
 const BUILTIN_TOOL_ALIASES: Record<string, string> = {
-  [OMNIROUTE_WEB_SEARCH_FALLBACK_TOOL_NAME]: "web_search",
+  [OZROUTER_WEB_SEARCH_FALLBACK_TOOL_NAME]: "web_search",
 };
 
 function resolveBuiltinHandlerName(

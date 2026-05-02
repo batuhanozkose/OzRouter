@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * Docker healthcheck script for OmniRoute.
+ * Healthcheck script for OzRouter.
  * Checks the /api/monitoring/health endpoint on the dashboard port.
- * Used by Dockerfile and docker-compose files.
  */
 const port = process.env.DASHBOARD_PORT || process.env.PORT || "20128";
 

@@ -22,8 +22,8 @@ export const SkillExecuteSchema = z.object({
 });
 
 export const skillTools = {
-  omniroute_skills_list: {
-    name: "omniroute_skills_list",
+  ozrouter_skills_list: {
+    name: "ozrouter_skills_list",
     description: "List all registered skills with optional filtering by API key or name",
     inputSchema: SkillListSchema,
     handler: async (args: z.infer<typeof SkillListSchema>) => {
@@ -52,8 +52,8 @@ export const skillTools = {
     },
   },
 
-  omniroute_skills_enable: {
-    name: "omniroute_skills_enable",
+  ozrouter_skills_enable: {
+    name: "ozrouter_skills_enable",
     description: "Enable or disable a specific skill by ID",
     inputSchema: SkillEnableSchema,
     handler: async (args: z.infer<typeof SkillEnableSchema>) => {
@@ -72,8 +72,8 @@ export const skillTools = {
     },
   },
 
-  omniroute_skills_execute: {
-    name: "omniroute_skills_execute",
+  ozrouter_skills_execute: {
+    name: "ozrouter_skills_execute",
     description: "Execute a skill with provided input and return the result",
     inputSchema: SkillExecuteSchema,
     handler: async (args: z.infer<typeof SkillExecuteSchema>) => {
@@ -94,8 +94,8 @@ export const skillTools = {
     },
   },
 
-  omniroute_skills_executions: {
-    name: "omniroute_skills_executions",
+  ozrouter_skills_executions: {
+    name: "ozrouter_skills_executions",
     description: "List recent skill execution history",
     inputSchema: z.object({
       apiKeyId: z.string().optional(),

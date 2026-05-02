@@ -154,7 +154,7 @@ function toRecord(value: unknown): JsonRecord {
 }
 
 function isConfiguredEnvApiKey(key: string): boolean {
-  const envKey = process.env.OMNIROUTE_API_KEY || process.env.ROUTER_API_KEY;
+  const envKey = process.env.OZROUTER_API_KEY || process.env.ROUTER_API_KEY;
   return Boolean(envKey && key === envKey);
 }
 

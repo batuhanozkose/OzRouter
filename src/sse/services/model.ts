@@ -6,7 +6,7 @@ import {
   parseModel,
   resolveModelAliasFromMap,
   getModelInfoCore,
-} from "@omniroute/open-sse/services/model.ts";
+} from "@ozrouter/open-sse/services/model.ts";
 
 export { parseModel };
 

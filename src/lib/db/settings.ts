@@ -4,7 +4,7 @@
 
 import { getDbInstance } from "./core";
 import { backupDbFile } from "./backup";
-import { PROVIDER_ID_TO_ALIAS } from "@omniroute/open-sse/config/providerModels.ts";
+import { PROVIDER_ID_TO_ALIAS } from "@ozrouter/open-sse/config/providerModels.ts";
 import { invalidateDbCache } from "./readCache";
 import { resolveProxyForConnectionFromRegistry } from "./proxies";
 import { getComboModelProvider as getComboEntryProvider } from "@/lib/combos/steps";
@@ -72,7 +72,7 @@ export async function getSettings() {
     settings[key] = JSON.parse(rawValue);
   }
 
-  // Auto-complete onboarding for pre-configured deployments (Docker/VM)
+  // Auto-complete onboarding for pre-configured deployments.
   // If INITIAL_PASSWORD is set via env, this is a headless deploy — skip the wizard
   if (!settings.setupComplete && process.env.INITIAL_PASSWORD) {
     settings.setupComplete = true;
@@ -234,7 +234,7 @@ export async function getPricingForModel(provider: string, model: string) {
   const pricing = await getPricing();
   if (pricing[provider]?.[model]) return pricing[provider][model];
 
-  const { PROVIDER_ID_TO_ALIAS } = await import("@omniroute/open-sse/config/providerModels");
+  const { PROVIDER_ID_TO_ALIAS } = await import("@ozrouter/open-sse/config/providerModels");
   const alias = PROVIDER_ID_TO_ALIAS[provider];
   if (alias && pricing[alias]) return pricing[alias][model] || null;
 

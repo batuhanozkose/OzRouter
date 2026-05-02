@@ -166,7 +166,7 @@ export default function RoutingTab() {
           <div>
             <h3 className="text-lg font-semibold">Antigravity Signature Cache Mode</h3>
             <p className="text-sm text-text-muted">
-              Control whether OmniRoute reuses only stored Gemini thought signatures or accepts
+              Control whether OzRouter reuses only stored Gemini thought signatures or accepts
               validated client-provided signatures in Antigravity-compatible tool-call flows.
             </p>
           </div>
@@ -177,7 +177,7 @@ export default function RoutingTab() {
             {
               value: "enabled",
               label: "Enabled",
-              desc: "Current behavior. Ignore client-provided signatures and keep using the stored OmniRoute flow.",
+              desc: "Current behavior. Ignore client-provided signatures and keep using the stored OzRouter flow.",
             },
             {
               value: "bypass",
@@ -234,7 +234,7 @@ export default function RoutingTab() {
           <div>
             <h3 className="text-lg font-semibold">Client Cache Control</h3>
             <p className="text-sm text-text-muted">
-              Configure whether OmniRoute preserves client-provided cache_control markers
+              Configure whether OzRouter preserves client-provided cache_control markers
             </p>
           </div>
         </div>
@@ -244,7 +244,7 @@ export default function RoutingTab() {
             {
               value: "auto",
               label: "Auto (Recommended)",
-              desc: "For deterministic Claude-compatible flows, preserve client-provided cache_control as-is. If the request has no cache_control, OmniRoute does not inject any bridge-owned markers for CC-compatible third-party proxy compatibility.",
+              desc: "For deterministic Claude-compatible flows, preserve client-provided cache_control as-is. If the request has no cache_control, OzRouter does not inject any bridge-owned markers for CC-compatible third-party proxy compatibility.",
             },
             {
               value: "always",
@@ -254,7 +254,7 @@ export default function RoutingTab() {
             {
               value: "never",
               label: "Never Preserve",
-              desc: "Always remove client cache_control headers and let OmniRoute manage caching where native provider flows support it.",
+              desc: "Always remove client cache_control headers and let OzRouter manage caching where native provider flows support it.",
             },
           ].map((option) => (
             <button

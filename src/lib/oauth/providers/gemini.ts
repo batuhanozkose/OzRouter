@@ -32,8 +32,7 @@ export const gemini = {
 
       throw new Error(
         `Gemini OAuth requires ${envName} to be set.\n` +
-          `In Docker: add '${envName}=<your-secret>' to your docker-compose.yml env.\n` +
-          "In npm: add it to ~/.omniroute/.env\n" +
+          "Add it to ~/.ozrouter/.env or your shell environment.\n" +
           "Obtain the client secret from https://console.cloud.google.com/apis/credentials\n" +
           "for the same OAuth 2.0 Client ID configured as GEMINI_CLI_OAUTH_CLIENT_ID or GEMINI_OAUTH_CLIENT_ID."
       );

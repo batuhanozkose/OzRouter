@@ -11,7 +11,7 @@ import { useTranslations } from "next-intl";
  * Generates the chatLanguageModels.json block for VS Code GitHub Copilot
  * using the Azure vendor pattern as required by Copilot's architecture.
  *
- * Feature request: https://github.com/diegosouzapw/OmniRoute/issues/142
+ * Feature request: https://github.com/batuhanozkose/OzRouter/issues/142
  */
 export default function CopilotToolCard({
   tool,
@@ -29,7 +29,7 @@ export default function CopilotToolCard({
   const [selectedModels, setSelectedModels] = useState<Set<string>>(() => {
     if (typeof window === "undefined") return new Set<string>();
     try {
-      const saved = localStorage.getItem("omniroute-copilot-selected-models");
+      const saved = localStorage.getItem("ozrouter-copilot-selected-models");
       return saved ? new Set<string>(JSON.parse(saved)) : new Set<string>();
     } catch {
       return new Set<string>();
@@ -37,7 +37,7 @@ export default function CopilotToolCard({
   });
   const [selectedApiKeyId, setSelectedApiKeyId] = useState(() => {
     if (typeof window !== "undefined") {
-      const savedKey = localStorage.getItem("omniroute-cli-key-copilot");
+      const savedKey = localStorage.getItem("ozrouter-cli-key-copilot");
       if (savedKey && apiKeys?.some((k: any) => k.id === savedKey)) return savedKey;
     }
     return apiKeys?.length > 0 ? apiKeys[0].id : "";
@@ -84,10 +84,7 @@ export default function CopilotToolCard({
   // Persist selection
   useEffect(() => {
     if (selectedModels.size > 0) {
-      localStorage.setItem(
-        "omniroute-copilot-selected-models",
-        JSON.stringify([...selectedModels])
-      );
+      localStorage.setItem("ozrouter-copilot-selected-models", JSON.stringify([...selectedModels]));
     }
   }, [selectedModels]);
 
@@ -129,9 +126,9 @@ export default function CopilotToolCard({
     }));
 
     const config = {
-      name: "OmniRoute",
+      name: "OzRouter",
       vendor: "azure",
-      apiKey: `\${input:chat.lm.secret.omniroute}`,
+      apiKey: `\${input:chat.lm.secret.ozrouter}`,
       models,
     };
 
@@ -146,7 +143,7 @@ export default function CopilotToolCard({
 
   const handleApiKeyChange = (value: string) => {
     setSelectedApiKeyId(value);
-    if (value) localStorage.setItem("omniroute-cli-key-copilot", value);
+    if (value) localStorage.setItem("ozrouter-cli-key-copilot", value);
   };
 
   return (

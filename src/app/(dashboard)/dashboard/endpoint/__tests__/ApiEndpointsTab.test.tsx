@@ -78,7 +78,7 @@ describe("ApiEndpointsTab", () => {
   it("renders catalog content when the OpenAPI catalog loads", async () => {
     fetchMock.mockResolvedValue(
       jsonResponse({
-        info: { title: "OmniRoute API", version: "3.7.6" },
+        info: { title: "OzRouter API", version: "3.7.6" },
         servers: [],
         tags: [{ name: "Chat" }],
         endpoints: [
@@ -100,7 +100,7 @@ describe("ApiEndpointsTab", () => {
 
     renderApiEndpointsTab();
 
-    await waitForText("OmniRoute API");
+    await waitForText("OzRouter API");
     expect(document.body.textContent).toContain("1 endpoints across 1 categories");
     expect(document.body.textContent).toContain("/api/v1/chat/completions");
   });

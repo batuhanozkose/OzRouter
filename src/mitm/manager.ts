@@ -91,7 +91,7 @@ export async function getMitmStatus(): Promise<{
 
 /**
  * Start MITM proxy
- * @param {string} apiKey - OmniRoute API key
+ * @param {string} apiKey - OzRouter API key
  * @param {string} sudoPassword - Sudo password for DNS/cert operations
  */
 export async function startMitm(

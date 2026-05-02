@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
-import { getAllModelLockouts } from "@omniroute/open-sse/services/accountFallback.ts";
-import { getCacheStats } from "@omniroute/open-sse/services/signatureCache.ts";
+import { getAllModelLockouts } from "@ozrouter/open-sse/services/accountFallback.ts";
+import { getCacheStats } from "@ozrouter/open-sse/services/signatureCache.ts";
 import { getProviderConnections, updateProviderConnection } from "@/lib/localDb";
 import {
   enableRateLimitProtection,
   disableRateLimitProtection,
   getRateLimitStatus,
   getAllRateLimitStatus,
-} from "@omniroute/open-sse/services/rateLimitManager.ts";
+} from "@ozrouter/open-sse/services/rateLimitManager.ts";
 import { getAccountDisplayName } from "@/lib/display/names";
 
 import { toggleRateLimitSchema } from "@/shared/validation/schemas";

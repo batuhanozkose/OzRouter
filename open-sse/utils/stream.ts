@@ -18,7 +18,7 @@ import {
   unwrapGeminiChunk,
 } from "./streamHelpers.ts";
 import { calculateCost } from "@/lib/usage/costCalculator";
-import { buildOmniRouteSseMetadataComment } from "@/domain/omnirouteResponseMeta";
+import { buildOzRouterSseMetadataComment } from "@/domain/ozrouterResponseMeta";
 import {
   createStructuredSSECollector,
   buildStreamSummaryFromEvents,
@@ -58,7 +58,7 @@ export { COLORS, formatSSE };
 
 type JsonRecord = Record<string, unknown>;
 
-const PENDING_REQUEST_CLEARED_MARKER = "__omniroutePendingRequestCleared";
+const PENDING_REQUEST_CLEARED_MARKER = "__ozrouterPendingRequestCleared";
 
 function markPendingRequestCleared(error: Error): Error {
   (error as Error & Record<string, unknown>)[PENDING_REQUEST_CLEARED_MARKER] = true;
@@ -734,7 +734,7 @@ export function createSSEStream(options: StreamOptions = {}) {
     finalUsage: UsageTokenRecord | Record<string, unknown> | null | undefined
   ) => {
     const costUsd = finalUsage ? await calculateCost(provider, model, finalUsage) : 0;
-    const comment = buildOmniRouteSseMetadataComment({
+    const comment = buildOzRouterSseMetadataComment({
       provider,
       model,
       cacheHit: false,

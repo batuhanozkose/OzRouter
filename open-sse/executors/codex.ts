@@ -32,7 +32,7 @@ import { createRequire } from "module";
 
 // ─── wreq-js lazy loader ───────────────────────────────────────────────────
 // wreq-js is a Rust-native module that requires platform-specific .node binaries.
-// Loading it eagerly crashes the server when the binary is missing (pnpm, Docker
+// Loading it eagerly crashes the server when the binary is missing (package managers,
 // Alpine, unsupported architectures). We lazy-load with try/catch to gracefully
 // fall back to HTTP transport when the WebSocket transport is unavailable.
 const _wreqRequire = createRequire(import.meta.url);
@@ -697,13 +697,13 @@ function normalizeEffortValue(value: unknown): string | undefined {
 }
 
 function consumeResponsesStoreMarker(body: Record<string, unknown>): unknown {
-  const marker = body._omnirouteResponsesStore;
-  delete body._omnirouteResponsesStore;
+  const marker = body._ozrouterResponsesStore;
+  delete body._ozrouterResponsesStore;
   return marker;
 }
 
 export function isCodexResponsesWebSocketRequired(_model: string, credentials: unknown): boolean {
-  // OmniRoute is an HTTP→SSE gateway — WebSocket transport is unnecessary and
+  // OzRouter is an HTTP→SSE gateway — WebSocket transport is unnecessary and
   // breaks when upstream requests go through an HTTP proxy (403 on WS upgrade).
   // Default to the standard HTTP Responses SSE endpoint for all Codex models.
   // Users who need WebSocket can opt in via the provider codexTransport setting.
@@ -1334,7 +1334,7 @@ export class CodexExecutor extends BaseExecutor {
     }
 
     // Delete session_id and conversation_id from the body.
-    // These are often injected by OmniRoute's fallback logic for store=true,
+    // These are often injected by OzRouter's fallback logic for store=true,
     // but the upstream Codex API strictly rejects them as unsupported parameters.
     delete body.session_id;
     delete body.conversation_id;

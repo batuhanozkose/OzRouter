@@ -7,7 +7,7 @@ import { runWithProxyContext } from "../utils/proxyFetch.ts";
 // Token expiry buffer (refresh if expires within 5 minutes)
 export const TOKEN_EXPIRY_BUFFER_MS = 5 * 60 * 1000;
 
-const CACHE_SECRET = "omniroute-token-cache";
+const CACHE_SECRET = "ozrouter-token-cache";
 
 // In-flight refresh promise cache to prevent race conditions
 // Key: "provider:sha256(refreshToken)" → Value: Promise<result>
@@ -180,7 +180,7 @@ export async function refreshKimiCodingToken(refreshToken, log, proxyConfig: unk
 
   // Generate device info for headers (same as OAuth flow)
   const deviceId = "kimi-refresh-" + Date.now();
-  const platform = "omniroute";
+  const platform = "ozrouter";
   const version = "2.1.2";
   const deviceModel =
     typeof process !== "undefined" ? `${process.platform} ${process.arch}` : "unknown";

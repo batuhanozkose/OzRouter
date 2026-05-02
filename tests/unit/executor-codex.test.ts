@@ -277,7 +277,7 @@ test("CodexExecutor.transformRequest preserves store-enabled responses state whe
   const executor = new CodexExecutor();
   const body = {
     _nativeCodexPassthrough: true,
-    _omnirouteResponsesStore: true,
+    _ozrouterResponsesStore: true,
     instructions: "keep this",
     previous_response_id: "resp_prev_123",
     stream: false,
@@ -291,7 +291,7 @@ test("CodexExecutor.transformRequest preserves store-enabled responses state whe
     },
   });
 
-  assert.equal(result._omnirouteResponsesStore, undefined);
+  assert.equal(result._ozrouterResponsesStore, undefined);
   assert.equal(result.store, true);
   assert.equal(result.previous_response_id, undefined);
 });
@@ -299,7 +299,7 @@ test("CodexExecutor.transformRequest strips store from compact requests even whe
   const executor = new CodexExecutor();
   const body = {
     _nativeCodexPassthrough: true,
-    _omnirouteResponsesStore: true,
+    _ozrouterResponsesStore: true,
     instructions: "keep this",
     store: true,
     stream: false,
@@ -313,7 +313,7 @@ test("CodexExecutor.transformRequest strips store from compact requests even whe
     },
   });
 
-  assert.equal(result._omnirouteResponsesStore, undefined);
+  assert.equal(result._ozrouterResponsesStore, undefined);
   assert.equal(result.store, undefined);
   assert.equal(result.stream, undefined);
   assert.equal(result.instructions, "keep this");
@@ -996,15 +996,15 @@ test("Codex internal websocket bridge secret comparison handles mismatched lengt
 });
 
 test("Codex internal websocket bridge rejects non-object JSON payloads", async () => {
-  await withEnv({ OMNIROUTE_WS_BRIDGE_SECRET: "bridge-secret" }, async () => {
+  await withEnv({ OZROUTER_WS_BRIDGE_SECRET: "bridge-secret" }, async () => {
     const { POST } = await import("../../src/app/api/internal/codex-responses-ws/route.ts");
 
     const response = await POST(
-      new Request("http://omniroute.local/api/internal/codex-responses-ws", {
+      new Request("http://ozrouter.local/api/internal/codex-responses-ws", {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          "x-omniroute-ws-bridge-secret": "bridge-secret",
+          "x-ozrouter-ws-bridge-secret": "bridge-secret",
         },
         body: JSON.stringify(["invalid"]),
       })

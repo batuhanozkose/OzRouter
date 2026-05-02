@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "OmniRoute",
-    short_name: "OmniRoute",
+    name: "OzRouter",
+    short_name: "OzRouter",
     description:
-      "OmniRoute is an AI gateway for multi-provider LLMs. One endpoint for all your AI providers.",
+      "OzRouter is an AI gateway for multi-provider LLMs. One endpoint for all your AI providers.",
     start_url: "/",
     scope: "/",
     display: "fullscreen",

@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-const TEST_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "omniroute-stream-utils-"));
+const TEST_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "ozrouter-stream-utils-"));
 process.env.DATA_DIR = TEST_DATA_DIR;
 const core = await import("../../src/lib/db/core.ts");
 
@@ -745,7 +745,7 @@ test("buildStreamSummaryFromEvents preserves Gemini thought parts and function c
   });
 });
 
-test("compactStructuredStreamPayload wraps primitive summaries with Omniroute stream metadata", () => {
+test("compactStructuredStreamPayload wraps primitive summaries with OzRouter stream metadata", () => {
   const compact = compactStructuredStreamPayload({
     _streamed: true,
     _format: "sse-json",
@@ -756,7 +756,7 @@ test("compactStructuredStreamPayload wraps primitive summaries with Omniroute st
 
   assert.deepEqual(compact, {
     summary: "done",
-    _omniroute_stream: {
+    _ozrouter_stream: {
       format: "sse-json",
       stage: "client_response",
       eventCount: 2,
@@ -846,7 +846,7 @@ test("createStructuredSSECollector drops excess events and compactStructuredStre
   assert.deepEqual(compact, {
     object: "response",
     status: "completed",
-    _omniroute_stream: {
+    _ozrouter_stream: {
       format: "sse-json",
       stage: "client_response",
       eventCount: 2,

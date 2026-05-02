@@ -1,7 +1,7 @@
 ###
 # @name Upload a JSONL file for batch processing
-POST {{omniroute-address}}/v1/files
-Authorization: Bearer {{OMNIROUTE_API_KEY}}
+POST {{ozrouter-address}}/v1/files
+Authorization: Bearer {{OZROUTER_API_KEY}}
 Content-Type: multipart/form-data; boundary=boundary
 
 --boundary
@@ -23,8 +23,8 @@ batch
 
 ###
 # @name Upload a JSONL file for batch processing - test embedding endpoint
-POST {{omniroute-address}}/v1/files
-Authorization: Bearer {{OMNIROUTE_API_KEY}}
+POST {{ozrouter-address}}/v1/files
+Authorization: Bearer {{OZROUTER_API_KEY}}
 Content-Type: multipart/form-data; boundary=boundary
 
 --boundary
@@ -52,8 +52,8 @@ batch
 
 ###
 # @name List all uploaded files
-GET {{omniroute-address}}/v1/files
-Authorization: Bearer {{OMNIROUTE_API_KEY}}
+GET {{ozrouter-address}}/v1/files
+Authorization: Bearer {{OZROUTER_API_KEY}}
 
 > {%
     client.global.set("file_id", response.body.data[0].id);
@@ -61,13 +61,13 @@ Authorization: Bearer {{OMNIROUTE_API_KEY}}
 
 ###
 # @name Get file metadata of the uploaded file
-GET {{omniroute-address}}/v1/files/{{file_id}}
-Authorization: Bearer {{OMNIROUTE_API_KEY}}
+GET {{ozrouter-address}}/v1/files/{{file_id}}
+Authorization: Bearer {{OZROUTER_API_KEY}}
 
 ###
 # @name Create a new batch job
-POST {{omniroute-address}}/v1/batches
-Authorization: Bearer {{OMNIROUTE_API_KEY}}
+POST {{ozrouter-address}}/v1/batches
+Authorization: Bearer {{OZROUTER_API_KEY}}
 Content-Type: application/json
 
 {
@@ -82,13 +82,13 @@ Content-Type: application/json
 
 ###
 # @name List all batch jobs
-GET {{omniroute-address}}/v1/batches
-Authorization: Bearer {{OMNIROUTE_API_KEY}}
+GET {{ozrouter-address}}/v1/batches
+Authorization: Bearer {{OZROUTER_API_KEY}}
 
 ###
 # @name Get status of batch job
-GET {{omniroute-address}}/v1/batches/{{batch_id}}
-Authorization: Bearer {{OMNIROUTE_API_KEY}}
+GET {{ozrouter-address}}/v1/batches/{{batch_id}}
+Authorization: Bearer {{OZROUTER_API_KEY}}
 
 > {%
     if (response.body.output_file_id) {
@@ -101,30 +101,30 @@ Authorization: Bearer {{OMNIROUTE_API_KEY}}
 
 ###
 # @name Cancel batch job
-POST {{omniroute-address}}/v1/batches/{{batch_id}}/cancel
-Authorization: Bearer {{OMNIROUTE_API_KEY}}
+POST {{ozrouter-address}}/v1/batches/{{batch_id}}/cancel
+Authorization: Bearer {{OZROUTER_API_KEY}}
 
 ###
 # @name Get outputfile contents
-GET {{omniroute-address}}/v1/files/{{output_file_id}}/content
-Authorization: Bearer {{OMNIROUTE_API_KEY}}
+GET {{ozrouter-address}}/v1/files/{{output_file_id}}/content
+Authorization: Bearer {{OZROUTER_API_KEY}}
 
 ###
 # @name Get outputfile metadata
-GET {{omniroute-address}}/v1/files/{{output_file_id}}
-Authorization: Bearer {{OMNIROUTE_API_KEY}}
+GET {{ozrouter-address}}/v1/files/{{output_file_id}}
+Authorization: Bearer {{OZROUTER_API_KEY}}
 
 ###
 # @name Get errorfile contents
-GET {{omniroute-address}}/v1/files/{{error_file_id}}/content
-Authorization: Bearer {{OMNIROUTE_API_KEY}}
+GET {{ozrouter-address}}/v1/files/{{error_file_id}}/content
+Authorization: Bearer {{OZROUTER_API_KEY}}
 
 ###
 # @name Get errorfile metadata
-GET {{omniroute-address}}/v1/files/{{error_file_id}}
-Authorization: Bearer {{OMNIROUTE_API_KEY}}
+GET {{ozrouter-address}}/v1/files/{{error_file_id}}
+Authorization: Bearer {{OZROUTER_API_KEY}}
 
 ###
 # @name Delete File
-DELETE {{omniroute-address}}/v1/files/{{file_id}}
-Authorization: Bearer {{OMNIROUTE_API_KEY}}
+DELETE {{ozrouter-address}}/v1/files/{{file_id}}
+Authorization: Bearer {{OZROUTER_API_KEY}}

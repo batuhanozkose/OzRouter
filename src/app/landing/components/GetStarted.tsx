@@ -9,7 +9,8 @@ export default function GetStarted() {
 
   const endpoint = "http://localhost:20128";
   const dashboardUrl = `${endpoint}/dashboard`;
-  const command = "npx omniroute";
+  const command =
+    "git clone https://github.com/batuhanozkose/OzRouter.git && cd OzRouter && npm install && npm run dev";
 
   const handleCopy = async (text: string) => {
     await copyToClipboard(text);
@@ -28,17 +29,17 @@ export default function GetStarted() {
 
             <div className="flex flex-col gap-6">
               <div className="flex gap-4 min-w-0">
-                <div className="flex-none w-8 h-8 rounded-full bg-[#E54D5E]/20 text-[#E54D5E] flex items-center justify-center font-bold">
+                <div className="flex-none w-8 h-8 rounded-full bg-[#7289DA]/20 text-[#7289DA] flex items-center justify-center font-bold">
                   1
                 </div>
                 <div>
-                  <h4 className="font-bold text-lg">{t("installOmniRoute")}</h4>
+                  <h4 className="font-bold text-lg">{t("installOzRouter")}</h4>
                   <p className="text-sm text-gray-500 mt-1">{t("installStepDescription")}</p>
                 </div>
               </div>
 
               <div className="flex gap-4 min-w-0">
-                <div className="flex-none w-8 h-8 rounded-full bg-[#E54D5E]/20 text-[#E54D5E] flex items-center justify-center font-bold">
+                <div className="flex-none w-8 h-8 rounded-full bg-[#7289DA]/20 text-[#7289DA] flex items-center justify-center font-bold">
                   2
                 </div>
                 <div>
@@ -48,7 +49,7 @@ export default function GetStarted() {
               </div>
 
               <div className="flex gap-4 min-w-0">
-                <div className="flex-none w-8 h-8 rounded-full bg-[#E54D5E]/20 text-[#E54D5E] flex items-center justify-center font-bold">
+                <div className="flex-none w-8 h-8 rounded-full bg-[#7289DA]/20 text-[#7289DA] flex items-center justify-center font-bold">
                   3
                 </div>
                 <div>
@@ -86,12 +87,12 @@ export default function GetStarted() {
                 </div>
 
                 <div className="text-gray-400 mb-6">
-                  <span className="text-[#E54D5E]">&gt;</span> {t("startingOmniRoute")}
+                  <span className="text-[#7289DA]">&gt;</span> {t("startingOzRouter")}
                   <br />
-                  <span className="text-[#E54D5E]">&gt;</span> {t("serverRunningOnLabel")}{" "}
+                  <span className="text-[#7289DA]">&gt;</span> {t("serverRunningOnLabel")}{" "}
                   <span className="text-blue-400 break-all">{endpoint}</span>
                   <br />
-                  <span className="text-[#E54D5E]">&gt;</span> {t("dashboardLabel")}:{" "}
+                  <span className="text-[#7289DA]">&gt;</span> {t("dashboardLabel")}:{" "}
                   <span className="text-blue-400 break-all">{dashboardUrl}</span>
                   <br />
                   <span className="text-green-400">&gt;</span> {t("readyToRoute")}
@@ -105,10 +106,10 @@ export default function GetStarted() {
                   <span className="text-purple-400">{t("dataLocation")}</span>
                   <br />
                   <span className="text-gray-500">{t("dataLocationMacLinux")}</span>{" "}
-                  <span className="break-all">~/.omniroute/db.json</span>
+                  <span className="break-all">~/.ozrouter/db.json</span>
                   <br />
                   <span className="text-gray-500">{t("dataLocationWindows")}</span>{" "}
-                  <span className="break-all">%APPDATA%/omniroute/db.json</span>
+                  <span className="break-all">%APPDATA%/ozrouter/db.json</span>
                 </div>
               </div>
             </div>

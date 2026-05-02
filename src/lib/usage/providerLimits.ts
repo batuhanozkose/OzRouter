@@ -15,9 +15,9 @@ import { setQuotaCache } from "@/domain/quotaCache";
 import { buildClaudeExtraUsageConnectionUpdate } from "@/lib/providers/claudeExtraUsage";
 import { getMachineId } from "@/shared/utils/machine";
 import { USAGE_SUPPORTED_PROVIDERS } from "@/shared/constants/providers";
-import { getExecutor } from "@omniroute/open-sse/executors/index.ts";
-import { getUsageForProvider } from "@omniroute/open-sse/services/usage.ts";
-import { runWithProxyContext } from "@omniroute/open-sse/utils/proxyFetch.ts";
+import { getExecutor } from "@ozrouter/open-sse/executors/index.ts";
+import { getUsageForProvider } from "@ozrouter/open-sse/services/usage.ts";
+import { runWithProxyContext } from "@ozrouter/open-sse/utils/proxyFetch.ts";
 
 type JsonRecord = Record<string, unknown>;
 

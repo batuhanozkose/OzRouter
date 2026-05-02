@@ -14,13 +14,13 @@ export async function GET() {
   try {
     const { getAllCircuitBreakerStatuses } = await import("@/shared/utils/circuitBreaker");
     const { getAllRateLimitStatus, getLearnedLimits } =
-      await import("@omniroute/open-sse/services/rateLimitManager");
-    const { getAllModelLockouts } = await import("@omniroute/open-sse/services/accountFallback");
-    const { getInflightCount } = await import("@omniroute/open-sse/services/requestDedup.ts");
+      await import("@ozrouter/open-sse/services/rateLimitManager");
+    const { getAllModelLockouts } = await import("@ozrouter/open-sse/services/accountFallback");
+    const { getInflightCount } = await import("@ozrouter/open-sse/services/requestDedup.ts");
     const { getQuotaMonitorSummary, getQuotaMonitorSnapshots } =
-      await import("@omniroute/open-sse/services/quotaMonitor.ts");
+      await import("@ozrouter/open-sse/services/quotaMonitor.ts");
     const { getActiveSessions, getAllActiveSessionCountsByKey } =
-      await import("@omniroute/open-sse/services/sessionManager.ts");
+      await import("@ozrouter/open-sse/services/sessionManager.ts");
 
     const settings = await getSettings();
     const connections = await getProviderConnections();

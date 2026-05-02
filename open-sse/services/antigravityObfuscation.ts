@@ -25,7 +25,7 @@ const DEFAULT_WORDS = [
   "claude-code",
   "kilo code",
   "kilocode",
-  "omniroute",
+  "ozrouter",
 ];
 
 let words = [...DEFAULT_WORDS];

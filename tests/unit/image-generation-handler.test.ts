@@ -4,7 +4,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-process.env.DATA_DIR = mkdtempSync(join(tmpdir(), "omniroute-images-"));
+process.env.DATA_DIR = mkdtempSync(join(tmpdir(), "ozrouter-images-"));
 
 const { IMAGE_PROVIDERS, parseImageModel, getAllImageModels } =
   await import("../../open-sse/config/imageRegistry.ts");

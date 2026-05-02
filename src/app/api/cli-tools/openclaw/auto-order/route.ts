@@ -7,9 +7,9 @@
 import { NextResponse } from "next/server";
 import { requireCliToolsAuth } from "@/lib/api/requireCliToolsAuth";
 import { getComboModelProvider } from "@/lib/combos/steps";
-import { resolveOmniRouteBaseUrl } from "@/shared/utils/resolveOmniRouteBaseUrl";
+import { resolveOzRouterBaseUrl } from "@/shared/utils/resolveOzRouterBaseUrl";
 
-const OMNIROUTE_BASE_URL = resolveOmniRouteBaseUrl();
+const OZROUTER_BASE_URL = resolveOzRouterBaseUrl();
 
 export async function GET(request: Request) {
   const authError = await requireCliToolsAuth(request);
@@ -18,8 +18,8 @@ export async function GET(request: Request) {
   try {
     // Fetch current health and combos to determine best provider ordering
     const [healthRes, combosRes] = await Promise.allSettled([
-      fetch(`${OMNIROUTE_BASE_URL}/api/monitoring/health`, { signal: AbortSignal.timeout(5000) }),
-      fetch(`${OMNIROUTE_BASE_URL}/api/combos`, { signal: AbortSignal.timeout(5000) }),
+      fetch(`${OZROUTER_BASE_URL}/api/monitoring/health`, { signal: AbortSignal.timeout(5000) }),
+      fetch(`${OZROUTER_BASE_URL}/api/combos`, { signal: AbortSignal.timeout(5000) }),
     ]);
 
     const health = healthRes.status === "fulfilled" ? await healthRes.value.json() : {};
@@ -65,7 +65,7 @@ export async function GET(request: Request) {
         allow_fallbacks: true,
       },
       generated_at: new Date().toISOString(),
-      source: "omniroute-auto-combo",
+      source: "ozrouter-auto-combo",
     });
   } catch {
     return NextResponse.json({
@@ -74,7 +74,7 @@ export async function GET(request: Request) {
         allow_fallbacks: true,
       },
       generated_at: new Date().toISOString(),
-      source: "omniroute-fallback",
+      source: "ozrouter-fallback",
     });
   }
 }

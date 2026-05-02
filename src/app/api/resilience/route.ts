@@ -110,7 +110,7 @@ function normalizeLegacyPatch(body: JsonRecord): ResilienceSettingsPatch {
 
 async function syncRuntimeSettings(resilienceSettings: ResilienceSettings) {
   const { applyRequestQueueSettings } =
-    await import("@omniroute/open-sse/services/rateLimitManager");
+    await import("@ozrouter/open-sse/services/rateLimitManager");
   await applyRequestQueueSettings(resilienceSettings.requestQueue);
 }
 

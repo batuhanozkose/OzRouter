@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { enforceApiKeyPolicy } from "@/shared/utils/apiKeyPolicy";
-import { applyCompression } from "@omniroute/open-sse/services/compression/strategySelector";
-import type { CompressionMode } from "@omniroute/open-sse/services/compression/types";
+import { applyCompression } from "@ozrouter/open-sse/services/compression/strategySelector";
+import type { CompressionMode } from "@ozrouter/open-sse/services/compression/types";
 
 const PreviewRequestSchema = z.object({
   messages: z

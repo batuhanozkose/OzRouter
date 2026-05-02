@@ -17,7 +17,7 @@ import {
   isClaudeCodeCompatibleProvider,
   isOpenAICompatibleProvider,
 } from "@/shared/constants/providers";
-import type { RegistryModel } from "@omniroute/open-sse/config/providerRegistry.ts";
+import type { RegistryModel } from "@ozrouter/open-sse/config/providerRegistry.ts";
 
 type JsonRecord = Record<string, unknown>;
 

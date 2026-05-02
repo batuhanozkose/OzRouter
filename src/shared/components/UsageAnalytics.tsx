@@ -62,7 +62,7 @@ export default function UsageAnalytics() {
 
       // Update available keys from unfiltered data (only when no filter is active).
       // Use apiKeyName as the stable identifier — it is always populated
-      // for every OmniRoute API key regardless of the downstream provider.
+      // for every OzRouter API key regardless of the downstream provider.
       if (selectedApiKeys.length === 0 && data.byApiKey?.length > 0) {
         const seen = new Set<string>();
         const keys: { id: string; name: string }[] = [];

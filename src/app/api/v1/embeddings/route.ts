@@ -1,4 +1,4 @@
-import { handleEmbedding } from "@omniroute/open-sse/handlers/embeddings.ts";
+import { handleEmbedding } from "@ozrouter/open-sse/handlers/embeddings.ts";
 import {
   getProviderCredentials,
   clearRecoveredProviderState,
@@ -12,9 +12,9 @@ import {
   buildDynamicEmbeddingProvider,
   type EmbeddingProviderNodeRow,
   type EmbeddingProvider,
-} from "@omniroute/open-sse/config/embeddingRegistry.ts";
-import { errorResponse, unavailableResponse } from "@omniroute/open-sse/utils/error.ts";
-import { HTTP_STATUS } from "@omniroute/open-sse/config/constants.ts";
+} from "@ozrouter/open-sse/config/embeddingRegistry.ts";
+import { errorResponse, unavailableResponse } from "@ozrouter/open-sse/utils/error.ts";
+import { HTTP_STATUS } from "@ozrouter/open-sse/config/constants.ts";
 import * as log from "@/sse/utils/logger";
 import { toJsonErrorPayload } from "@/shared/utils/upstreamError";
 import { enforceApiKeyPolicy } from "@/shared/utils/apiKeyPolicy";
@@ -96,7 +96,7 @@ export async function handleValidatedEmbeddingRequestBody(body: ValidatedEmbeddi
         if (!validTypes.includes(n.apiType || "")) return false;
         try {
           const hostname = new URL(n.baseUrl).hostname;
-          // Strictly matching 172.16.0.0/12 (Docker/local) and explicitly blocking ::1 per SSRF hardening
+          // Strictly matching 172.16.0.0/12 private/local ranges and explicitly blocking ::1 per SSRF hardening
           return (
             hostname === "localhost" ||
             hostname === "127.0.0.1" ||

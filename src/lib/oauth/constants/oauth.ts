@@ -2,13 +2,13 @@ import {
   ANTIGRAVITY_LOAD_CODE_ASSIST_API_CLIENT,
   ANTIGRAVITY_LOAD_CODE_ASSIST_USER_AGENT,
   getAntigravityLoadCodeAssistClientMetadata,
-} from "@omniroute/open-sse/services/antigravityHeaders.ts";
+} from "@ozrouter/open-sse/services/antigravityHeaders.ts";
 import {
   GITHUB_COPILOT_API_VERSION,
   GITHUB_COPILOT_CHAT_PLUGIN_VERSION,
   GITHUB_COPILOT_CHAT_USER_AGENT,
   GITHUB_COPILOT_EDITOR_VERSION,
-} from "@omniroute/open-sse/config/providerHeaderProfiles.ts";
+} from "@ozrouter/open-sse/config/providerHeaderProfiles.ts";
 import { buildGitLabOAuthEndpoints, GITLAB_DUO_DEFAULT_BASE_URL } from "../gitlab";
 
 /**

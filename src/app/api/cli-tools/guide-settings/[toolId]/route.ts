@@ -54,7 +54,7 @@ export async function POST(request, { params }) {
         return await saveContinueConfig({ baseUrl, apiKey, model });
       case "opencode":
         // (#524) OpenCode config was never saved because only 'continue' was handled here.
-        // OpenCode reads ~/.config/opencode/opencode.json — write the OmniRoute settings there.
+        // OpenCode reads ~/.config/opencode/opencode.json — write the OzRouter settings there.
         return await saveOpenCodeConfig({ baseUrl, apiKey, model, models, modelLabels });
       case "qwen":
         return await saveQwenConfig({ baseUrl, apiKey, model });
@@ -90,7 +90,7 @@ async function saveContinueConfig({ baseUrl, apiKey, model }) {
     // No existing config or invalid JSON — start fresh
   }
 
-  // Build the OmniRoute model entry
+  // Build the OzRouter model entry
   const normalizedBaseUrl = String(baseUrl || "")
     .trim()
     .replace(/\/+$/, "");
@@ -99,8 +99,8 @@ async function saveContinueConfig({ baseUrl, apiKey, model }) {
     title: model,
     model: model,
     provider: "openai",
-    apiKey: apiKey || "sk_omniroute",
-    omnirouteManaged: true,
+    apiKey: apiKey || "sk_ozrouter",
+    ozrouterManaged: true,
   };
 
   // Merge into existing models array
@@ -113,18 +113,18 @@ async function saveContinueConfig({ baseUrl, apiKey, model }) {
       .toLowerCase();
   }
 
-  // Check if OmniRoute entry already exists and update it, or add new
+  // Check if OzRouter entry already exists and update it, or add new
   const existingIdx = models.findIndex(
     (m) =>
       m &&
-      (m.omnirouteManaged === true ||
+      (m.ozrouterManaged === true ||
         normalizeApiBase(m.apiBase) === normalizedBaseUrl.toLowerCase() ||
-        normalizeApiBase(m.apiBase).includes("omniroute") ||
+        normalizeApiBase(m.apiBase).includes("ozrouter") ||
         normalizeApiBase(m.apiBase).includes(`localhost:${apiPort}`) ||
         normalizeApiBase(m.apiBase).includes(`127.0.0.1:${apiPort}`) ||
         String(m.apiKey || "")
           .toLowerCase()
-          .includes("sk_omniroute"))
+          .includes("sk_ozrouter"))
   );
 
   if (existingIdx >= 0) {
@@ -204,7 +204,7 @@ async function saveQwenConfig({ baseUrl, apiKey, model }) {
   const normalizedBaseUrl = String(baseUrl || "")
     .trim()
     .replace(/\/+$/, "");
-  const resolvedApiKey = apiKey || "sk_omniroute";
+  const resolvedApiKey = apiKey || "sk_ozrouter";
   const resolvedModel = model || "gemini-cli/gemini-3.1-pro-preview";
 
   // Read existing config to preserve other settings (permissions, mcpServers, etc.)

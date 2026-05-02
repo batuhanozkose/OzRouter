@@ -7,7 +7,7 @@ import { runJsonMigration, type LegacyJsonData } from "@/lib/db/jsonMigration";
 /**
  * POST /api/settings/import-json
  *
- * Imports a legacy 9router / OmniRoute JSON backup into the current SQLite
+ * Imports a legacy 9router / OzRouter JSON backup into the current SQLite
  * database.  Accepts either multipart/form-data (file field) or a raw JSON body.
  *
  * 🔒 Auth-guarded.
@@ -44,7 +44,9 @@ export async function POST(request: Request) {
       data = JSON.parse(rawText) as LegacyJsonData;
     } catch {
       return NextResponse.json(
-        { error: "Invalid JSON: the file could not be parsed. Please upload a valid .json backup." },
+        {
+          error: "Invalid JSON: the file could not be parsed. Please upload a valid .json backup.",
+        },
         { status: 400 }
       );
     }

@@ -22,7 +22,7 @@ import {
   getAccessToken,
   supportsTokenRefresh,
   isUnrecoverableRefreshError,
-} from "@omniroute/open-sse/services/tokenRefresh.ts";
+} from "@ozrouter/open-sse/services/tokenRefresh.ts";
 import { pickMaskedDisplayValue } from "@/shared/utils/maskEmail";
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -102,7 +102,7 @@ function isEnvFlagEnabled(name: string): boolean {
 
 function isHealthCheckDisabled(): boolean {
   return (
-    isEnvFlagEnabled("OMNIROUTE_DISABLE_TOKEN_HEALTHCHECK") ||
+    isEnvFlagEnabled("OZROUTER_DISABLE_TOKEN_HEALTHCHECK") ||
     isBuildProcess() ||
     isAutomatedTestProcess()
   );
@@ -116,7 +116,7 @@ const CACHE_TTL = 30_000; // Cache settings for 30 seconds
 
 async function shouldHideLogs(): Promise<boolean> {
   if (
-    isEnvFlagEnabled("OMNIROUTE_HIDE_HEALTHCHECK_LOGS") ||
+    isEnvFlagEnabled("OZROUTER_HIDE_HEALTHCHECK_LOGS") ||
     isBuildProcess() ||
     isAutomatedTestProcess()
   ) {
@@ -181,16 +181,16 @@ export function clearHealthCheckLogCache() {
 // ── Singleton guard (globalThis survives HMR re-evaluation) ─────────────────
 
 declare global {
-  var __omnirouteTokenHC:
+  var __ozrouterTokenHC:
     | { initialized: boolean; interval: ReturnType<typeof setInterval> | null }
     | undefined;
 }
 
 function getHCState() {
-  if (!globalThis.__omnirouteTokenHC) {
-    globalThis.__omnirouteTokenHC = { initialized: false, interval: null };
+  if (!globalThis.__ozrouterTokenHC) {
+    globalThis.__ozrouterTokenHC = { initialized: false, interval: null };
   }
-  return globalThis.__omnirouteTokenHC;
+  return globalThis.__ozrouterTokenHC;
 }
 
 /**

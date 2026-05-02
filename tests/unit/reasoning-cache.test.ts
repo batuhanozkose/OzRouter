@@ -12,7 +12,7 @@ import { mkdtempSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
-process.env.DATA_DIR = mkdtempSync(join(tmpdir(), "omniroute-reasoning-"));
+process.env.DATA_DIR = mkdtempSync(join(tmpdir(), "ozrouter-reasoning-"));
 
 // ──────────── Direct service import ────────────
 

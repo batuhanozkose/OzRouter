@@ -57,7 +57,7 @@ import {
 } from "@/lib/usage/tokenAccounting";
 import { recordCost } from "@/domain/costRules";
 import { calculateCost } from "@/lib/usage/costCalculator";
-import { buildOmniRouteResponseMetaHeaders } from "@/domain/omnirouteResponseMeta";
+import { buildOzRouterResponseMetaHeaders } from "@/domain/ozrouterResponseMeta";
 import { CLAUDE_OAUTH_TOOL_PREFIX } from "../translator/request/openai-to-claude.ts";
 import {
   getModelNormalizeToolCallId,
@@ -155,7 +155,7 @@ import {
 } from "@/lib/memory/settings";
 import { injectSkills } from "@/lib/skills/injection";
 import { handleToolCallExecution } from "@/lib/skills/interception";
-import { OMNIROUTE_RESPONSE_HEADERS } from "@/shared/constants/headers";
+import { OZROUTER_RESPONSE_HEADERS } from "@/shared/constants/headers";
 import {
   buildClaudeCodeCompatibleRequest,
   isClaudeCodeCompatibleProvider,
@@ -196,7 +196,7 @@ function cloneBoundedChatLogPayload(value: unknown, depth = 0): unknown {
     if (value.length > CHAT_LOG_ARRAY_TAIL_ITEMS) {
       return [
         {
-          _omniroute_truncated_array: true,
+          _ozrouter_truncated_array: true,
           originalLength: value.length,
           retainedTailItems: CHAT_LOG_ARRAY_TAIL_ITEMS,
         },
@@ -212,7 +212,7 @@ function cloneBoundedChatLogPayload(value: unknown, depth = 0): unknown {
     result[key] = cloneBoundedChatLogPayload(item, depth + 1);
   }
   if (entries.length > CHAT_LOG_MAX_OBJECT_KEYS) {
-    result._omniroute_truncated_keys = entries.length - CHAT_LOG_MAX_OBJECT_KEYS;
+    result._ozrouter_truncated_keys = entries.length - CHAT_LOG_MAX_OBJECT_KEYS;
   }
   return result;
 }
@@ -805,17 +805,15 @@ function attachLogMeta(
   );
   if (Object.keys(compactMeta).length === 0) return payload;
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
-    return { _omniroute: compactMeta, _payload: payload ?? null };
+    return { _ozrouter: compactMeta, _payload: payload ?? null };
   }
   const existing =
-    payload._omniroute &&
-    typeof payload._omniroute === "object" &&
-    !Array.isArray(payload._omniroute)
-      ? payload._omniroute
+    payload._ozrouter && typeof payload._ozrouter === "object" && !Array.isArray(payload._ozrouter)
+      ? payload._ozrouter
       : {};
   return {
     ...payload,
-    _omniroute: {
+    _ozrouter: {
       ...existing,
       ...compactMeta,
     },
@@ -1065,8 +1063,8 @@ export async function handleChatCore({
         status: cachedIdemp.status,
         headers: {
           "Content-Type": "application/json",
-          "X-OmniRoute-Idempotent": "true",
-          ...buildOmniRouteResponseMetaHeaders({
+          "X-OzRouter-Idempotent": "true",
+          ...buildOzRouterResponseMetaHeaders({
             provider,
             model,
             cacheHit: false,
@@ -1170,7 +1168,7 @@ export async function handleChatCore({
     body = bodyWithWebSearchFallback as typeof body;
     log?.info?.(
       "TOOLS",
-      `Converted ${webSearchFallbackPlan.convertedToolCount} web_search tool(s) to OmniRoute fallback for ${provider}`
+      `Converted ${webSearchFallbackPlan.convertedToolCount} web_search tool(s) to OzRouter fallback for ${provider}`
     );
   }
   const noLogEnabled = apiKeyInfo?.noLog === true;
@@ -1180,10 +1178,10 @@ export async function handleChatCore({
   const skillRequestId = generateRequestId();
   const pipelineSessionId =
     (clientRawRequest?.headers && typeof clientRawRequest.headers.get === "function"
-      ? clientRawRequest.headers.get("x-omniroute-session-id")
+      ? clientRawRequest.headers.get("x-ozrouter-session-id")
       : getHeaderValueCaseInsensitive(
           clientRawRequest?.headers ?? null,
-          "x-omniroute-session-id"
+          "x-ozrouter-session-id"
         )) || skillRequestId;
   const persistAttemptLogs = ({
     status,
@@ -1337,7 +1335,7 @@ export async function handleChatCore({
   const explicitStreamAlias = resolveExplicitStreamAlias(body);
 
   // Remove non-standard non-stream aliases before provider translation/execution.
-  // They are accepted for compatibility at the OmniRoute API boundary only.
+  // They are accepted for compatibility at the OzRouter API boundary only.
   if (body && typeof body === "object") {
     const b = body as Record<string, unknown>;
     if (explicitStreamAlias !== undefined) {
@@ -1408,8 +1406,8 @@ export async function handleChatCore({
         response: new Response(JSON.stringify(cached), {
           headers: {
             "Content-Type": "application/json",
-            [OMNIROUTE_RESPONSE_HEADERS.cache]: "HIT",
-            ...buildOmniRouteResponseMetaHeaders({
+            [OZROUTER_RESPONSE_HEADERS.cache]: "HIT",
+            ...buildOzRouterResponseMetaHeaders({
               provider,
               model,
               cacheHit: true,
@@ -2392,7 +2390,7 @@ export async function handleChatCore({
         typeof credentials?.accessToken === "string" &&
         credentials.accessToken.trim().length > 0;
       if (isQwenOAuthRequest && !hasValidQwenUser) {
-        bodyToSend = { ...bodyToSend, user: "omniroute-qwen-oauth" };
+        bodyToSend = { ...bodyToSend, user: "ozrouter-qwen-oauth" };
         log?.debug?.("QWEN", "Injected fallback user for OAuth request");
       }
 
@@ -3516,8 +3514,8 @@ export async function handleChatCore({
       response: new Response(JSON.stringify(translatedResponse), {
         headers: {
           "Content-Type": "application/json",
-          [OMNIROUTE_RESPONSE_HEADERS.cache]: "MISS",
-          ...buildOmniRouteResponseMetaHeaders({
+          [OZROUTER_RESPONSE_HEADERS.cache]: "MISS",
+          ...buildOzRouterResponseMetaHeaders({
             provider,
             model,
             cacheHit: false,
@@ -3583,8 +3581,8 @@ export async function handleChatCore({
     "Content-Type": "text/event-stream",
     "Cache-Control": "no-cache",
     Connection: "keep-alive",
-    [OMNIROUTE_RESPONSE_HEADERS.cache]: "MISS",
-    ...buildOmniRouteResponseMetaHeaders({
+    [OZROUTER_RESPONSE_HEADERS.cache]: "MISS",
+    ...buildOzRouterResponseMetaHeaders({
       provider,
       model,
       cacheHit: false,
@@ -3819,7 +3817,7 @@ export async function handleChatCore({
     // Chain: provider → transform → progress → client
     const transformedBody = pipeWithDisconnect(providerResponse, transformStream, streamController);
     finalStream = transformedBody.pipeThrough(progressTransform);
-    responseHeaders[OMNIROUTE_RESPONSE_HEADERS.progress] = "enabled";
+    responseHeaders[OZROUTER_RESPONSE_HEADERS.progress] = "enabled";
   } else {
     finalStream = pipeWithDisconnect(providerResponse, transformStream, streamController);
   }

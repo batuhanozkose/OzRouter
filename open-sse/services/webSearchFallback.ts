@@ -1,6 +1,6 @@
 import { FORMATS } from "../translator/formats.ts";
 
-export const OMNIROUTE_WEB_SEARCH_FALLBACK_TOOL_NAME = "omniroute_web_search";
+export const OZROUTER_WEB_SEARCH_FALLBACK_TOOL_NAME = "ozrouter_web_search";
 const WEB_SEARCH_TOOL_TYPES = new Set(["web_search", "web_search_preview"]);
 const SEARCH_CONTEXT_DEFAULTS: Record<string, number> = {
   low: 5,
@@ -113,7 +113,7 @@ function buildFallbackTool(tool: JsonRecord): JsonRecord {
   return {
     type: "function",
     function: {
-      name: OMNIROUTE_WEB_SEARCH_FALLBACK_TOOL_NAME,
+      name: OZROUTER_WEB_SEARCH_FALLBACK_TOOL_NAME,
       description: buildFallbackDescription(tool),
       parameters: buildFallbackParameters(tool),
     },
@@ -182,7 +182,7 @@ export function prepareWebSearchFallbackBody<T extends JsonRecord>(
     return true;
   });
 
-  if (!toolNames.has(OMNIROUTE_WEB_SEARCH_FALLBACK_TOOL_NAME)) {
+  if (!toolNames.has(OZROUTER_WEB_SEARCH_FALLBACK_TOOL_NAME)) {
     preservedTools.unshift(buildFallbackTool(toRecord(builtInSearchTools[0])));
   }
 
@@ -194,7 +194,7 @@ export function prepareWebSearchFallbackBody<T extends JsonRecord>(
   if (isBuiltInWebSearchToolChoice(body.tool_choice)) {
     nextBody.tool_choice = {
       type: "function",
-      function: { name: OMNIROUTE_WEB_SEARCH_FALLBACK_TOOL_NAME },
+      function: { name: OZROUTER_WEB_SEARCH_FALLBACK_TOOL_NAME },
     } as T["tool_choice"];
   }
 
@@ -202,7 +202,7 @@ export function prepareWebSearchFallbackBody<T extends JsonRecord>(
     body: nextBody,
     fallback: {
       enabled: true,
-      toolName: OMNIROUTE_WEB_SEARCH_FALLBACK_TOOL_NAME,
+      toolName: OZROUTER_WEB_SEARCH_FALLBACK_TOOL_NAME,
       convertedToolCount: builtInSearchTools.length,
     },
   };

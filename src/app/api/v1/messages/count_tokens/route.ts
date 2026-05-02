@@ -2,7 +2,7 @@ import { CORS_HEADERS } from "@/shared/utils/cors";
 import { v1CountTokensSchema } from "@/shared/validation/schemas";
 import { isValidationFailure, validateBody } from "@/shared/validation/helpers";
 import { estimateTokens } from "@/shared/utils/costEstimator";
-import { getExecutor } from "@omniroute/open-sse/executors/index.ts";
+import { getExecutor } from "@ozrouter/open-sse/executors/index.ts";
 import { getModelInfo } from "@/sse/services/model";
 import { extractApiKey, getProviderCredentials, isValidApiKey } from "@/sse/services/auth";
 import * as log from "@/sse/utils/logger";

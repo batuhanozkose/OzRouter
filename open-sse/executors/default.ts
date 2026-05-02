@@ -187,7 +187,6 @@ export class DefaultExecutor extends BaseExecutor {
       case "lemonade":
       case "llamafile":
       case "triton":
-      case "docker-model-runner":
       case "xinference":
       case "oobabooga": {
         const baseUrl = credentials?.providerSpecificData?.baseUrl || this.config.baseUrl;

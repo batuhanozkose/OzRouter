@@ -10,17 +10,17 @@ import { createPassthroughStreamWithLogger } from "../../open-sse/utils/stream.t
 
 import { wantsProgress, createProgressTransform } from "../../open-sse/utils/progressTracker.ts";
 
-test("wantsProgress detects X-OmniRoute-Progress header correctly", () => {
-  const headersObj = { "x-omniroute-progress": "true" };
+test("wantsProgress detects X-OzRouter-Progress header correctly", () => {
+  const headersObj = { "x-ozrouter-progress": "true" };
   assert.equal(wantsProgress(new Headers(headersObj)), true);
 
-  const headersMap = new Map([["x-omniroute-progress", "true"]]);
+  const headersMap = new Map([["x-ozrouter-progress", "true"]]);
   assert.equal(wantsProgress(headersMap), true);
 
-  const headersPlain = { "x-omniroute-progress": "true" };
+  const headersPlain = { "x-ozrouter-progress": "true" };
   assert.equal(wantsProgress(headersPlain), true);
 
-  assert.equal(wantsProgress({ "x-omniroute-progress": "false" }), false);
+  assert.equal(wantsProgress({ "x-ozrouter-progress": "false" }), false);
   assert.equal(wantsProgress(null), false);
   assert.equal(wantsProgress({}), false);
 });

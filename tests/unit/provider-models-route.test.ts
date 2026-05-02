@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-const TEST_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "omniroute-provider-model-routes-"));
+const TEST_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "ozrouter-provider-model-routes-"));
 process.env.DATA_DIR = TEST_DATA_DIR;
 
 const core = await import("../../src/lib/db/core.ts");
@@ -14,14 +14,14 @@ const providerModelsRoute = await import("../../src/app/api/providers/[id]/model
 const antigravityVersion = await import("../../open-sse/services/antigravityVersion.ts");
 
 const originalFetch = globalThis.fetch;
-const originalAllowPrivateProviderUrls = process.env.OMNIROUTE_ALLOW_PRIVATE_PROVIDER_URLS;
+const originalAllowPrivateProviderUrls = process.env.OZROUTER_ALLOW_PRIVATE_PROVIDER_URLS;
 
 async function resetStorage() {
   globalThis.fetch = originalFetch;
   if (originalAllowPrivateProviderUrls === undefined) {
-    delete process.env.OMNIROUTE_ALLOW_PRIVATE_PROVIDER_URLS;
+    delete process.env.OZROUTER_ALLOW_PRIVATE_PROVIDER_URLS;
   } else {
-    process.env.OMNIROUTE_ALLOW_PRIVATE_PROVIDER_URLS = originalAllowPrivateProviderUrls;
+    process.env.OZROUTER_ALLOW_PRIVATE_PROVIDER_URLS = originalAllowPrivateProviderUrls;
   }
   antigravityVersion.clearAntigravityVersionCache();
   core.resetDbInstance();
@@ -95,7 +95,7 @@ test("provider models route rejects OpenAI-compatible providers without a base U
 });
 
 test("provider models route blocks private OpenAI-compatible base URLs", async () => {
-  delete process.env.OMNIROUTE_ALLOW_PRIVATE_PROVIDER_URLS;
+  delete process.env.OZROUTER_ALLOW_PRIVATE_PROVIDER_URLS;
 
   const connection = await seedConnection("openai-compatible-private", {
     apiKey: "sk-openai-compatible",
@@ -246,7 +246,7 @@ test("provider models route returns the local catalog for GitLab Duo fallback mo
 });
 
 test("provider models route discovers local OpenAI-style models without requiring an API key", async () => {
-  process.env.OMNIROUTE_ALLOW_PRIVATE_PROVIDER_URLS = "true";
+  process.env.OZROUTER_ALLOW_PRIVATE_PROVIDER_URLS = "true";
 
   const lmStudioConnection = await seedConnection("lm-studio", {
     providerSpecificData: {

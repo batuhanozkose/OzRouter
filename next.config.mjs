@@ -18,7 +18,7 @@ const nextConfig = {
     },
   },
   output: "standalone",
-  // OmniRoute is a proxy for AI APIs — request bodies routinely include
+  // OzRouter is a proxy for AI APIs — request bodies routinely include
   // multi-MB payloads (vision models, image edits, base64-encoded files,
   // long chat histories with embedded images). Next.js's Server Action
   // handler intercepts POSTs with multipart/form-data or
@@ -29,7 +29,7 @@ const nextConfig = {
   // more.
   experimental: {
     serverActions: {
-      bodySizeLimit: process.env.OMNIROUTE_SERVER_ACTIONS_BODY_LIMIT || "50mb",
+      bodySizeLimit: process.env.OZROUTER_SERVER_ACTIONS_BODY_LIMIT || "50mb",
     },
   },
   outputFileTracingRoot: projectRoot,
@@ -82,8 +82,8 @@ const nextConfig = {
     "util",
     "process",
   ],
-  transpilePackages: ["@omniroute/open-sse", "@lobehub/icons"],
-  allowedDevOrigins: ["localhost", "127.0.0.1", "192.168.*"],
+  transpilePackages: ["@ozrouter/open-sse", "@lobehub/icons"],
+  allowedDevOrigins: ["localhost", "127.0.0.1", "192.168.*", "p1.proxy.zo.computer"],
   typescript: {
     // TODO: Re-enable after fixing all sub-component useTranslations scope issues
     ignoreBuildErrors: true,

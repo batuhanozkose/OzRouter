@@ -1,6 +1,6 @@
-import { getRegistryEntry } from "@omniroute/open-sse/config/providerRegistry.ts";
-import { getEmbeddingProvider } from "@omniroute/open-sse/config/embeddingRegistry.ts";
-import { getRerankProvider } from "@omniroute/open-sse/config/rerankRegistry.ts";
+import { getRegistryEntry } from "@ozrouter/open-sse/config/providerRegistry.ts";
+import { getEmbeddingProvider } from "@ozrouter/open-sse/config/embeddingRegistry.ts";
+import { getRerankProvider } from "@ozrouter/open-sse/config/rerankRegistry.ts";
 import {
   buildClaudeCodeCompatibleHeaders,
   buildClaudeCodeCompatibleValidationPayload,
@@ -10,7 +10,7 @@ import {
   joinBaseUrlAndPath,
   stripClaudeCodeCompatibleEndpointSuffix,
   stripAnthropicMessagesSuffix,
-} from "@omniroute/open-sse/services/claudeCodeCompatible.ts";
+} from "@ozrouter/open-sse/services/claudeCodeCompatible.ts";
 import {
   isClaudeCodeCompatibleProvider,
   isAnthropicCompatibleProvider,
@@ -25,49 +25,49 @@ import {
 } from "@/shared/network/safeOutboundFetch";
 import { getProviderOutboundGuard } from "@/shared/network/outboundUrlGuard";
 import { extractCookieValue, normalizeSessionCookieHeader } from "@/lib/providers/webCookieAuth";
-import { getGigachatAccessToken } from "@omniroute/open-sse/services/gigachatAuth.ts";
-import { validateQoderCliPat } from "@omniroute/open-sse/services/qoderCli.ts";
+import { getGigachatAccessToken } from "@ozrouter/open-sse/services/gigachatAuth.ts";
+import { validateQoderCliPat } from "@ozrouter/open-sse/services/qoderCli.ts";
 import {
   AZURE_AI_DEFAULT_BASE_URL,
   buildAzureAiChatUrl,
   buildAzureAiModelsUrl,
-} from "@omniroute/open-sse/config/azureAi.ts";
+} from "@ozrouter/open-sse/config/azureAi.ts";
 import {
   BEDROCK_DEFAULT_BASE_URL,
   buildBedrockModelsUrl,
   getBedrockValidationModelId,
   normalizeBedrockBaseUrl,
-} from "@omniroute/open-sse/config/bedrock.ts";
+} from "@ozrouter/open-sse/config/bedrock.ts";
 import {
   DATAROBOT_DEFAULT_BASE_URL,
   buildDataRobotCatalogUrl,
   buildDataRobotChatUrl,
   isDataRobotDeploymentUrl,
-} from "@omniroute/open-sse/config/datarobot.ts";
+} from "@ozrouter/open-sse/config/datarobot.ts";
 import {
   OCI_DEFAULT_BASE_URL,
   buildOciChatUrl,
   buildOciModelsUrl,
-} from "@omniroute/open-sse/config/oci.ts";
+} from "@ozrouter/open-sse/config/oci.ts";
 import {
   SAP_DEFAULT_BASE_URL,
   buildSapChatUrl,
   buildSapModelsUrl,
   getSapResourceGroup,
   isSapDeploymentUrl,
-} from "@omniroute/open-sse/config/sap.ts";
+} from "@ozrouter/open-sse/config/sap.ts";
 import {
   WATSONX_DEFAULT_BASE_URL,
   buildWatsonxChatUrl,
   buildWatsonxModelsUrl,
-} from "@omniroute/open-sse/config/watsonx.ts";
+} from "@ozrouter/open-sse/config/watsonx.ts";
 import {
   buildRunwayApiUrl,
   buildRunwayHeaders,
   normalizeRunwayBaseUrl,
-} from "@omniroute/open-sse/config/runway.ts";
-import { PETALS_DEFAULT_MODEL, normalizePetalsBaseUrl } from "@omniroute/open-sse/config/petals.ts";
-import { signAwsRequest } from "@omniroute/open-sse/utils/awsSigV4.ts";
+} from "@ozrouter/open-sse/config/runway.ts";
+import { PETALS_DEFAULT_MODEL, normalizePetalsBaseUrl } from "@ozrouter/open-sse/config/petals.ts";
+import { signAwsRequest } from "@ozrouter/open-sse/utils/awsSigV4.ts";
 import { validateImageProviderApiKey } from "@/lib/providers/imageValidation";
 
 const OPENAI_LIKE_FORMATS = new Set(["openai", "openai-responses"]);
@@ -2455,7 +2455,7 @@ async function validateChatGptWebProvider({ apiKey, providerSpecificData = {} }:
     // cf_clearance to JA3/JA4 + HTTP/2 SETTINGS, so plain Node fetch always
     // gets cf-mitigated: challenge regardless of cookies.
     const { tlsFetchChatGpt, TlsClientUnavailableError } =
-      await import("@omniroute/open-sse/services/chatgptTlsClient.ts");
+      await import("@ozrouter/open-sse/services/chatgptTlsClient.ts");
 
     let response;
     try {
@@ -2932,7 +2932,7 @@ export async function validateProviderApiKey({ provider, apiKey, providerSpecifi
     vertex: async ({ apiKey }: any) => {
       try {
         const { parseSAFromApiKey, getAccessToken } =
-          await import("@omniroute/open-sse/executors/vertex.ts");
+          await import("@ozrouter/open-sse/executors/vertex.ts");
         const sa = parseSAFromApiKey(apiKey);
         // Validates credentials by successfully exchanging them for a JWT from Google Identity
         await getAccessToken(sa);
@@ -2944,7 +2944,7 @@ export async function validateProviderApiKey({ provider, apiKey, providerSpecifi
     "vertex-partner": async ({ apiKey }: any) => {
       try {
         const { parseSAFromApiKey, getAccessToken } =
-          await import("@omniroute/open-sse/executors/vertex.ts");
+          await import("@ozrouter/open-sse/executors/vertex.ts");
         const sa = parseSAFromApiKey(apiKey);
         await getAccessToken(sa);
         return { valid: true, error: null };

@@ -127,18 +127,11 @@ export default function Modal({
         {/* Header */}
         {(title || showCloseButton) && (
           <div className="flex items-center justify-between p-6 border-b border-black/5 dark:border-white/5">
-            <div className="flex items-center">
-              <div className="flex items-center gap-2 mr-4" aria-hidden="true">
-                <div className="w-3 h-3 rounded-full bg-[#FF5F56]" />
-                <div className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
-                <div className="w-3 h-3 rounded-full bg-[#27C93F]" />
-              </div>
-              {title && (
-                <h2 id={titleId} className="text-lg font-semibold text-text-main">
-                  {title}
-                </h2>
-              )}
-            </div>
+            {title && (
+              <h2 id={titleId} className="text-lg font-semibold text-text-main">
+                {title}
+              </h2>
+            )}
             {showCloseButton && (
               <button
                 onClick={onClose}

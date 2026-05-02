@@ -17,7 +17,7 @@ const useEmailPrivacyStore = create<EmailPrivacyState>()(
       toggleEmailVisibility: () => set({ emailsVisible: !get().emailsVisible }),
     }),
     {
-      name: "omniroute-email-privacy",
+      name: "ozrouter-email-privacy",
     }
   )
 );

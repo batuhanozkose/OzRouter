@@ -14,7 +14,7 @@ const {
 } = await import("../../scripts/build-next-isolated.mjs");
 
 async function withTempDir(fn) {
-  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "omniroute-build-next-isolated-"));
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "ozrouter-build-next-isolated-"));
 
   try {
     await fn(tempDir);
@@ -121,7 +121,7 @@ test("getTransientBuildPaths leaves _tasks in place by default", () => {
 });
 
 test("getTransientBuildPaths only moves _tasks when explicitly enabled", () => {
-  const paths = getTransientBuildPaths("/repo", { OMNIROUTE_BUILD_MOVE_TASKS: "1" });
+  const paths = getTransientBuildPaths("/repo", { OZROUTER_BUILD_MOVE_TASKS: "1" });
 
   assert.equal(
     paths.some((entry) => path.basename(entry.sourcePath) === "_tasks"),

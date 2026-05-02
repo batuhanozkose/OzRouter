@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * OmniRoute — Environment Sync
+ * OzRouter — Environment Sync
  *
  * Ensures .env exists and contains the selected keys from .env.example.
  * Runs on installs and can be executed manually via `npm run env:sync`.
@@ -25,13 +25,13 @@ const CRYPTO_SECRETS = {
   JWT_SECRET: () => randomBytes(64).toString("hex"),
   API_KEY_SECRET: () => randomBytes(32).toString("hex"),
   STORAGE_ENCRYPTION_KEY: () => randomBytes(32).toString("hex"),
-  MACHINE_ID_SALT: () => `omniroute-${randomBytes(8).toString("hex")}`,
+  MACHINE_ID_SALT: () => `ozrouter-${randomBytes(8).toString("hex")}`,
 };
 
 /**
  * Keys that MUST NOT be regenerated when existing encrypted data exists in the DB.
  * Generating a new key would make all previously-encrypted credentials unrecoverable.
- * @see https://github.com/diegosouzapw/OmniRoute/issues/1622
+ * @see https://github.com/batuhanozkose/OzRouter/issues/1622
  */
 const ENCRYPTION_BOUND_KEYS = new Set(["STORAGE_ENCRYPTION_KEY"]);
 
@@ -42,13 +42,13 @@ function resolveDataDir(env = process.env) {
 
   if (process.platform === "win32") {
     const appData = env.APPDATA || join(homedir(), "AppData", "Roaming");
-    return join(appData, "omniroute");
+    return join(appData, "ozrouter");
   }
 
   const xdg = env.XDG_CONFIG_HOME?.trim();
-  if (xdg) return join(resolve(xdg), "omniroute");
+  if (xdg) return join(resolve(xdg), "ozrouter");
 
-  return join(homedir(), ".omniroute");
+  return join(homedir(), ".ozrouter");
 }
 
 /**
@@ -255,7 +255,7 @@ export function syncEnv({ rootDir, quiet = false, scope = "full" } = {}) {
         if (ENCRYPTION_BOUND_KEYS.has(key) && dbHasEncrypted) {
           log(
             `⚠️  ${key} NOT generated — encrypted credentials exist in DB. ` +
-              `Restore your previous key via ~/.omniroute/server.env, ~/.omniroute/.env, ` +
+              `Restore your previous key via ~/.ozrouter/server.env, ~/.ozrouter/.env, ` +
               `or the STORAGE_ENCRYPTION_KEY environment variable.`
           );
           continue;
@@ -302,7 +302,7 @@ export function syncEnv({ rootDir, quiet = false, scope = "full" } = {}) {
     if (entry.blocked) {
       log(
         `⚠️  ${entry.key} NOT generated — encrypted credentials exist in DB. ` +
-          `Restore your previous key via ~/.omniroute/server.env, ~/.omniroute/.env, ` +
+          `Restore your previous key via ~/.ozrouter/server.env, ~/.ozrouter/.env, ` +
           `or the STORAGE_ENCRYPTION_KEY environment variable.`
       );
       continue;

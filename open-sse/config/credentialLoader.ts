@@ -35,7 +35,7 @@ let lastLoadTime = 0;
 let cachedProviders: Record<string, unknown> | null = null;
 
 // Survives Next.js dev HMR: module-level cache resets but process is the same (V4 pattern).
-type CredGlobals = typeof globalThis & { __omnirouteCredNoFileLogged?: boolean };
+type CredGlobals = typeof globalThis & { __ozrouterCredNoFileLogged?: boolean };
 function credGlobals(): CredGlobals {
   return globalThis as CredGlobals;
 }
@@ -64,9 +64,9 @@ export function loadProviderCredentials<T extends Record<string, unknown>>(provi
   const credPath = resolveCredentialsPath();
 
   if (!existsSync(credPath)) {
-    if (!credGlobals().__omnirouteCredNoFileLogged) {
+    if (!credGlobals().__ozrouterCredNoFileLogged) {
       console.log("[CREDENTIALS] No external credentials file found, using defaults.");
-      credGlobals().__omnirouteCredNoFileLogged = true;
+      credGlobals().__ozrouterCredNoFileLogged = true;
     }
     cachedProviders = providers;
     lastLoadTime = Date.now();

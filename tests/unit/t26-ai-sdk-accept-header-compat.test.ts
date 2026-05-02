@@ -26,12 +26,12 @@ test("T26: mixed Accept header prefers SSE only when text/event-stream is presen
 });
 
 test("T26: markdown code fence stripping unwraps Claude JSON blocks", () => {
-  const wrapped = '```json\n{"name":"omniroute"}\n```';
-  assert.equal(stripMarkdownCodeFence(wrapped), '{"name":"omniroute"}');
+  const wrapped = '```json\n{"name":"ozrouter"}\n```';
+  assert.equal(stripMarkdownCodeFence(wrapped), '{"name":"ozrouter"}');
 });
 
 test("T26: non-fenced content is returned unchanged", () => {
-  const plain = '{"name":"omniroute"}';
+  const plain = '{"name":"ozrouter"}';
   assert.equal(stripMarkdownCodeFence(plain), plain);
 });
 

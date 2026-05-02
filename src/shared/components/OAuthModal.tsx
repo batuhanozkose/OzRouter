@@ -267,7 +267,7 @@ export default function OAuthModal({
       let forceManual = false;
 
       // Claude Code and Cline OAuth flows can finish on provider-hosted pages that
-      // show an auth code instead of redirecting back to OmniRoute.
+      // show an auth code instead of redirecting back to OzRouter.
       // Start directly in manual mode so users always have an input to paste code/url.
       if (provider === "claude" || provider === "cline") {
         forceManual = true;
@@ -334,7 +334,7 @@ export default function OAuthModal({
       // Redirect URI strategy:
       // - Codex/OpenAI: always port 1455 (registered in OAuth app)
       // - Google OAuth providers (antigravity, gemini-cli): always localhost, regardless of
-      //   where OmniRoute is hosted — Google only accepts pre-registered localhost URIs with
+      //   where OzRouter is hosted — Google only accepts pre-registered localhost URIs with
       //   the built-in credentials. Remote users must configure their own credentials.
       // - Other providers on remote: use actual origin (supports PUBLIC_URL env var)
       // - Localhost: use localhost:port
@@ -347,7 +347,7 @@ export default function OAuthModal({
         const port = window.location.port || "20128";
         redirectUri = `http://localhost:${port}/callback`;
       } else if (!isLocalhost) {
-        // Behind reverse proxy: use actual origin (e.g., https://omniroute.example.com/callback)
+        // Behind reverse proxy: use actual origin (e.g., https://ozrouter.example.com/callback)
         // Supports PUBLIC_URL env var override, or falls back to window.location.origin.
         const publicUrl = process.env.NEXT_PUBLIC_BASE_URL;
         const origin =
@@ -691,7 +691,7 @@ export default function OAuthModal({
                       code: (c) => <code className="font-mono">{c}</code>,
                       a: (c) => (
                         <a
-                          href="https://github.com/diegosouzapw/OmniRoute#oauth-on-a-remote-server"
+                          href="https://github.com/batuhanozkose/OzRouter#oauth-on-a-remote-server"
                           target="_blank"
                           rel="noreferrer"
                           className="underline"

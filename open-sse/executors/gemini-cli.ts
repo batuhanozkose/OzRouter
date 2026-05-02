@@ -180,12 +180,12 @@ export class GeminiCLIExecutor extends BaseExecutor {
           }
         } else {
           console.warn(
-            `[OmniRoute] onboardUser returned ${response.status} on attempt ${attempt + 1}`
+            `[OzRouter] onboardUser returned ${response.status} on attempt ${attempt + 1}`
           );
         }
       } catch (error) {
         const msg = error instanceof Error ? error.message : String(error);
-        console.warn(`[OmniRoute] onboardUser attempt ${attempt + 1} failed (${msg})`);
+        console.warn(`[OzRouter] onboardUser attempt ${attempt + 1} failed (${msg})`);
       }
 
       if (attempt < attempts - 1) {
@@ -198,7 +198,7 @@ export class GeminiCLIExecutor extends BaseExecutor {
 
   /**
    * Fetch the current cloudaicompanionProject via loadCodeAssist API.
-   * Native Gemini CLI refreshes this every 30 seconds — OmniRoute stores it once
+   * Native Gemini CLI refreshes this every 30 seconds — OzRouter stores it once
    * at OAuth connection time, so it goes stale. This method keeps it fresh.
    */
   async refreshProject(accessToken: string): Promise<string | null> {
@@ -246,7 +246,7 @@ export class GeminiCLIExecutor extends BaseExecutor {
 
       if (!response.ok) {
         console.warn(
-          `[OmniRoute] loadCodeAssist returned ${response.status} — falling back to stored projectId`
+          `[OzRouter] loadCodeAssist returned ${response.status} — falling back to stored projectId`
         );
         return null;
       }
@@ -256,14 +256,14 @@ export class GeminiCLIExecutor extends BaseExecutor {
 
       if (!projectId) {
         console.warn(
-          "[OmniRoute] loadCodeAssist returned no project — attempting managed project onboarding"
+          "[OzRouter] loadCodeAssist returned no project — attempting managed project onboarding"
         );
         projectId = await this.onboardManagedProject(accessToken, extractDefaultTierId(data));
       }
 
       if (!projectId) {
         console.warn(
-          "[OmniRoute] managed project onboarding failed — falling back to stored projectId"
+          "[OzRouter] managed project onboarding failed — falling back to stored projectId"
         );
         return null;
       }
@@ -273,7 +273,7 @@ export class GeminiCLIExecutor extends BaseExecutor {
       return projectId;
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
-      console.warn(`[OmniRoute] loadCodeAssist failed (${msg}) — falling back to stored projectId`);
+      console.warn(`[OzRouter] loadCodeAssist failed (${msg}) — falling back to stored projectId`);
       return null;
     }
   }

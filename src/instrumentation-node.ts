@@ -21,7 +21,7 @@ function toHex(bytes: Uint8Array): string {
 }
 
 function isBackgroundServicesDisabled(): boolean {
-  const raw = process.env.OMNIROUTE_DISABLE_BACKGROUND_SERVICES;
+  const raw = process.env.OZROUTER_DISABLE_BACKGROUND_SERVICES;
   if (!raw) return false;
   return new Set(["1", "true", "yes", "on"]).has(raw.trim().toLowerCase());
 }
@@ -70,7 +70,7 @@ async function ensureSecrets(): Promise<void> {
 
 export async function registerNodejs(): Promise<void> {
   // Initialize proxy fetch patch FIRST (before any HTTP requests)
-  await import("@omniroute/open-sse/index.ts");
+  await import("@ozrouter/open-sse/index.ts");
   console.log("[STARTUP] Global fetch proxy patch initialized");
 
   await ensureSecrets();
@@ -130,7 +130,7 @@ export async function registerNodejs(): Promise<void> {
     console.log(
       `[STARTUP] Cloud/model sync background bootstrap ${cloudSyncInitialized ? "initialized" : "skipped"}`
     );
-    const { initBatchProcessor } = await import("@omniroute/open-sse/services/batchProcessor");
+    const { initBatchProcessor } = await import("@ozrouter/open-sse/services/batchProcessor");
     initBatchProcessor();
     console.log("[STARTUP] Batch processor started");
   }
