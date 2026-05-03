@@ -1,6 +1,11 @@
 import fs from "fs/promises";
 import path from "path";
-import { getProviderConnectionById } from "@/lib/localDb";
+import {
+  createProviderConnection,
+  getProviderConnectionById,
+  getProviderConnections,
+  updateProviderConnection,
+} from "@/lib/db/providers";
 import { createBackup } from "@/shared/services/backupService";
 import { getCliConfigPaths } from "@/shared/services/cliRuntime";
 import {
@@ -47,6 +52,13 @@ export interface BuiltCodexAuthFile {
   content: string;
 }
 
+export interface ImportedCodexAuthFile {
+  connectionId: string;
+  email: string | null;
+  workspaceId: string | null;
+  created: boolean;
+}
+
 export class CodexAuthFileError extends Error {
   status: number;
   code: string;
@@ -91,6 +103,192 @@ function extractCodexAccountId(idToken: string, providerSpecificData: unknown): 
     toNonEmptyString(authInfo.account_id) ||
     toNonEmptyString(toRecord(providerSpecificData).workspaceId)
   );
+}
+
+function extractCodexAuthMetadata(idToken: string, fallbackAccountId: string | null) {
+  const payload = decodeJwtPayload(idToken);
+  const authInfo = payload ? toRecord(payload["https://api.openai.com/auth"]) : {};
+  const organizations = Array.isArray(authInfo.organizations) ? authInfo.organizations : null;
+  const workspaceId =
+    toNonEmptyString(authInfo.chatgpt_account_id) ||
+    toNonEmptyString(authInfo.account_id) ||
+    fallbackAccountId;
+  const planType = toNonEmptyString(authInfo.chatgpt_plan_type);
+
+  return {
+    email: payload ? toNonEmptyString(payload.email) : null,
+    name: payload ? toNonEmptyString(payload.name) : null,
+    workspaceId,
+    providerSpecificData: {
+      workspaceId,
+      workspacePlanType: planType,
+      chatgptUserId: toNonEmptyString(authInfo.chatgpt_user_id),
+      organizations,
+      codexDeviceAuthImportedAt: new Date().toISOString(),
+    },
+  };
+}
+
+function getTokenExpiry(idToken: string): { expiresAt: string | null; expiresIn: number | null } {
+  const payload = decodeJwtPayload(idToken);
+  const exp = typeof payload?.exp === "number" ? payload.exp : null;
+  if (!exp) return { expiresAt: null, expiresIn: null };
+
+  return {
+    expiresAt: new Date(exp * 1000).toISOString(),
+    expiresIn: Math.max(0, exp - Math.floor(Date.now() / 1000)),
+  };
+}
+
+function parseCodexAuthFilePayload(raw: string): CodexAuthFilePayload {
+  let parsed: JsonRecord;
+  try {
+    parsed = toRecord(JSON.parse(raw));
+  } catch {
+    throw new CodexAuthFileError("Codex auth.json is not valid JSON", 400, "invalid_json");
+  }
+
+  const tokens = toRecord(parsed.tokens);
+  const payload: CodexAuthFilePayload = {
+    auth_mode: "chatgpt",
+    OPENAI_API_KEY: null,
+    tokens: {
+      id_token: toNonEmptyString(tokens.id_token) || "",
+      access_token: toNonEmptyString(tokens.access_token) || "",
+      refresh_token: toNonEmptyString(tokens.refresh_token) || "",
+      account_id: toNonEmptyString(tokens.account_id) || "",
+    },
+    last_refresh: toNonEmptyString(parsed.last_refresh) || new Date().toISOString(),
+  };
+
+  if (!payload.tokens.id_token) {
+    throw new CodexAuthFileError(
+      "Codex auth.json is missing tokens.id_token",
+      409,
+      "id_token_missing"
+    );
+  }
+  if (!payload.tokens.access_token) {
+    throw new CodexAuthFileError(
+      "Codex auth.json is missing tokens.access_token",
+      409,
+      "access_token_missing"
+    );
+  }
+  if (!payload.tokens.refresh_token) {
+    throw new CodexAuthFileError(
+      "Codex auth.json is missing tokens.refresh_token",
+      409,
+      "refresh_token_missing"
+    );
+  }
+  if (!payload.tokens.account_id) {
+    throw new CodexAuthFileError(
+      "Codex auth.json is missing tokens.account_id",
+      409,
+      "account_id_missing"
+    );
+  }
+
+  return payload;
+}
+
+export async function importCodexAuthFileContent(
+  raw: string,
+  options: { connectionId?: string | null } = {}
+): Promise<ImportedCodexAuthFile> {
+  const payload = parseCodexAuthFilePayload(raw);
+  const metadata = extractCodexAuthMetadata(payload.tokens.id_token, payload.tokens.account_id);
+  if (!metadata.email) {
+    throw new CodexAuthFileError(
+      "Codex auth.json does not include an email claim. Re-authenticate before importing.",
+      409,
+      "email_missing"
+    );
+  }
+  if (!metadata.workspaceId) {
+    throw new CodexAuthFileError(
+      "Codex auth.json does not include a workspace/account id. Re-authenticate before importing.",
+      409,
+      "account_id_missing"
+    );
+  }
+  const expiry = getTokenExpiry(payload.tokens.id_token);
+  const connectionData = {
+    provider: "codex",
+    authType: "oauth",
+    accessToken: payload.tokens.access_token,
+    refreshToken: payload.tokens.refresh_token,
+    idToken: payload.tokens.id_token,
+    expiresAt: expiry.expiresAt,
+    expiresIn: expiry.expiresIn,
+    email: metadata.email,
+    displayName: metadata.name || metadata.email,
+    name: metadata.email || metadata.name || `Codex ${metadata.workspaceId?.slice(0, 8)}`,
+    providerSpecificData: metadata.providerSpecificData,
+    testStatus: "active",
+    isActive: true,
+  };
+
+  let connection: JsonRecord | null = null;
+  const explicitId = toNonEmptyString(options.connectionId);
+  if (explicitId) {
+    connection = (await updateProviderConnection(explicitId, connectionData)) as JsonRecord | null;
+  }
+
+  if (!connection && metadata.email && metadata.workspaceId) {
+    const existing = await getProviderConnections({ provider: "codex" });
+    const match = existing.find((candidate: JsonRecord) => {
+      const providerData = toRecord(candidate.providerSpecificData);
+      return (
+        candidate.authType === "oauth" &&
+        candidate.email === metadata.email &&
+        providerData.workspaceId === metadata.workspaceId
+      );
+    });
+    if (match?.id) {
+      connection = (await updateProviderConnection(
+        String(match.id),
+        connectionData
+      )) as JsonRecord | null;
+    }
+  }
+
+  const created = !connection;
+  if (!connection) {
+    connection = (await createProviderConnection(connectionData)) as JsonRecord | null;
+  }
+
+  const connectionId = toNonEmptyString(connection?.id);
+  if (!connectionId) {
+    throw new CodexAuthFileError("Failed to import Codex auth.json", 500, "import_failed");
+  }
+
+  return {
+    connectionId,
+    email: metadata.email,
+    workspaceId: metadata.workspaceId,
+    created,
+  };
+}
+
+export async function importCodexAuthFileFromLocalCli(
+  options: { connectionId?: string | null } = {}
+) {
+  const paths = getCliConfigPaths("codex");
+  const authPath = paths?.auth;
+  if (!authPath) {
+    throw new CodexAuthFileError("Codex auth path could not be resolved", 500, "path_unavailable");
+  }
+
+  let raw: string;
+  try {
+    raw = await fs.readFile(authPath, "utf8");
+  } catch {
+    throw new CodexAuthFileError("Codex auth.json was not found", 404, "auth_file_not_found");
+  }
+
+  return importCodexAuthFileContent(raw, options);
 }
 
 function shouldRefreshCodexConnection(connection: CodexConnectionLike): boolean {

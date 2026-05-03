@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { timingSafeEqual } from "crypto";
+import { randomUUID, timingSafeEqual } from "crypto";
+import { spawn } from "child_process";
+import fs from "fs/promises";
+import path from "path";
 import {
   getProvider,
   generateAuthData,
@@ -24,10 +27,36 @@ import {
   oauthPollSchema,
 } from "@/shared/validation/schemas";
 import { isValidationFailure, validateBody } from "@/shared/validation/helpers";
+import { requireManagementAuth } from "@/lib/api/requireManagementAuth";
+import { importCodexAuthFileFromLocalCli } from "@/lib/oauth/utils/codexAuthFile";
+import { getCliConfigPaths, getCliRuntimeStatus } from "@/shared/services/cliRuntime";
+
+type CodexDeviceAuthState = {
+  id: string;
+  status: "running" | "success" | "error";
+  startedAt: number;
+  stdout: string;
+  stderr: string;
+  verificationUrl: string | null;
+  userCode: string | null;
+  connectionId: string | null;
+  importResult: unknown;
+  error: string | null;
+  child?: ReturnType<typeof spawn>;
+  authSnapshot?: { existed: boolean; content: string | null; authPath: string | null };
+  timeout?: NodeJS.Timeout;
+};
+
+const codexDeviceAuthGlobal = globalThis as typeof globalThis & {
+  __codexDeviceAuthState?: CodexDeviceAuthState | null;
+};
 
 // Use globalThis to persist callback server state across Next.js HMR reloads
 if (!globalThis.__codexCallbackState) {
   globalThis.__codexCallbackState = null;
+}
+if (!codexDeviceAuthGlobal.__codexDeviceAuthState) {
+  codexDeviceAuthGlobal.__codexDeviceAuthState = null;
 }
 
 /**
@@ -206,6 +235,252 @@ async function handleStartCallbackServer(provider: string, searchParams: URLSear
   }
 }
 
+function redactCliOutput(value: string): string {
+  return value
+    .replace(/sk-[A-Za-z0-9_-]+/g, "sk-redacted")
+    .replace(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, "jwt-redacted");
+}
+
+function stripAnsiAndControl(value: string): string {
+  return value
+    .replace(/\u001b\[[0-?]*[ -/]*[@-~]/g, "")
+    .replace(/\u001b\][^\u0007]*(?:\u0007|\u001b\\)/g, "")
+    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, "");
+}
+
+function isLikelyCodexDeviceCode(value: string): boolean {
+  return /^[A-Z0-9]{4}-[A-Z0-9]{4,5}$/.test(value) || /^[A-Z0-9]{6,12}$/.test(value);
+}
+
+function extractLikelyCodexDeviceCode(outputWithoutUrls: string): string | null {
+  const codeLines = outputWithoutUrls
+    .split(/\r?\n/)
+    .filter((line) => /\b(?:code|verification|device)\b/i.test(line));
+  const preferredText = codeLines.length > 0 ? codeLines.join("\n") : outputWithoutUrls;
+  const preferredTokens =
+    preferredText.match(/\b[A-Z0-9]{4}-[A-Z0-9]{4,5}\b|\b[A-Z0-9]{6,12}\b/g) || [];
+  const preferredCode = preferredTokens.find(isLikelyCodexDeviceCode);
+  if (preferredCode) return preferredCode;
+
+  const allTokens =
+    outputWithoutUrls.match(/\b[A-Z0-9]{4}-[A-Z0-9]{4,5}\b|\b[A-Z0-9]{6,12}\b/g) || [];
+  return allTokens.find(isLikelyCodexDeviceCode) || null;
+}
+
+export function extractCodexDeviceAuthHints(output: string) {
+  const cleanOutput = stripAnsiAndControl(output);
+  const urls = (cleanOutput.match(/https?:\/\/[^\s"'<>]+/g) || []).map((url) =>
+    url.replace(/[),.;\]]+$/g, "")
+  );
+  const verificationUrl =
+    urls.find((url) => /openai|auth|device|login/i.test(url)) || urls[0] || null;
+  const outputWithoutUrls = cleanOutput.replace(/https?:\/\/[^\s"'<>]+/g, " ");
+  const userCode = extractLikelyCodexDeviceCode(outputWithoutUrls);
+
+  return {
+    verificationUrl,
+    userCode,
+  };
+}
+
+async function snapshotCodexAuthFile() {
+  const paths = getCliConfigPaths("codex");
+  const authPath = paths?.auth || null;
+  if (!authPath) return { existed: false, content: null, authPath };
+
+  try {
+    return {
+      existed: true,
+      content: await fs.readFile(authPath, "utf8"),
+      authPath,
+    };
+  } catch {
+    return { existed: false, content: null, authPath };
+  }
+}
+
+async function restoreCodexAuthSnapshot(snapshot?: CodexDeviceAuthState["authSnapshot"]) {
+  if (!snapshot?.authPath || !snapshot.existed || snapshot.content == null) return;
+
+  await fs.mkdir(path.dirname(snapshot.authPath), { recursive: true });
+  await fs.writeFile(snapshot.authPath, snapshot.content, { encoding: "utf8", mode: 0o600 });
+  try {
+    await fs.chmod(snapshot.authPath, 0o600);
+  } catch {
+    // Best effort on platforms that ignore chmod semantics.
+  }
+}
+
+async function handleStartCodexDeviceLogin(request: Request, connectionId?: string | null) {
+  const authError = await requireManagementAuth(request);
+  if (authError) return authError;
+
+  const current = codexDeviceAuthGlobal.__codexDeviceAuthState;
+  if (current?.status === "running") {
+    return NextResponse.json({
+      success: false,
+      pending: true,
+      error: "already_running",
+      errorDescription: "A Codex CLI device-auth login is already running.",
+      verificationUrl: current.verificationUrl,
+      userCode: current.userCode,
+    });
+  }
+
+  const runtime = await getCliRuntimeStatus("codex");
+  if (!runtime.installed || !runtime.runnable || !runtime.commandPath) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: "codex_cli_unavailable",
+        errorDescription:
+          runtime.installed && !runtime.runnable
+            ? "Codex CLI is installed but not runnable."
+            : "Codex CLI is not installed.",
+        runtime,
+      },
+      { status: 409 }
+    );
+  }
+
+  const authSnapshot = await snapshotCodexAuthFile();
+  const state: CodexDeviceAuthState = {
+    id: randomUUID(),
+    status: "running",
+    startedAt: Date.now(),
+    stdout: "",
+    stderr: "",
+    verificationUrl: null,
+    userCode: null,
+    connectionId: connectionId || null,
+    importResult: null,
+    error: null,
+    authSnapshot,
+  };
+
+  const child = spawn(runtime.commandPath, ["login", "--device-auth"], {
+    env: process.env,
+    stdio: ["ignore", "pipe", "pipe"],
+    shell: process.platform === "win32",
+  });
+  state.child = child;
+  codexDeviceAuthGlobal.__codexDeviceAuthState = state;
+
+  const updateOutput = (chunk: Buffer) => {
+    state.stdout = redactCliOutput((state.stdout + chunk.toString()).slice(-12000));
+    const hints = extractCodexDeviceAuthHints(`${state.stdout}\n${state.stderr}`);
+    state.verificationUrl = hints.verificationUrl;
+    state.userCode = hints.userCode;
+  };
+  child.stdout.on("data", updateOutput);
+  child.stderr.on("data", (chunk) => {
+    state.stderr = redactCliOutput((state.stderr + chunk.toString()).slice(-12000));
+    const hints = extractCodexDeviceAuthHints(`${state.stdout}\n${state.stderr}`);
+    state.verificationUrl = hints.verificationUrl;
+    state.userCode = hints.userCode;
+  });
+
+  state.timeout = setTimeout(
+    () => {
+      if (state.status !== "running") return;
+      state.status = "error";
+      state.error = "Codex CLI device-auth timed out.";
+      child.kill("SIGKILL");
+    },
+    10 * 60 * 1000
+  );
+
+  child.on("error", (error) => {
+    if (state.timeout) clearTimeout(state.timeout);
+    state.status = "error";
+    state.error = error.message || "Failed to start Codex CLI device-auth.";
+  });
+
+  child.on("close", async (code) => {
+    if (state.timeout) clearTimeout(state.timeout);
+    if (state.status !== "running") return;
+
+    if (code !== 0) {
+      state.status = "error";
+      state.error = state.stderr || state.stdout || `Codex CLI exited with code ${code}`;
+      return;
+    }
+
+    try {
+      state.importResult = await importCodexAuthFileFromLocalCli({
+        connectionId: state.connectionId,
+      });
+      await restoreCodexAuthSnapshot(state.authSnapshot);
+      await syncToCloudIfEnabled();
+      state.status = "success";
+    } catch (error: any) {
+      try {
+        await restoreCodexAuthSnapshot(state.authSnapshot);
+      } catch {
+        // Preserve original import error.
+      }
+      state.status = "error";
+      state.error = error?.message || "Failed to import Codex CLI auth.json.";
+    }
+  });
+
+  return NextResponse.json({
+    success: false,
+    pending: true,
+    id: state.id,
+    verificationUrl: state.verificationUrl,
+    userCode: state.userCode,
+  });
+}
+
+async function handlePollCodexDeviceLogin(request: Request) {
+  const authError = await requireManagementAuth(request);
+  if (authError) return authError;
+
+  const state = codexDeviceAuthGlobal.__codexDeviceAuthState;
+  if (!state) {
+    return NextResponse.json({
+      success: false,
+      pending: false,
+      error: "no_device_login",
+      errorDescription: "No Codex CLI device-auth login is running.",
+    });
+  }
+
+  if (state.status === "success") {
+    const result = state.importResult;
+    codexDeviceAuthGlobal.__codexDeviceAuthState = null;
+    return NextResponse.json({
+      success: true,
+      pending: false,
+      result,
+    });
+  }
+
+  if (state.status === "error") {
+    const error = state.error || "Codex CLI device-auth failed.";
+    codexDeviceAuthGlobal.__codexDeviceAuthState = null;
+    return NextResponse.json({
+      success: false,
+      pending: false,
+      error: "device_auth_failed",
+      errorDescription: error,
+    });
+  }
+
+  const hints = extractCodexDeviceAuthHints(`${state.stdout}\n${state.stderr}`);
+  state.verificationUrl = hints.verificationUrl;
+  state.userCode = hints.userCode;
+
+  return NextResponse.json({
+    success: false,
+    pending: true,
+    verificationUrl: state.verificationUrl,
+    userCode: state.userCode,
+    startedAt: state.startedAt,
+  });
+}
+
 // POST /api/oauth/[provider]/exchange - Exchange code for tokens and save
 // POST /api/oauth/[provider]/poll - Poll for token (device_code flow)
 export async function POST(
@@ -218,7 +493,11 @@ export async function POST(
     try {
       rawBody = await request.json();
     } catch {
-      if (action !== "poll-callback") {
+      if (
+        action !== "poll-callback" &&
+        action !== "device-login-start" &&
+        action !== "device-login-poll"
+      ) {
         return NextResponse.json(
           {
             error: {
@@ -250,6 +529,32 @@ export async function POST(
         return NextResponse.json({ error: validation.error }, { status: 400 });
       }
       body = validation.data;
+    } else if (action === "device-login-start" || action === "device-login-poll") {
+      const validation = validateBody(jsonObjectSchema, rawBody || {});
+      if (isValidationFailure(validation)) {
+        return NextResponse.json({ error: validation.error }, { status: 400 });
+      }
+      body = validation.data;
+    }
+
+    if (action === "device-login-start") {
+      if (provider !== "codex") {
+        return NextResponse.json(
+          { error: "Codex CLI device-auth is only supported for codex" },
+          { status: 400 }
+        );
+      }
+      return handleStartCodexDeviceLogin(request, body.connectionId);
+    }
+
+    if (action === "device-login-poll") {
+      if (provider !== "codex") {
+        return NextResponse.json(
+          { error: "Codex CLI device-auth is only supported for codex" },
+          { status: 400 }
+        );
+      }
+      return handlePollCodexDeviceLogin(request);
     }
 
     if (action === "exchange") {

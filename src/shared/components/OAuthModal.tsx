@@ -201,6 +201,75 @@ export default function OAuthModal({
     [provider, onSuccess, reauthConnection]
   );
 
+  const startCodexCliDeviceLogin = useCallback(async () => {
+    if (provider !== "codex") return;
+
+    try {
+      setError(null);
+      setIsDeviceCode(true);
+      setDeviceData({ verification_uri: "", verification_uri_complete: "", user_code: "" });
+      setStep("waiting");
+      setPolling(true);
+
+      const startRes = await fetch("/api/oauth/codex/device-login-start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ connectionId: reauthConnection?.id }),
+      });
+      const startData = await startRes.json();
+      if (!startRes.ok || (startData.error && !startData.pending)) {
+        throw new Error(
+          startData.errorDescription || startData.error || "Failed to start Codex CLI device-auth"
+        );
+      }
+
+      if (startData.verificationUrl || startData.userCode) {
+        setDeviceData({
+          verification_uri: startData.verificationUrl || "",
+          verification_uri_complete: startData.verificationUrl || "",
+          user_code: startData.userCode || "",
+        });
+      }
+
+      const maxAttempts = 300;
+      for (let i = 0; i < maxAttempts; i++) {
+        await new Promise((r) => setTimeout(r, 2000));
+
+        const pollRes = await fetch("/api/oauth/codex/device-login-poll", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        });
+        const pollData = await pollRes.json();
+
+        if (pollData.verificationUrl || pollData.userCode) {
+          setDeviceData({
+            verification_uri: pollData.verificationUrl || "",
+            verification_uri_complete: pollData.verificationUrl || "",
+            user_code: pollData.userCode || "",
+          });
+        }
+
+        if (pollData.success) {
+          setStep("success");
+          setPolling(false);
+          onSuccess?.();
+          return;
+        }
+
+        if (pollData.error && !pollData.pending) {
+          throw new Error(pollData.errorDescription || pollData.error);
+        }
+      }
+
+      throw new Error("Codex CLI device-auth timed out");
+    } catch (err) {
+      setError(err.message);
+      setStep("error");
+      setPolling(false);
+    }
+  }, [provider, onSuccess, reauthConnection]);
+
   // Start OAuth flow
   const startOAuthFlow = useCallback(async () => {
     if (!provider) return;
@@ -629,9 +698,21 @@ export default function OAuthModal({
             <h3 className="text-lg font-semibold mb-2">{t("waiting")}</h3>
             <p className="text-sm text-text-muted mb-2">{t("completeAuthInPopup")}</p>
             <p className="text-xs text-text-muted mb-4 opacity-70">{t("popupClosedHint")}</p>
-            <Button variant="ghost" onClick={() => setStep("input")}>
-              {t("popupBlocked")}
-            </Button>
+            <div className="flex flex-col items-center gap-2">
+              <Button variant="ghost" onClick={() => setStep("input")}>
+                {t("popupBlocked")}
+              </Button>
+              {provider === "codex" && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  icon="terminal"
+                  onClick={startCodexCliDeviceLogin}
+                >
+                  {t("codexCliDeviceButton")}
+                </Button>
+              )}
+            </div>
           </div>
         )}
 
@@ -640,37 +721,45 @@ export default function OAuthModal({
           <>
             <div className="text-center py-4">
               <p className="text-sm text-text-muted mb-4">{t("deviceCodeVisitUrl")}</p>
-              <div className="bg-sidebar p-4 rounded-lg mb-4">
-                <p className="text-xs text-text-muted mb-1">{t("deviceCodeVerificationUrl")}</p>
-                <div className="flex items-center gap-2">
-                  <code className="flex-1 text-sm break-all">{deviceVerificationUrl}</code>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    icon={copied === "verify_url" ? "check" : "content_copy"}
-                    onClick={() => copy(deviceVerificationUrl, "verify_url")}
-                  />
+              {deviceVerificationUrl ? (
+                <div className="bg-sidebar p-4 rounded-lg mb-4">
+                  <p className="text-xs text-text-muted mb-1">{t("deviceCodeVerificationUrl")}</p>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 text-sm break-all">{deviceVerificationUrl}</code>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      icon={copied === "verify_url" ? "check" : "content_copy"}
+                      onClick={() => copy(deviceVerificationUrl, "verify_url")}
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="bg-primary/10 p-4 rounded-lg">
-                <p className="text-xs text-text-muted mb-1">{t("deviceCodeYourCode")}</p>
-                <div className="flex items-center justify-center gap-2">
-                  <p className="text-2xl font-mono font-bold text-primary">
-                    {deviceData.user_code}
-                  </p>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    icon={copied === "user_code" ? "check" : "content_copy"}
-                    onClick={() => copy(deviceData.user_code, "user_code")}
-                  />
+              ) : (
+                <div className="bg-sidebar p-4 rounded-lg mb-4 text-sm text-text-muted">
+                  {provider === "codex" ? t("codexCliStarting") : t("deviceCodeWaiting")}
                 </div>
-              </div>
+              )}
+              {deviceData.user_code && (
+                <div className="bg-primary/10 p-4 rounded-lg">
+                  <p className="text-xs text-text-muted mb-1">{t("deviceCodeYourCode")}</p>
+                  <div className="flex items-center justify-center gap-2">
+                    <p className="text-2xl font-mono font-bold text-primary">
+                      {deviceData.user_code}
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      icon={copied === "user_code" ? "check" : "content_copy"}
+                      onClick={() => copy(deviceData.user_code, "user_code")}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
             {polling && (
               <div className="flex items-center justify-center gap-2 text-sm text-text-muted">
                 <span className="material-symbols-outlined animate-spin">progress_activity</span>
-                {t("deviceCodeWaiting")}
+                {provider === "codex" ? t("codexCliImportWaiting") : t("deviceCodeWaiting")}
               </div>
             )}
           </>
@@ -708,6 +797,20 @@ export default function OAuthModal({
                 <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-3 text-xs text-blue-200">
                   <span className="material-symbols-outlined text-sm align-middle mr-1">info</span>
                   {t("remoteAccessInfo")}
+                </div>
+              )}
+              {provider === "codex" && (
+                <div className="rounded-lg border border-primary/30 bg-primary/10 p-3">
+                  <p className="text-sm font-medium mb-1">{t("codexCliDeviceTitle")}</p>
+                  <p className="text-xs text-text-muted mb-3">{t("codexCliDeviceDescription")}</p>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    icon="terminal"
+                    onClick={startCodexCliDeviceLogin}
+                  >
+                    {t("codexCliDeviceButton")}
+                  </Button>
                 </div>
               )}
               <div>

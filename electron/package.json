@@ -1,6 +1,6 @@
 {
   "name": "ozrouter-desktop",
-  "version": "3.7.8",
+  "version": "3.8.0",
   "description": "Desktop wrapper for the OzRouter local AI gateway.",
   "main": "main.js",
   "author": {
