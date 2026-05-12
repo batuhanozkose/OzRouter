@@ -84,6 +84,11 @@ const MODEL_FAMILIES: Record<string, string[]> = {
   // GPT-5 family
   "gpt-5": ["gpt-5-mini", "gpt-4o"],
   "gpt-5.1": ["gpt-5.1-mini", "gpt-5", "gpt-4o"],
+
+  // Codex model families
+  "gpt-5.3-codex": ["gpt-5.2-codex", "gpt-5.3-codex-spark"],
+  "gpt-5.2-codex": ["gpt-5.3-codex", "gpt-5.3-codex-spark"],
+  "gpt-5.3-codex-spark": ["gpt-5.3-codex", "gpt-5.2-codex"],
 };
 
 // ── Error Detection ──────────────────────────────────────────────────────────

@@ -5,6 +5,7 @@ import { Card, Button, ModelSelectModal } from "@/shared/components";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { copyToClipboard } from "@/shared/utils/clipboard";
+import { getDisplayBaseUrl } from "@/shared/utils/origin";
 import { buildOpenCodeConfigDocument } from "@/shared/services/opencodeConfig";
 import { useTheme } from "@/shared/hooks/useTheme";
 
@@ -90,7 +91,7 @@ export default function DefaultToolCard({
     [getSelectedModelEntries]
   );
 
-  const normalizedBaseUrl = baseUrl || "http://localhost:20128";
+  const normalizedBaseUrl = baseUrl || getDisplayBaseUrl();
   const baseUrlWithV1 = normalizedBaseUrl.endsWith("/v1")
     ? normalizedBaseUrl
     : `${normalizedBaseUrl}/v1`;

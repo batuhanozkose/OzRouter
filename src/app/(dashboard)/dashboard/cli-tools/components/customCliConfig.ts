@@ -1,3 +1,5 @@
+import { getDisplayBaseUrl } from "@/shared/utils/origin";
+
 export interface CustomCliAliasMapping {
   alias: string;
   model: string;
@@ -12,7 +14,7 @@ export interface CustomCliConfigInput {
 }
 
 export function normalizeOpenAiBaseUrl(baseUrl: string): string {
-  const trimmed = (baseUrl || "http://localhost:20128").trim().replace(/\/+$/, "");
+  const trimmed = (baseUrl || getDisplayBaseUrl()).trim().replace(/\/+$/, "");
   return trimmed.endsWith("/v1") ? trimmed : `${trimmed}/v1`;
 }
 

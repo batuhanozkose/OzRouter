@@ -6093,7 +6093,7 @@ function EditConnectionModal({ isOpen, connection, onSave, onClose }: EditConnec
       setValidationResult(null);
       setSaveError(null);
     }
-  }, [connection, defaultBaseUrl, isVertex]);
+  }, [connection, defaultBaseUrl, isVertex, isOpen]);
 
   const handleTest = async () => {
     if (!connection?.provider) return;

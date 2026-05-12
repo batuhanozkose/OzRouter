@@ -86,7 +86,20 @@ export function claudeToOpenAIRequest(model, body, stream) {
           function: {
             name,
             description: typeof tool.description === "string" ? tool.description : "", // fix: never null (#276)
-            parameters: tool.input_schema || { type: "object", properties: {} },
+            parameters: (() => {
+              const schema = tool.input_schema || { type: "object", properties: {} };
+              // Inject properties: {} for zero-argument tools — prevents 400 errors
+              // from OpenAI strict schema validation when MCP tools omit properties.
+              if (
+                schema &&
+                typeof schema === "object" &&
+                schema.type === "object" &&
+                !schema.properties
+              ) {
+                return { ...schema, properties: {} };
+              }
+              return schema;
+            })(),
           },
         };
       })

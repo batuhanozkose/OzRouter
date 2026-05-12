@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { getDisplayBaseUrl } from "@/shared/utils/origin";
 
 const STEP_IDS = ["welcome", "security", "provider", "test", "done"];
 const STEP_ICONS = ["waving_hand", "lock", "dns", "play_circle", "check_circle"];
@@ -22,7 +23,7 @@ export default function OnboardingWizard() {
   const tc = useTranslations("common");
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [apiEndpoint, setApiEndpoint] = useState("http://localhost:20128/api/v1");
+  const [apiEndpoint, setApiEndpoint] = useState(`${getDisplayBaseUrl()}/api/v1`);
 
   // Security step state
   const [password, setPassword] = useState("");

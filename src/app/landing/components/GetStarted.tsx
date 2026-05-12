@@ -3,11 +3,13 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { copyToClipboard } from "@/shared/utils/clipboard";
 
+import { getDisplayBaseUrl } from "@/shared/utils/origin";
+
 export default function GetStarted() {
   const t = useTranslations("landing");
   const [copied, setCopied] = useState(false);
 
-  const endpoint = "http://localhost:20128";
+  const endpoint = getDisplayBaseUrl();
   const dashboardUrl = `${endpoint}/dashboard`;
   const command =
     "git clone https://github.com/batuhanozkose/OzRouter.git && cd OzRouter && npm install && npm run dev";

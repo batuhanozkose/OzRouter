@@ -4,6 +4,7 @@ import { useMemo, useState, useCallback } from "react";
 import { Card, Button } from "@/shared/components";
 import { useTranslations } from "next-intl";
 import { copyToClipboard } from "@/shared/utils/clipboard";
+import { getDisplayBaseUrl } from "@/shared/utils/origin";
 import {
   buildCustomCliEnvScript,
   buildCustomCliJsonConfig,
@@ -59,7 +60,7 @@ export default function CustomCliCard({
     (!cloudEnabled
       ? "sk_ozrouter"
       : translateOrFallback("yourApiKeyPlaceholder", "sk-your-ozrouter-key"));
-  const baseUrlWithV1 = normalizeOpenAiBaseUrl(baseUrl || "http://localhost:20128");
+  const baseUrlWithV1 = normalizeOpenAiBaseUrl(baseUrl || getDisplayBaseUrl());
   const chatCompletionsEndpoint = `${baseUrlWithV1}/chat/completions`;
 
   const envScript = useMemo(

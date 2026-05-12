@@ -164,6 +164,21 @@ export function truncateUrl(url: string | null | undefined, max = 50) {
 }
 
 /**
+ * Format a large number with K/M/B/T suffix for compact display.
+ * Prevents UI overflow for large token counts and request counts.
+ * @param {number} n - Number to format
+ * @returns {string}
+ */
+export function formatCompact(n: number | null | undefined): string {
+  const value = n || 0;
+  if (value >= 1_000_000_000_000) return `${(value / 1_000_000_000_000).toFixed(1)}T`;
+  if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)}B`;
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
+  return String(Math.round(value));
+}
+
+/**
  * Safely extract a finite number, returning undefined for invalid values.
  * Used by quota normalization in both backend (quotaCache) and frontend (ProviderLimits).
  */

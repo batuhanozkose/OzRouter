@@ -536,7 +536,10 @@ export default function ApiEndpointsTab() {
                               Example
                             </p>
                             <code className="text-[11px] font-mono text-text-main break-all">
-                              curl -X {ep.method} http://localhost:20128
+                              curl -X {ep.method}{" "}
+                              {typeof window !== "undefined"
+                                ? window.location.origin
+                                : "http://localhost:20128"}
                               {ep.path.replace("/api/", "/")}
                               {ep.security ? ' -H "Authorization: Bearer YOUR_KEY"' : ""}
                               {ep.requestBody

@@ -598,8 +598,20 @@ export function runMigrations(db: Database.Database, options?: { isNewDb?: boole
       console.log(`[Migration] Applied: ${migration.version}_${migration.name}`);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error(`[Migration] FAILED: ${migration.version}_${migration.name} — ${message}`);
-      throw err; // Re-throw to prevent DB from starting in inconsistent state
+      // Treat duplicate-column ALTER TABLE errors as no-ops.
+      // This can happen when a migration was partially applied before a crash.
+      if (message.includes("duplicate column name")) {
+        console.log(
+          `[Migration] Skipping (already applied): ${migration.version}_${migration.name}`
+        );
+        db.prepare("INSERT OR IGNORE INTO _ozrouter_migrations (version, name) VALUES (?, ?)").run(
+          migration.version,
+          migration.name
+        );
+      } else {
+        console.error(`[Migration] FAILED: ${migration.version}_${migration.name} — ${message}`);
+        throw err; // Re-throw to prevent DB from starting in inconsistent state
+      }
     }
   }
 

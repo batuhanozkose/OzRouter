@@ -605,6 +605,18 @@ function normalizeCodexTools(body: Record<string, unknown>): void {
       return false;
     }
 
+    // Flatten Chat Completions format to Responses format.
+    // Chat Completions: { type: "function", function: { name, description, parameters } }
+    // Responses:        { type: "function", name, description, parameters }
+    if (tool.function && typeof tool.function === "object" && !Array.isArray(tool.function)) {
+      const fn = tool.function as Record<string, unknown>;
+      if (!tool.name) tool.name = fn.name;
+      if (fn.description && !tool.description) tool.description = fn.description;
+      if (fn.parameters && !tool.parameters) tool.parameters = fn.parameters;
+      if (fn.strict !== undefined && tool.strict === undefined) tool.strict = fn.strict;
+      delete tool.function;
+    }
+
     validToolNames.add(name);
     return true;
   });
@@ -1271,6 +1283,16 @@ export class CodexExecutor extends BaseExecutor {
     // Issue #806: Even for native passthrough, some clients (purist completions) might indiscriminately inject
     // a `messages` or `prompt` array which the strict Codex Responses schema rejects.
     delete body.messages;
+    // Map prompt field to input for Cursor compatibility (fixes Cursor sending prompt instead of input).
+    if (!body.input && typeof body.prompt === "string" && body.prompt.trim()) {
+      body.input = [
+        {
+          type: "message",
+          role: "user",
+          content: [{ type: "input_text", text: body.prompt }],
+        },
+      ];
+    }
     delete body.prompt;
 
     let modelEffort: string | null = null;

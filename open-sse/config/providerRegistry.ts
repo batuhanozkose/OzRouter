@@ -679,6 +679,7 @@ export const REGISTRY: Record<string, RegistryEntry> = {
     headers: {
       "HTTP-Referer": "https://endpoint-proxy.local",
       "X-Title": "OzRouter",
+      "User-Agent": CLAUDE_CLI_USER_AGENT,
     },
     models: [{ id: "auto", name: "Auto (Best Available)" }],
   },

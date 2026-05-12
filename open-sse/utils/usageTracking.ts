@@ -219,6 +219,8 @@ export function filterUsageForFormat(usage, targetFormat) {
       "reasoning_tokens",
       "prompt_tokens_details",
       "completion_tokens_details",
+      "prompt_cache_hit_tokens",
+      "prompt_cache_miss_tokens",
       "estimated",
     ],
   };
@@ -256,6 +258,8 @@ export function normalizeUsage(usage) {
   assignNumber("total_tokens", usage?.total_tokens);
   assignNumber("cache_read_input_tokens", usage?.cache_read_input_tokens);
   assignNumber("cache_creation_input_tokens", usage?.cache_creation_input_tokens);
+  assignNumber("prompt_cache_hit_tokens", usage?.prompt_cache_hit_tokens);
+  assignNumber("prompt_cache_miss_tokens", usage?.prompt_cache_miss_tokens);
   assignNumber("cached_tokens", usage?.cached_tokens);
   assignNumber("reasoning_tokens", usage?.reasoning_tokens);
 
@@ -365,10 +369,15 @@ export function extractUsage(chunk) {
       completion_tokens: chunk.usage.completion_tokens ?? chunk.usage.output_tokens ?? 0,
       cached_tokens:
         chunk.usage.prompt_tokens_details?.cached_tokens ??
-        chunk.usage.input_tokens_details?.cached_tokens,
+        chunk.usage.input_tokens_details?.cached_tokens ??
+        chunk.usage.prompt_cache_hit_tokens,
       reasoning_tokens:
         chunk.usage.completion_tokens_details?.reasoning_tokens ??
         chunk.usage.output_tokens_details?.reasoning_tokens,
+      cache_read_input_tokens: chunk.usage.cache_read_input_tokens,
+      cache_creation_input_tokens: chunk.usage.cache_creation_input_tokens,
+      prompt_cache_hit_tokens: chunk.usage.prompt_cache_hit_tokens,
+      prompt_cache_miss_tokens: chunk.usage.prompt_cache_miss_tokens,
     });
   }
 

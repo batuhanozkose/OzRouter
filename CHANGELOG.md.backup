@@ -1,0 +1,59 @@
+# Changelog
+
+## [Unreleased]
+
+- Remaining OmniRoute v3.7.9 backports (Gemini CLI transport, combo stabilization, OAuth mutex, etc.)
+
+## [3.8.2] — 2026-05-11
+
+### Fixed
+
+- Codex prompt field now maps to input array for Cursor compatibility.
+- Codex tools normalization flattens Chat Completions format to Responses format.
+- Codex model family fallback added (gpt-5.2-codex, gpt-5.3-codex, gpt-5.3-codex-spark).
+- MCP tool schema injects `properties: {}` for zero-argument tools in Anthropic→OpenAI translation.
+- EditConnectionModal now re-syncs formData when `isOpen` dependency changes.
+- Migration runner treats duplicate-column ALTER TABLE errors as no-ops (crash recovery).
+- Dashboard endpoint examples now use `window.location.origin` instead of hardcoded localhost.
+- All client-side dashboard components now derive base URL from browser origin instead of hardcoding localhost:20128.
+- DeepSeek V4 native cache token extraction (`prompt_cache_hit_tokens`, `prompt_cache_miss_tokens`).
+- MCP endpoints now enforce API key authentication when `REQUIRE_API_KEY` is set, working correctly even when dashboard auth is enabled.
+
+### Added
+
+- `formatCompact()` utility for K/M/B/T number shortening in dashboard UI.
+
+### Changed
+
+- Backported upstream OmniRoute v3.7.7-v3.7.9 fixes and features.
+
+## [3.8.1] — 2026-05-11
+
+### Fixed
+
+- Corrected HTTP status codes for SSRF-blocked provider validation (503 → 400).
+- Fixed A2A JSON-RPC auth rejection returning 503 instead of 400.
+- Fixed `securityBlocked` flag not being set after SSRF status code change.
+- Added missing `scripts/smoke-electron-packaged.mjs` for electron smoke tests.
+- Added missing `scripts/run-next-playwright.mjs` for Playwright test runner.
+- Fixed Codex executor session identity test with correct installation UUID.
+- Fixed chat-cooldown-aware-retry abort test timing issue.
+- Fixed `dev-origins-config` test to include `p1.proxy.zo.computer`.
+- Fixed `providers-validate-route` SSRF audit log test expectations.
+- Fixed memory schema test to use `unknownField` for strict-mode validation.
+- Fixed `volumeDetector` test to use vitest imports and mock settings.
+- Fixed CacheTrends, CachePerformance, and IdempotencyLayer UI test rendering assertions.
+- Added `@testing-library/dom`, `@testing-library/react`, `@testing-library/jest-dom` dev dependencies.
+- Added `vitest.setup.ts` with jest-dom matchers.
+
+### Changed
+
+- Complete Turkish (tr.json) translation rewrite — all 4897 keys translated with proper context.
+
+## [3.7.8] — 2026-05-02
+
+- Rebranded the project as OzRouter.
+- Updated public documentation for GitHub-only installation.
+- Removed npm and Docker Hub publishing workflows.
+- Updated repository metadata for `batuhanozkose/OzRouter`.
+- Simplified release guidance around source-based local installs.
