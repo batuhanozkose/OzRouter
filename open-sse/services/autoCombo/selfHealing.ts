@@ -36,8 +36,12 @@ export class SelfHealingManager {
     return true;
   }
 
+  /** Map of provider → evaluation-in-progress flag to prevent re-entrant races */
+  private evaluating = new Set<string>();
+
   /**
    * Evaluate provider health and potentially exclude or re-admit.
+   * Synchronous — safe for concurrent calls from the same event loop tick.
    */
   evaluate(
     provider: string,
@@ -48,59 +52,72 @@ export class SelfHealingManager {
     reason?: string;
     isProbe?: boolean;
   } {
-    const existing = this.exclusions.get(provider);
-
-    // Re-admission: score above threshold and cooldown expired
-    if (
-      existing &&
-      score >= REENTRY_THRESHOLD &&
-      Date.now() - existing.excludedAt > existing.cooldownMs
-    ) {
-      this.exclusions.delete(provider);
-      return {
-        excluded: false,
-        reason: `Re-admitted: score ${score.toFixed(2)} >= ${REENTRY_THRESHOLD}`,
-      };
+    // Guard against re-entrant concurrent evaluation for the same provider
+    if (this.evaluating.has(provider)) {
+      return { excluded: this.isExcluded(provider) };
     }
+    this.evaluating.add(provider);
+    try {
+      const existing = this.exclusions.get(provider);
 
-    // Already excluded and still in cooldown
-    if (this.isExcluded(provider)) {
-      // Allow probe if HALF_OPEN
-      if (circuitBreakerState === "HALF_OPEN" && existing) {
-        existing.probeCount++;
-        return { excluded: false, isProbe: true, reason: `Probe request #${existing.probeCount}` };
+      // Re-admission: score above threshold and cooldown expired
+      if (
+        existing &&
+        score >= REENTRY_THRESHOLD &&
+        Date.now() - existing.excludedAt > existing.cooldownMs
+      ) {
+        this.exclusions.delete(provider);
+        return {
+          excluded: false,
+          reason: `Re-admitted: score ${score.toFixed(2)} >= ${REENTRY_THRESHOLD}`,
+        };
       }
-      return { excluded: true, reason: existing?.reason || "Excluded" };
-    }
 
-    // New exclusion: score too low
-    if (score < EXCLUSION_THRESHOLD) {
-      const cooldownMs = existing
-        ? Math.min(existing.cooldownMs * 2, MAX_COOLDOWN_MS)
-        : DEFAULT_COOLDOWN_MS;
-      this.exclusions.set(provider, {
-        provider,
-        excludedAt: Date.now(),
-        cooldownMs,
-        reason: `Score ${score.toFixed(2)} < ${EXCLUSION_THRESHOLD}`,
-        probeCount: 0,
-      });
-      return { excluded: true, reason: `Excluded: score ${score.toFixed(2)} below threshold` };
-    }
+      // Already excluded and still in cooldown
+      if (this.isExcluded(provider)) {
+        // Allow probe if HALF_OPEN
+        if (circuitBreakerState === "HALF_OPEN" && existing) {
+          existing.probeCount++;
+          return {
+            excluded: false,
+            isProbe: true,
+            reason: `Probe request #${existing.probeCount}`,
+          };
+        }
+        return { excluded: true, reason: existing?.reason || "Excluded" };
+      }
 
-    // Circuit breaker OPEN → auto-exclude
-    if (circuitBreakerState === "OPEN") {
-      this.exclusions.set(provider, {
-        provider,
-        excludedAt: Date.now(),
-        cooldownMs: DEFAULT_COOLDOWN_MS,
-        reason: "Circuit breaker OPEN",
-        probeCount: 0,
-      });
-      return { excluded: true, reason: "Circuit breaker OPEN" };
-    }
+      // New exclusion: score too low
+      if (score < EXCLUSION_THRESHOLD) {
+        const cooldownMs = existing
+          ? Math.min(existing.cooldownMs * 2, MAX_COOLDOWN_MS)
+          : DEFAULT_COOLDOWN_MS;
+        this.exclusions.set(provider, {
+          provider,
+          excludedAt: Date.now(),
+          cooldownMs,
+          reason: `Score ${score.toFixed(2)} < ${EXCLUSION_THRESHOLD}`,
+          probeCount: 0,
+        });
+        return { excluded: true, reason: `Excluded: score ${score.toFixed(2)} below threshold` };
+      }
 
-    return { excluded: false };
+      // Circuit breaker OPEN → auto-exclude
+      if (circuitBreakerState === "OPEN") {
+        this.exclusions.set(provider, {
+          provider,
+          excludedAt: Date.now(),
+          cooldownMs: DEFAULT_COOLDOWN_MS,
+          reason: "Circuit breaker OPEN",
+          probeCount: 0,
+        });
+        return { excluded: true, reason: "Circuit breaker OPEN" };
+      }
+
+      return { excluded: false };
+    } finally {
+      this.evaluating.delete(provider);
+    }
   }
 
   /**

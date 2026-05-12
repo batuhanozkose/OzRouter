@@ -75,13 +75,15 @@ class CostStrategyImpl implements RouterStrategy {
     const sorted = [...candidates].sort((a, b) => a.costPer1MTokens - b.costPer1MTokens);
     const best = sorted[0];
     if (!best) throw new Error("[CostStrategy] No candidates available");
+    const minCost = Math.min(...candidates.map((c) => c.costPer1MTokens));
+    const normalizedScore = best.costPer1MTokens === 0 ? 1.0 : minCost / best.costPer1MTokens;
     return {
       provider: best.provider,
       model: best.model,
       strategy: this.name,
       reason: `CostStrategy: cheapest at $${best.costPer1MTokens.toFixed(3)}/1M tokens`,
       candidatesConsidered: candidates.length,
-      finalScore: best.costPer1MTokens === 0 ? 1.0 : 1 / best.costPer1MTokens,
+      finalScore: Math.min(1, Math.max(0, normalizedScore)),
     };
   }
 }
@@ -96,15 +98,15 @@ class LatencyStrategyImpl implements RouterStrategy {
     const healthy = pool.filter((c) => c.circuitBreakerState !== "OPEN");
     const candidates = healthy.length > 0 ? healthy : pool;
     const sorted = [...candidates].sort((a, b) => {
-      const aPenalty = a.errorRate * 1000;
-      const bPenalty = b.errorRate * 1000;
+      const aPenalty = Math.min(1, a.errorRate) * 1000;
+      const bPenalty = Math.min(1, b.errorRate) * 1000;
       return a.p95LatencyMs + aPenalty - (b.p95LatencyMs + bPenalty);
     });
     const best = sorted[0];
     if (!best) throw new Error("[LatencyStrategy] No candidates available");
 
     const latencyScore = best.p95LatencyMs > 0 ? Math.max(0.001, 10_000 / best.p95LatencyMs) : 1;
-    const reliability = Math.max(0, 1 - best.errorRate);
+    const reliability = Math.max(0, 1 - Math.min(1, best.errorRate));
     const finalScore = latencyScore * 0.7 + reliability * 0.3;
 
     return {

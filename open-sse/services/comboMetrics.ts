@@ -185,6 +185,11 @@ export function recordComboRequest(
     target?: ComboRequestTargetMeta | null;
   }
 ): void {
+  // Normalize target — treat undefined connectionId as null
+  const normalizedTarget = target
+    ? { ...target, connectionId: target.connectionId ?? null }
+    : target;
+
   if (!metrics.has(comboName)) {
     metrics.set(comboName, createComboEntry(strategy));
   }
@@ -212,7 +217,7 @@ export function recordComboRequest(
   }
   applyMetricOutcome(combo.byModel[modelStr], success, latencyMs, usedAt);
 
-  const targetMetric = buildTargetMetric(modelStr, target || {});
+  const targetMetric = buildTargetMetric(modelStr, normalizedTarget || {});
   if (!targetMetric) return;
 
   if (!combo.byTarget[targetMetric.executionKey]) {
@@ -224,11 +229,11 @@ export function recordComboRequest(
   existingTargetMetric.provider = targetMetric.provider || existingTargetMetric.provider;
   existingTargetMetric.providerId = targetMetric.providerId || existingTargetMetric.providerId;
   existingTargetMetric.connectionId =
-    target?.connectionId === null
+    normalizedTarget?.connectionId === null
       ? null
       : (targetMetric.connectionId ?? existingTargetMetric.connectionId);
   existingTargetMetric.label =
-    target?.label === null ? null : (targetMetric.label ?? existingTargetMetric.label);
+    normalizedTarget?.label === null ? null : (targetMetric.label ?? existingTargetMetric.label);
 
   applyMetricOutcome(existingTargetMetric, success, latencyMs, usedAt);
 }

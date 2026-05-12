@@ -146,8 +146,20 @@ export function applyToolFilter(
  */
 export function stripModelTags(messages: Message[]): Message[] {
   return messages.map((msg) => {
-    if (typeof msg.content === "string" && CACHE_TAG_PATTERN.test(msg.content)) {
-      return { ...msg, content: msg.content.replace(CACHE_TAG_PATTERN, "").trimEnd() };
+    if (typeof msg.content === "string") {
+      if (CACHE_TAG_PATTERN.test(msg.content)) {
+        return { ...msg, content: msg.content.replace(CACHE_TAG_PATTERN, "").trimEnd() };
+      }
+      return msg;
+    }
+    if (Array.isArray(msg.content)) {
+      const cleaned = msg.content.map((part: Record<string, unknown>) => {
+        if (part && typeof part.text === "string" && CACHE_TAG_PATTERN.test(part.text)) {
+          return { ...part, text: (part.text as string).replace(CACHE_TAG_PATTERN, "").trimEnd() };
+        }
+        return part;
+      });
+      return { ...msg, content: cleaned };
     }
     return msg;
   });

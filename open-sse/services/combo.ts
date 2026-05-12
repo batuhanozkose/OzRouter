@@ -136,7 +136,7 @@ export async function validateResponseQuality(
 ): Promise<{ valid: boolean; reason?: string; clonedResponse?: Response }> {
   if (isStreaming) return { valid: true };
 
-  const contentType = response.headers.get("content-type") || "";
+  const contentType = response.headers?.get("content-type") || "";
   if (!contentType.includes("application/json") && !contentType.includes("text/")) {
     return { valid: true };
   }
@@ -570,19 +570,26 @@ async function sortModelsByCost(models) {
 }
 
 async function sortTargetsByCost(targets: ResolvedComboTarget[]) {
-  const orderedModels = await sortModelsByCost(targets.map((target) => target.modelStr));
-  const byModel = new Map<string, ResolvedComboTarget[]>();
-  for (const target of targets) {
-    const queue = byModel.get(target.modelStr) || [];
-    queue.push(target);
-    byModel.set(target.modelStr, queue);
-  }
-  return orderedModels
-    .map((modelStr) => {
-      const queue = byModel.get(modelStr);
-      return queue?.shift() || null;
+  if (targets.length <= 1) return targets;
+  const { getPricingForModel } = await import("../../src/lib/localDb");
+  const withCost = await Promise.all(
+    targets.map(async (target) => {
+      const parsed = parseModel(target.modelStr);
+      const provider = parsed.provider || parsed.providerAlias || "unknown";
+      const model = parsed.model || target.modelStr;
+      let cost = Infinity;
+      try {
+        const pricing = await getPricingForModel(provider, model);
+        const inputPrice = Number(pricing?.input);
+        if (Number.isFinite(inputPrice) && inputPrice >= 0) cost = inputPrice;
+      } catch {
+        /* keep Infinity */
+      }
+      return { target, cost };
     })
-    .filter((target): target is ResolvedComboTarget => target !== null);
+  );
+  withCost.sort((a, b) => a.cost - b.cost);
+  return withCost.map((e) => e.target);
 }
 
 /**
@@ -604,22 +611,14 @@ function sortModelsByUsage(models, comboName) {
 }
 
 function sortTargetsByUsage(targets: ResolvedComboTarget[], comboName: string) {
-  const orderedModels = sortModelsByUsage(
-    targets.map((target) => target.modelStr),
-    comboName
-  );
-  const byModel = new Map<string, ResolvedComboTarget[]>();
-  for (const target of targets) {
-    const queue = byModel.get(target.modelStr) || [];
-    queue.push(target);
-    byModel.set(target.modelStr, queue);
-  }
-  return orderedModels
-    .map((modelStr) => {
-      const queue = byModel.get(modelStr);
-      return queue?.shift() || null;
-    })
-    .filter((target): target is ResolvedComboTarget => target !== null);
+  const metrics = getComboMetrics(comboName);
+  const byModel = metrics?.byModel || {};
+  const withUsage = targets.map((target) => ({
+    target,
+    requests: byModel[target.modelStr]?.requests ?? 0,
+  }));
+  withUsage.sort((a, b) => a.requests - b.requests);
+  return withUsage.map((e) => e.target);
 }
 
 /**
@@ -641,19 +640,30 @@ function sortModelsByContextSize(models) {
 }
 
 function sortTargetsByContextSize(targets: ResolvedComboTarget[]) {
-  const orderedModels = sortModelsByContextSize(targets.map((target) => target.modelStr));
-  const byModel = new Map<string, ResolvedComboTarget[]>();
+  const withContext = targets.map((target) => {
+    const parsed = parseModel(target.modelStr);
+    const provider = parsed.provider || parsed.providerAlias || "unknown";
+    const model = parsed.model || target.modelStr;
+    const limit = getModelContextLimit(provider, model);
+    return { target, context: limit ?? 0 };
+  });
+  withContext.sort((a, b) => b.context - a.context);
+  return withContext.map((e) => e.target);
+}
+
+function sortTargetsByStepOrder(targets: ResolvedComboTarget[]) {
+  const stepOrder = new Map<string, number>();
   for (const target of targets) {
-    const queue = byModel.get(target.modelStr) || [];
-    queue.push(target);
-    byModel.set(target.modelStr, queue);
+    if (!stepOrder.has(target.stepId)) {
+      stepOrder.set(target.stepId, stepOrder.size);
+    }
   }
-  return orderedModels
-    .map((modelStr) => {
-      const queue = byModel.get(modelStr);
-      return queue?.shift() || null;
-    })
-    .filter((target): target is ResolvedComboTarget => target !== null);
+  return [...targets].sort((a, b) => {
+    const orderA = stepOrder.get(a.stepId) ?? 0;
+    const orderB = stepOrder.get(b.stepId) ?? 0;
+    if (orderA !== orderB) return orderA - orderB;
+    return a.weight - b.weight;
+  });
 }
 
 function toTextContent(content) {
@@ -1219,7 +1229,16 @@ export async function handleComboChat({
       "COMBO",
       `Bypassing strategy — routing directly to pinned context model: ${pinnedModel}`
     );
-    return handleSingleModelWrapped(body, pinnedModel);
+    const allTargets = resolveComboTargets(combo, allCombos);
+    const matchedTarget = allTargets.find((t) => t.modelStr === pinnedModel);
+    const target = matchedTarget || {
+      modelStr: pinnedModel,
+      executionKey: pinnedModel,
+      stepId: pinnedModel,
+      provider: parseModel(pinnedModel).provider || "unknown",
+      connectionId: null,
+    };
+    return handleSingleModelWrapped(body, pinnedModel, target);
   }
 
   // Route to round-robin handler if strategy matches
@@ -1367,7 +1386,10 @@ export async function handleComboChat({
         scoredTargets.find((entry) => {
           const parsed = parseModel(entry.target.modelStr);
           const modelId = parsed.model || entry.target.modelStr;
-          return entry.target.provider === selectedProvider && modelId === selectedModel;
+          return (
+            entry.target.provider === selectedProvider &&
+            (modelId === selectedModel || entry.target.modelStr === selectedModel)
+          );
         })?.target ||
         rankedTargets[0] ||
         eligibleTargets[0];
@@ -1436,6 +1458,34 @@ export async function handleComboChat({
   } else if (strategy === "context-optimized") {
     orderedTargets = sortTargetsByContextSize(orderedTargets);
     log.info("COMBO", `Context-optimized ordering: largest first (${orderedTargets[0]?.modelStr})`);
+  } else if (strategy === "fill-first") {
+    orderedTargets = sortTargetsByStepOrder(orderedTargets);
+    log.info(
+      "COMBO",
+      `Fill-first ordering: exhaust step-by-step (${orderedTargets.length} targets across ${new Set(orderedTargets.map((t) => t.stepId)).size} steps)`
+    );
+  } else if (strategy === "p2c") {
+    if (orderedTargets.length > 1) {
+      const idx1 = Math.floor(Math.random() * orderedTargets.length);
+      let idx2;
+      do {
+        idx2 = Math.floor(Math.random() * orderedTargets.length);
+      } while (idx2 === idx1 && orderedTargets.length > 1);
+      const t1 = orderedTargets[idx1];
+      const t2 = orderedTargets[idx2];
+      const stats = semaphore.getStats();
+      const load1 = stats[t1.executionKey]?.running ?? 0;
+      const load2 = stats[t2.executionKey]?.running ?? 0;
+      const selected = load1 <= load2 ? t1 : t2;
+      const rest = orderedTargets.filter((t) => t.executionKey !== selected.executionKey);
+      orderedTargets = [selected, ...rest];
+      log.info(
+        "COMBO",
+        `P2C: picked ${selected.modelStr} (load=${selected === t1 ? load1 : load2}) over ${selected === t1 ? t2.modelStr : t1.modelStr} (load=${selected === t1 ? load2 : load1})`
+      );
+    } else {
+      log.info("COMBO", "P2C: only one target — using as-is");
+    }
   }
 
   if (orderedTargets.length === 0) {

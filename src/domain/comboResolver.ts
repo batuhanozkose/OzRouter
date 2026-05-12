@@ -34,7 +34,7 @@ export function resolveComboModel(combo: any, context: any = {}) {
   const normalized = models
     .map((entry) => ({
       model: getComboStepTarget(entry) || "",
-      weight: getComboStepWeight(entry) || 1,
+      weight: getComboStepWeight(entry) ?? 0,
     }))
     .filter((entry) => entry.model);
 
@@ -46,7 +46,7 @@ export function resolveComboModel(combo: any, context: any = {}) {
 
     case "round-robin": {
       // Persistent counter per combo for deterministic round-robin
-      const comboKey = combo.id || combo.name || "default";
+      const comboKey = combo.name || "default";
       if (!roundRobinCounters.has(comboKey)) {
         roundRobinCounters.set(comboKey, 0);
       }
@@ -57,12 +57,16 @@ export function resolveComboModel(combo: any, context: any = {}) {
     }
 
     case "random": {
-      // Weighted random selection
-      const totalWeight = normalized.reduce((sum, m) => sum + (m.weight || 1), 0);
+      // Weighted random selection; uniform if no weights set
+      const totalWeight = normalized.reduce((sum, m) => sum + (m.weight || 0), 0);
+      if (totalWeight <= 0) {
+        const idx = Math.floor(Math.random() * normalized.length);
+        return { model: normalized[idx].model, index: idx };
+      }
       let rand = Math.random() * totalWeight;
 
       for (let i = 0; i < normalized.length; i++) {
-        rand -= normalized[i].weight || 1;
+        rand -= normalized[i].weight || 0;
         if (rand <= 0) {
           return { model: normalized[i].model, index: i };
         }

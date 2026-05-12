@@ -4,6 +4,7 @@
 export interface Combo {
   id: string;
   name: string;
+  description?: string;
   model: string;
   strategy: ComboStrategy;
   isActive: boolean;

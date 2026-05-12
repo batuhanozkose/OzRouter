@@ -158,7 +158,12 @@ export function selectProvider(
             cost: candidates.find((c) => c.provider === s.provider)?.costPer1MTokens || 0,
           }))
           .sort((a, b) => a.cost - b.cost)[0];
-        if (cheapest) selected = cheapest;
+        if (cheapest) {
+          selected = cheapest;
+        } else {
+          // All candidates missing cost data — keep original selection
+          console.warn("[autoCombo] Budget cap active but no candidate has pricing data");
+        }
       }
     }
   }
@@ -169,7 +174,7 @@ export function selectProvider(
     score: selected.score,
     isExploration,
     factors: selected.factors as unknown as Record<string, number>,
-    excluded,
+    excluded: [...new Set(excluded)],
   };
 }
 

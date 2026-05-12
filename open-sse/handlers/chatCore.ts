@@ -966,6 +966,7 @@ export async function handleChatCore({
       connectionId: connectionId || undefined,
       apiKeyId: apiKeyInfo?.id || undefined,
       apiKeyName: apiKeyInfo?.name || undefined,
+      comboStrategy: comboStrategy || undefined,
     }).catch(() => {});
   };
 
@@ -3305,6 +3306,7 @@ export async function handleChatCore({
         connectionId: connectionId || undefined,
         apiKeyId: apiKeyInfo?.id || undefined,
         apiKeyName: apiKeyInfo?.name || undefined,
+        comboStrategy: comboStrategy || undefined,
       }).catch((err) => {
         console.error("Failed to save usage stats:", err.message);
       });
@@ -3666,6 +3668,7 @@ export async function handleChatCore({
         connectionId: connectionId || undefined,
         apiKeyId: apiKeyInfo?.id || undefined,
         apiKeyName: apiKeyInfo?.name || undefined,
+        comboStrategy: comboStrategy || undefined,
       }).catch((err) => {
         console.error("Failed to save usage stats:", err.message);
       });

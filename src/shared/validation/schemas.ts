@@ -406,6 +406,7 @@ export const createComboSchema = z.object({
     .min(1, "Name is required")
     .max(100)
     .regex(/^[a-zA-Z0-9_/.-]+$/, "Name can only contain letters, numbers, -, _, / and ."),
+  description: z.string().max(200).optional(),
   models: z.array(comboModelEntry).optional().default([]),
   strategy: comboStrategySchema.optional().default("priority"),
   config: comboRuntimeConfigSchema.optional(),
@@ -1325,6 +1326,7 @@ export const updateComboSchema = z
       .max(100)
       .regex(/^[a-zA-Z0-9_/.-]+$/, "Name can only contain letters, numbers, -, _, / and .")
       .optional(),
+    description: z.string().max(200).optional(),
     models: z.array(comboModelEntry).optional(),
     strategy: comboStrategySchema.optional(),
     config: comboRuntimeConfigSchema.optional(),
@@ -1339,6 +1341,7 @@ export const updateComboSchema = z
   .superRefine((value, ctx) => {
     if (
       value.name === undefined &&
+      value.description === undefined &&
       value.models === undefined &&
       value.strategy === undefined &&
       value.config === undefined &&
