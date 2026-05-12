@@ -1,6 +1,6 @@
 {
   "name": "ozrouter",
-  "version": "3.8.0",
+  "version": "3.8.1",
   "private": true,
   "description": "Local AI gateway for routing OpenAI-compatible clients across multiple providers, accounts, and fallback chains.",
   "type": "module",
@@ -128,6 +128,7 @@
   "devDependencies": {
     "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4.1.18",
+    "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/bcryptjs": "^3.0.0",

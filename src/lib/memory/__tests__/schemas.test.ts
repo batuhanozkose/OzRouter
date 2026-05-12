@@ -38,7 +38,7 @@ describe("Memory Schemas", () => {
 
   test("MemoryUpdateInputSchema validation", () => {
     expect(MemoryUpdateInputSchema.parse(validUpdateInput)).toBeDefined();
-    const invalidUpdate = { key: "test" };
+    const invalidUpdate = { key: "test", unknownField: true };
     expect(() => MemoryUpdateInputSchema.parse(invalidUpdate)).toThrow();
   });
 });

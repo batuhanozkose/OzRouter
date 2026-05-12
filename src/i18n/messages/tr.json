@@ -100,7 +100,7 @@
     "hex": "Hex",
     "range": "Aralık",
     "component": "Bileşen",
-    "redirect_uri": "Redirect URI",
+    "redirect_uri": "Yönlendirme URI",
     "idempotency-key": "İdempotency Anahtarı",
     "error_description": "Hata Açıklaması",
     "code": "Kod",
@@ -303,7 +303,7 @@
     "providerMaxRetriesAria": "Provider Maksimum Deneme Erişilebilirlik",
     "textToSpeechDesc": "Metinden Sese Açıklaması",
     "machineId": "Makine Kimliği",
-    "globalProxy": "Global Proxy",
+    "globalProxy": "Global Vekil Sunucu",
     "hitsMisses": "İsabetler / Kaçırılanlar",
     "testDesc": "Test Açıklaması",
     "chatDesc": "Sohbet Açıklaması",
@@ -1190,11 +1190,11 @@
       "kiro": "Kiro'yu entegre ederken model yönlendirmesini OzRouter üzerinden merkezi olarak yönetmek istediğinizde kullanın.",
       "antigravity": "Antigravity/Kiro trafiğinin MITM üzerinden yakalanıp OzRouter'a yönlendirilmesi gerektiğinde kullanın.",
       "copilot": "OzRouter anahtarları ve yönlendirme kuralları uygulanırken Copilot sohbet tarzı bir UX istediğinizde kullanın.",
-      "windsurf": "Use when you want an AI-first IDE with Codeium/Windsurf models routed through OzRouter.",
+      "windsurf": "Codeium/Windsurf modellerini OzRouter üzerinden yönlendiren yapay zeka odaklı bir IDE istediğinizde kullanın.",
       "amp": "Use when you want Amp CLI routed through OzRouter with stable shorthand aliases and OpenAI-compatible setup.",
       "qwen": "Use when you want Qwen Code CLI with OzRouter-managed provider settings and multi-provider model access.",
-      "hermes": "Use when you need a lightweight terminal-native AI assistant for quick tasks.",
-      "custom": "Use for custom tool implementations or generic OpenAI-compatible configurations."
+      "hermes": "Hızlı görevler için hafif terminal tabanlı bir yapay zeka asistanına ihtiyacınız olduğunda kullanın.",
+      "custom": "Özel araç uygulamaları veya genel OpenAI uyumlu yapılandırmalar için kullanın."
     },
     "toolDescriptions": {
       "antigravity": "MITM ile Google Antigravity IDE",
@@ -1208,12 +1208,12 @@
       "continue": "Continue AI Asistanı",
       "opencode": "OpenCode AI kodlama ajanı (Terminal)",
       "kiro": "Amazon Kiro - AI destekli IDE",
-      "windsurf": "Windsurf AI Code Editor",
+      "windsurf": "Windsurf Yapay Zeka Kod Editörü",
       "copilot": "GitHub Copilot AI Assistant",
       "qwen": "Alibaba Qwen Code CLI",
-      "amp": "Sourcegraph Amp coding assistant CLI",
-      "hermes": "Hermes AI Terminal Assistant",
-      "custom": "Generic OpenAI-compatible CLI or SDK configuration generator"
+      "amp": "Sourcegraph Amp kodlama asistanı CLI",
+      "hermes": "Hermes Yapay Zeka Terminal Asistanı",
+      "custom": "Genel OpenAI uyumlu CLI veya SDK yapılandırma oluşturucu"
     },
     "guides": {
       "cursor": {
@@ -1283,8 +1283,8 @@
             "title": "Modeli Seçin"
           },
           "5": {
-            "title": "Use Thinking Variant",
-            "desc": "For thinking models, run with --variant high/low/max (example command below)."
+            "title": "Düşünme Varyantını Kullan",
+            "desc": "Düşünme modelleri için --variant high/low/max ile çalıştırın (aşağıdaki örnek komuta bakın)."
           }
         },
         "notes": {
@@ -1316,24 +1316,24 @@
       "windsurf": {
         "steps": {
           "1": {
-            "title": "Open AI Settings",
-            "desc": "Click the AI Settings icon in Windsurf or go to Settings"
+            "title": "Yapay Zeka Ayarlarını Açın",
+            "desc": "Windsurf'te Yapay Zeka Ayarları simgesine tıklayın veya Ayarlar'a gidin"
           },
           "2": {
-            "title": "Add Custom Provider",
-            "desc": "Select \"Add custom provider\" (OpenAI-compatible)"
+            "title": "Özel Sağlayıcı Ekleyin",
+            "desc": "\"Özel sağlayıcı ekle\"yi seçin (OpenAI uyumlu)"
           },
           "3": {
-            "title": "Base URL",
+            "title": "Temel URL",
             "desc": "http://127.0.0.1:20128/v1"
           },
           "4": {
             "title": "API Key",
-            "desc": "Select your OzRouter API key"
+            "desc": "OzRouter API anahtarınızı girin"
           },
           "5": {
-            "title": "Select Model",
-            "desc": "Choose a model from the dropdown"
+            "title": "Model Seçin",
+            "desc": "Açılır menüden bir model seçin"
           }
         }
       }
@@ -1363,7 +1363,7 @@
     "healthcheck": "Sağlık Kontrolü",
     "priority": "Öncelik",
     "fallback": "Yedek",
-    "roundRobin": "Round Robin",
+    "roundRobin": "Sırayla",
     "random": "Rastgele",
     "leastLatency": "En Düşük Gecikme",
     "comboName": "Kombo Adı",
@@ -1453,39 +1453,39 @@
         "example": "Düşük maliyetin öncelikli olduğu arka plan veya toplu işler."
       },
       "strict-random": {
-        "when": "Use when you want perfectly even spread — each model used once before repeating.",
-        "avoid": "Avoid when models have different quality or latency and order matters.",
-        "example": "Example: Multiple accounts of the same model to distribute usage evenly."
+        "when": "Mükemmel eşit dağılım istediğinizde kullanın — her model tekrar etmeden önce bir kez kullanılır.",
+        "avoid": "Modeller farklı kalite veya gecikmeye sahipse ve sıra önemliyse kaçının.",
+        "example": "Örnek: Kullanımı eşit dağıtmak için aynı modelin birden fazla hesabı."
       },
       "p2c": {
-        "avoid": "Avoid for small combos with 2 or fewer models — no benefit over round-robin.",
-        "when": "Use when you want low-latency selection using Power-of-Two-Choices algorithm.",
-        "example": "Example: High-throughput inference across 4+ equivalent model endpoints."
+        "avoid": "2 veya daha az modeli olan küçük combo'lar için kaçının — sırayla dağıtımdan farkı yoktur.",
+        "when": "İkili Seçim algoritması ile düşük gecikmeli seçim istediğinizde kullanın.",
+        "example": "Örnek: 4+ eşdeğer model uç noktası arasında yüksek verimli çıkarım."
       },
       "context-relay": {
-        "when": "Use when long sessions must survive account rotation without losing the working context.",
-        "example": "Example: Codex sessions that rotate across multiple accounts near quota exhaustion.",
-        "avoid": "Avoid when account switching is rare or when you do not want extra summarization requests."
+        "when": "Uzun oturumların çalışılan bağlamı kaybetmeden hesap rotasyonunu sürdürmesi gerektiğinde kullanın.",
+        "example": "Örnek: Kota tükenmesine yakın birden fazla hesap arasında dönen Codex oturumları.",
+        "avoid": "Hesap geçişi nadirse veya ek özetleme istekleri istemiyorsanız kaçının."
       },
       "fill-first": {
-        "when": "Use when you want to fully exhaust one provider's quota before moving to the next.",
-        "avoid": "Avoid when you need request-level load balancing across providers.",
-        "example": "Example: Use all $200 Deepgram credits before falling back to Groq."
+        "when": "Bir sağlayıcının kotasını tamamen tüketmeden diğerine geçmek istediğinizde kullanın.",
+        "avoid": "Sağlayıcılar arasında istek düzeyinde yük dengeleme gerektiğinde kaçının.",
+        "example": "Örnek: Deepgram'ın 200$ kredisini Groq'a geçmeden önce kullanın."
       },
       "auto": {
-        "when": "Use when you need multi-factor scoring routing based on cost, latency, and quality.",
-        "avoid": "Avoid when you need strict priority ordering or historical persistence.",
-        "example": "Example: Balance requests across models with different strengths."
+        "when": "Maliyet, gecikme ve kaliteye dayalı çok faktörlü puanlama yönlendirmesi gerektiğinde kullanın.",
+        "avoid": "Katı öncelik sıralaması veya geçmişe dayalı kalıcılık gerektiğinde kaçının.",
+        "example": "Örnek: Farklı güçlü yönleri olan modeller arasında istekleri dengeleyin."
       },
       "lkgp": {
-        "when": "Use when you want to route based on historical success rates and performance.",
-        "avoid": "Avoid when historical data is limited or unreliable.",
-        "example": "Example: Route to models with a good track record on specific tasks."
+        "when": "Geçmiş başarı oranlarına ve performansa dayalı yönlendirme istediğinizde kullanın.",
+        "avoid": "Geçmiş veriler sınırlı veya güvenilir olmadığında kaçının.",
+        "example": "Örnek: Belirli görevlerde iyi geçmişe sahip modellere yönlendirin."
       },
       "context-optimized": {
-        "when": "Use when you need to optimize context window usage across models.",
-        "avoid": "Avoid when models have similar context lengths or tasks are simple.",
-        "example": "Example: Distribute long conversations across models with larger context windows."
+        "when": "Modeller arasında bağlam penceresi kullanımını optimize etmeniz gerektiğinde kullanın.",
+        "avoid": "Modeller benzer bağlam uzunluklarına sahipse veya görevler basitse kaçının.",
+        "example": "Örnek: Uzun konuşmaları daha geniş bağlam pencerelerine sahip modellere dağıtın."
       }
     },
     "advancedHelp": {
@@ -1581,53 +1581,53 @@
         "tip3": "Maliyetin ana KPI olduğu toplu/arka plan işlerinde kullanın."
       },
       "strict-random": {
-        "title": "Shuffle deck distribution",
-        "description": "Each model is used exactly once per cycle before reshuffling.",
-        "tip1": "Use at least 2 models for meaningful distribution.",
-        "tip2": "Works best with equivalent-performance models.",
-        "tip3": "Ideal for load balancing across multiple API accounts."
+        "title": "Karıştırma destesi dağıtımı",
+        "description": "Her model yeniden karıştırmadan önce döngüde tam olarak bir kez kullanılır.",
+        "tip1": "Anlamlı dağıtım için en az 2 model kullanın.",
+        "tip2": "Eşdeğer performansa sahip modellerle en iyi sonucu verir.",
+        "tip3": "Birden fazla API hesabı arasında yük dengeleme için idealdir."
       },
       "fill-first": {
-        "description": "Exhaust provider quotas sequentially before falling back.",
-        "tip1": "Use for quota-based routing with clear fallback chains.",
-        "tip2": "Set quotas accurately to avoid premature fallback.",
-        "tip3": "Works best with providers offering free tiers or credit buckets.",
-        "title": "Quota Exhaustion"
+        "description": "Geri dönmek için önce sağlayıcı kotalarını sırayla tüketin.",
+        "tip1": "Açık geri dönüş zincirleriyle kota tabanlı yönlendirme için kullanın.",
+        "tip2": "Erken geri dönüşü önlemek için kotaları doğru belirleyin.",
+        "tip3": "Ücretsiz katmanlar veya kredi paketleri sunan sağlayıcılarla en iyi sonucu verir.",
+        "title": "Kota Tüketimi"
       },
       "auto": {
-        "description": "Route based on real-time scoring for cost, latency, quality, and health.",
-        "tip1": "Let the engine balance multiple factors automatically.",
-        "tip2": "Monitor which factors drive routing decisions in logs.",
-        "tip3": "Use for complex workloads where no single factor dominates.",
-        "title": "Multi-Factor Optimization"
+        "description": "Maliyet, gecikme, kalite ve sağlık durumuna göre gerçek zamanlı puanlama tabanlı yönlendirme.",
+        "tip1": "Motor birden fazla faktörü otomatik olarak dengelesin.",
+        "tip2": "Hangi faktörlerin yönlendirme kararlarını yönlendirdiğini günlüklerden izleyin.",
+        "tip3": "Tek bir faktörün baskın olmadığı karmaşık iş yükleri için kullanın.",
+        "title": "Çok Faktörlü Optimizasyon"
       },
       "lkgp": {
-        "description": "Route based on historical performance and success patterns.",
-        "tip1": "Requires sufficient request history for accurate predictions.",
-        "tip2": "Good for workloads with consistent model performance patterns.",
-        "tip3": "Monitor prediction accuracy and adjust weights as needed.",
-        "title": "History-Based Routing"
+        "description": "Geçmiş performans ve başarı kalıplarına göre yönlendirme.",
+        "tip1": "Doğru tahminler için yeterli istek geçmişi gerekir.",
+        "tip2": "Tutarlı model performans kalıplarına sahip iş yükleri için uygundur.",
+        "tip3": "Tahmin doğruluğunu izleyin ve ağırlıkları gerektiği gibi ayarlayın.",
+        "title": "Geçmiş Tabanlı Yönlendirme"
       },
       "context-optimized": {
-        "description": "Optimize routing based on context window usage and token efficiency.",
-        "tip1": "Route long conversations to models with larger context windows.",
-        "tip2": "Monitor context utilization to avoid token waste.",
-        "tip3": "Best for conversational AI requiring extensive context retention.",
-        "title": "Context Optimization"
+        "description": "Bağlam penceresi kullanımı ve token verimliliğine göre yönlendirmeyi optimize edin.",
+        "tip1": "Uzun konuşmaları daha geniş bağlam pencerelerine sahip modellere yönlendirin.",
+        "tip2": "Token israfını önlemek için bağlam kullanımını izleyin.",
+        "tip3": "Kapsamlı bağlam tutma gerektiren konuşma yapay zekası için en iyisidir.",
+        "title": "Bağlam Optimizasyonu"
       },
       "context-relay": {
-        "description": "Best when account rotation is expected and the next account must inherit a simplified task summary.",
-        "tip1": "Use with providers rotating accounts for the same model family.",
-        "tip2": "Set handoff threshold below hard quota cutoffs for summary generation time.",
-        "tip3": "Only set a dedicated summary model if the primary is too expensive or unstable.",
-        "title": "Session Continuity Priority"
+        "description": "Hesap rotasyonu bekleniyorsa ve sonraki hesap basitleştirilmiş bir görev özeti devralmak zorundaysa en iyisidir.",
+        "tip1": "Aynı model ailesi için hesapları dönen sağlayıcılarla kullanın.",
+        "tip2": "Özet oluşturma süresi için devretme eşiğini sert kota kesimlerinin altına ayarlayın.",
+        "tip3": "Birincil model çok pahalı veya kararsızsa yalnızca özel bir özet modeli ayarlayın.",
+        "title": "Oturum Sürekliliği Önceliği"
       },
       "p2c": {
-        "description": "Route to the provider with the lowest current load based on real-time metrics.",
-        "tip1": "Monitor provider health metrics for accurate load assessment.",
-        "tip2": "Works best with homogeneous provider pools.",
-        "tip3": "Adjust sensitivity to avoid oscillation during traffic spikes.",
-        "title": "Power of Two Choices"
+        "description": "Gerçek zamanlı metriklere dayalı en düşük yükteki sağlayıcıya yönlendirin.",
+        "tip1": "Doğru yük değerlendirmesi için sağlayıcı sağlık metriklerini izleyin.",
+        "tip2": "Homojen sağlayıcı havuzlarıyla en iyi sonucu verir.",
+        "tip3": "Trafik artışlarında salınımı önlemek için hassasiyeti ayarlayın.",
+        "title": "İkili Seçim Gücü"
       }
     },
     "templateFreeStack": "Ücretsiz Yığın ($0)",
@@ -1651,24 +1651,24 @@
     "intelligentPanelTitle": "Akıllı Yönlendirme Paneli",
     "builderStage": {
       "intelligent": {
-        "label": "Smart Routing",
-        "description": "Auto-routing candidate pool, presets, and scoring"
+        "label": "Akıllı Yönlendirme",
+        "description": "Otomatik yönlendirme aday havuzu, ön ayarlar ve puanlama"
       },
       "steps": {
         "label": "Steps",
-        "description": "Provider, model, and account selection"
+        "description": "Sağlayıcı, model ve hesap seçimi"
       },
       "strategy": {
-        "label": "Strategy",
-        "description": "Routing behavior and advanced settings"
+        "label": "Strateji",
+        "description": "Yönlendirme davranışı ve gelişmiş ayarlar"
       },
       "review": {
-        "label": "Review",
-        "description": "Final validation before saving"
+        "label": "İnceleme",
+        "description": "Kaydetmeden önce son doğrulama"
       },
       "basics": {
-        "description": "Name and starting template",
-        "label": "Basics"
+        "description": "Ad ve başlangıç şablonu",
+        "label": "Temel Bilgiler"
       }
     },
     "builderSelectProvider": "Provider seçin",
@@ -1782,7 +1782,7 @@
     "agentFeaturesSystemMessageOverride": "System message'ı geçersiz kıl",
     "agentFeaturesSystemMessagePlaceholder": "Uzman bir asistansınız...",
     "agentFeaturesSystemMessageHint": "Agent'lar için system message geçersiz kılma",
-    "agentFeaturesToolFilterRegex": "/regex-pattern/",
+    "agentFeaturesToolFilterRegex": "/regex-deseni/",
     "agentFeaturesToolFilterHint": "Agent'lar için araç filtre regex'i",
     "agentFeaturesContextCacheHint": "Agent araçları için bağlam içi cache etkinleştirme",
     "agentFeaturesContextCacheProtection": "Cache'i agent araç değişikliklerinden koru"
@@ -2073,7 +2073,7 @@
     "topTools": "En çok kullanılan araçlar",
     "noToolCalls24h": "Son 24 saatte araç çağrısı yapılmadı.",
     "runtimeDetails": "Çalışma zamanı ayrıntıları",
-    "transport": "Transport",
+    "transport": "Aktarım",
     "scopesEnforced": "Kapsam zorlaması",
     "yes": "Evet",
     "no": "Hayır",
@@ -2323,9 +2323,9 @@
     "upstreamNotSentYet": "Henüz upstream'e gönderilmedi",
     "runningRequestDetailMeta": "Hesap: {account} — Geçen Süre: {elapsed}",
     "consoleViewer": {
-      "fetchFailed": "Failed to fetch logs",
-      "copyFailed": "Failed to copy log entry",
-      "copyLogEntry": "Copy log entry"
+      "fetchFailed": "Günlükler alınamadı",
+      "copyFailed": "Günlük kaydı kopyalanamadı",
+      "copyLogEntry": "Günlük kaydını kopyala"
     },
     "export": "Dışa Aktar",
     "exporting": "Dışa Aktarılıyor...",
@@ -2592,7 +2592,7 @@
     "proxySourceGlobal": "Küresel",
     "proxySourceProvider": "Sağlayıcı",
     "proxySourceKey": "Anahtar",
-    "proxyConfiguredBySource": "Proxy ({source}): {host}",
+    "proxyConfiguredBySource": "Vekil Sunucu ({source}): {host}",
     "autoPriority": "Otomatik: {priority}",
     "proxy": "Proxy Sunucusu",
     "retestAuthentication": "Kimlik doğrulamayı yeniden test et",
@@ -2619,7 +2619,7 @@
     "compatProtocolHint": "Bu seçenekler, OzRouter bu istek biçimini (OpenAI Chat, Responses API veya Anthropic Messages) algıladığında uygulanır.",
     "compatProtocolOpenAI": "OpenAI Sohbet Tamamlamaları",
     "compatProtocolOpenAIResponses": "OpenAI Responses API",
-    "compatProtocolClaude": "Anthropic Messages",
+    "compatProtocolClaude": "Anthropic Mesajları",
     "compatUpstreamHeadersLabel": "Ek yukarı akış başlıkları",
     "compatUpstreamHeadersHint": "Yüksek ayrıcalıklı ayar: sağlayıcı API kimlik bilgilerini düzenlemekle aynı güven düzeyine sahiptir; yalnızca güvenilir yöneticiler kullanmalıdır. OzRouter, sağlayıcı API anahtarından kimlik doğrulama başlığını ekledikten sonra bu başlıklar birleştirilir. Özel bir başlık mevcut bir başlıkla aynı adı kullanıyorsa (ör. Authorization), verdiğiniz değer otomatik oluşturulan başlığın (Bearer token dahil) tamamının yerini alır; yukarı akış yalnızca sizin yazdığınız değeri görür. Hatalı yapılandırma 401 hatalarına veya bozuk yukarı akış kimlik doğrulamasına yol açabilir. Her başlık için bir satır kullanın (ör. bazı geçitler için ek Authentication başlığı). Önizlemek için değerin üzerine gelin veya odaklayın. Bu panelde bulanıklaştırma, dışarı tıklama veya paneli kapatma sırasında otomatik kaydedilir.",
     "compatUpstreamHeaderName": "Başlık adı",
@@ -3051,7 +3051,7 @@
     "routingAdvancedGuideHint2": "Sağlayıcılar kalite/maliyet açısından farklıysa, arka plan işleri için Maliyet Opt. ve dengeli dağılım için En Az Kullanılan ile başlayın.",
     "fillFirst": "Önce Doldur",
     "fillFirstDesc": "Hesapları öncelik sırasına göre kullanın",
-    "roundRobin": "Round Robin",
+    "roundRobin": "Sırayla",
     "roundRobinDesc": "Tüm hesaplar arasında geçiş yapın",
     "p2c": "P2C",
     "p2cDesc": "Rastgele 2 tane seç, sağlıklı olanı kullan",
@@ -3446,7 +3446,7 @@
     "compressionPreservePatternsDesc": "Hiç sıkıştırılmayacak regex desenleri (satır başına bir tane)",
     "compressionLogTitle": "Sıkıştırma Günlüğü",
     "compressionLogEmpty": "Henüz sıkıştırılmış istek yok. Sıkıştırma etkinleştirilmiş istekler işlendiğinde sıkıştırma istatistikleri burada görüntülenecektir.",
-    "mitmProxy": "MITM Proxy",
+    "mitmProxy": "MITM Vekil Sunucu",
     "endpointTunnelVisibility": "Endpoint tunnel görünürlüğü",
     "endpointTunnelVisibilityDesc": "Tunnel durumunu değiştirmeden Endpoint sayfasından tunnel kontrollerini gizle.",
     "showCloudflareTunnel": "Cloudflare Hızlı Tünel",
@@ -3637,7 +3637,7 @@
     "openaiIntermediatePanel": "OpenAI Aracı",
     "autoFeaturesTitle": "OzRouter'ın otomatik yaptıkları",
     "autoFeaturesCount": "8 özellik",
-    "featureReasoningCache": "Reasoning Cache",
+    "featureReasoningCache": "Akıl Yürütme Önbelleği",
     "featureReasoningCacheDesc": "Düşünme modu kullanan modellerde (DeepSeek V4, Kimi K2, Qwen) istemciler conversation history'den reasoning_content'i çıkardığında, önbellekteki değeri otomatik olarak yeniden ekler.",
     "featureSchemaCoercion": "Schema Dönüştürme",
     "featureSchemaCoercionDesc": "Bozuk tool şemalarını düzeltir: eksik additionalProperties ekler, uzun açıklamaları temizler, iç içe nesneleri normalleştirir.",
@@ -3647,7 +3647,7 @@
     "featureToolCallIdsDesc": "Eksik olduğunda benzersiz tool_call ID'leri üretir. Mistral gibi provider'lar için 9 karakterlik formata normalleştirir.",
     "featureMissingToolResponse": "Tool Yanıt Enjeksiyonu",
     "featureMissingToolResponseDesc": "İstemciler karşılık gelen yanıt olmadan tool_calls gönderdiğinde boş tool_result mesajları enjekte eder.",
-    "featureThinkingBudget": "Thinking Budget",
+    "featureThinkingBudget": "Düşünme Bütçesi",
     "featureThinkingBudgetDesc": "Thinking yapılandırmasını otomatik yönetir. Son mesaj kullanıcıdan gelmediğinde thinking parametrelerini kaldırır.",
     "featureDirectPaths": "Doğrudan Çeviri Yolları",
     "featureDirectPathsDesc": "Bazı format çiftleri (Claude→Gemini) OpenAI hub'ını atlayan doğrudan çevirmenlere sahiptir ve daha doğru çıktı üretir.",
@@ -3861,7 +3861,7 @@
     "resultErrorLabel": "Hata",
     "suiteBuilderBuiltInBadge": "Yerleşik",
     "suiteBuilderCaseCardTitle": "Test Durumu",
-    "weeklyLimitPlaceholder": "e.g. 50.00",
+    "weeklyLimitPlaceholder": "ör. 50.00",
     "suiteBuilderCaseTagsHint": "Test durumlarını düzenlemek için virgülle ayrılmış etiketler.",
     "notifyEvalRunFailedWithReason": "Değerlendirme başarısız oldu: {reason}",
     "weekly": "Haftalık",
@@ -3920,7 +3920,7 @@
     "suiteBuilderImportedSuite": "İçe Aktarılan Suit",
     "suiteBuilderCaseExpectedPlaceholderContains": "örn. def fibonacci",
     "suiteBuilderCaseExpectedPlaceholderExact": "Tam beklenen yanıtı yapıştırın",
-    "suiteBuilderCaseExpectedPlaceholderRegex": "e.g. ^\\\\s*\\\\{.*\\\\}\\\\s*$",
+    "suiteBuilderCaseExpectedPlaceholderRegex": "ör. ^\\\\s*\\\\{.*\\\\}\\\\s*$",
     "suiteBuilderCaseExpectedHintRegex": "JavaScript normal ifadesini çevreleyen eğik çizgi olmadan kullanın.",
     "suiteBuilderDuplicateCase": "Kopyala"
   },
@@ -4448,7 +4448,7 @@
     "flowDiagramOzRouterDesc": "İsteği alır ve hedefi seçer",
     "flowDiagramSpawn": "Süreç Oluşturma",
     "flowDiagramSpawnDesc": "CLI ikili dosyasını stdio üzerinden başlatır",
-    "flowDiagramCli": "CLI Agent",
+    "flowDiagramCli": "CLI Aracı",
     "flowDiagramCliDesc": "Kendi auth/model ile işler",
     "fingerprintSettingsHint": "CLI Fingerprint eşleştirmesi (istekleri belirli CLI araçları olarak gizleme) şu bölümden yapılandırılabilir:",
     "openSettings": "Ayarlar"
@@ -4658,7 +4658,7 @@
     "description": "AI yeteneklerini yönetin ve izleyin",
     "skillsTab": "Yetenekler",
     "executionsTab": "Çalıştırmalar",
-    "sandboxTab": "Sandbox",
+    "sandboxTab": "Korumalı Alan",
     "loading": "Yetenekler yükleniyor...",
     "noSkills": "Yetenek bulunamadı",
     "noExecutions": "Çalıştırma bulunamadı",
@@ -4688,12 +4688,12 @@
       "video": "Video",
       "chat": "Chat",
       "speech": "Speech",
-      "rerank": "Rerank",
+      "rerank": "Yeniden Sırala",
       "transcription": "Transcription",
-      "responses": "Responses",
+      "responses": "Yanıtlar",
       "search": "Search",
       "music": "Music",
-      "embeddings": "Embeddings"
+      "embeddings": "Gömüler"
     },
     "transcriptionHint": "Transcription Hint",
     "noAccounts": "No Accounts",
@@ -4856,7 +4856,7 @@
     "cacheSem": "SEM",
     "cacheUp": "UP",
     "semantic": "Semantik",
-    "upstream": "Upstream",
+    "upstream": "Üst Kaynak",
     "semanticCacheHit": "Semantic cache isabeti (OzRouter tarafından sunuldu)",
     "upstreamResponse": "Upstream provider yanıtı",
     "noApiKey": "API key yok",
@@ -4864,22 +4864,22 @@
     "statusFilters": {
       "all": "All",
       "error": "Errors",
-      "success": "Success",
+      "success": "Başarılı",
       "combo": "Combo"
     },
     "columns": {
-      "status": "Status",
-      "cacheSource": "Cache Source",
+      "status": "Durum",
+      "cacheSource": "Önbellek Kaynağı",
       "model": "Model",
-      "requested": "Requested",
-      "provider": "Provider",
-      "protocol": "Request Protocol",
-      "account": "Account",
+      "requested": "İstenen",
+      "provider": "Sağlayıcı",
+      "protocol": "İstek Protokolü",
+      "account": "Hesap",
       "apiKey": "API Key",
       "combo": "Combo",
-      "tokens": "Tokens",
+      "tokens": "Token",
       "tps": "TPS",
-      "duration": "Duration",
+      "duration": "Süre",
       "time": "Time"
     },
     "loadingLogs": "Loglar yükleniyor...",
@@ -5039,7 +5039,7 @@
     "partialData": "Telemetri kısmen mevcut: {error}"
   },
   "mitm": {
-    "title": "MITM Proxy",
+    "title": "MITM Vekil Sunucu",
     "description": "İstemci isteklerini yakalamak ve yönlendirmek için şeffaf proxy.",
     "enable": "MITM Proxy'yi Etkinleştir",
     "enableDesc": "Yerel yakalama işlemini ve DNS geçersiz kılmayı başlat veya durdur.",
@@ -5094,7 +5094,7 @@
     "levelKey": "Anahtar",
     "levelDirect": "Doğrudan (proxy yok)",
     "titleGlobal": "Genel Proxy Yapılandırması",
-    "titleLevel": "{level} Proxy — {label}",
+    "titleLevel": "{level} Vekil Sunucu — {label}",
     "loading": "Proxy yapılandırması yükleniyor...",
     "inheritingFrom": "Şuradan devralınıyor",
     "source": "Kaynak",

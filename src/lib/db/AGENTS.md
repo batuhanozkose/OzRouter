@@ -8,39 +8,55 @@
 
 ### Core Infrastructure
 
-- **`core.ts`** — `getDbInstance()` returns singleton `better-sqlite3` with WAL journaling. Exports `rowToCamel()` (snake_case → camelCase), `encryptConnectionFields()` for provider credentials at rest. `SCHEMA_SQL` defines 15 base tables.
+- **`core.ts`** — `getDbInstance()` returns singleton `better-sqlite3` with WAL journaling. Exports `rowToCamel()` (snake_case → camelCase), `encryptConnectionFields()` for provider credentials at rest. `SCHEMA_SQL` defines 20 base tables.
 - **`migrationRunner.ts`** — Applies versioned SQL files from `db/migrations/` inside transactions. Tracks applied migrations in `_ozrouter_migrations`. Runs at startup; each migration is idempotent.
-- **`db/migrations/`** — 21 SQL files (`001_initial_schema.sql` → `021_combo_call_log_targets.sql`). Each migration has single responsibility, runs in a transaction, never fails partially.
+- **`db/migrations/`** — 39 SQL files (`001_initial_schema.sql` → `040_oneproxy_proxy_fields.sql`). Each migration has single responsibility, runs in a transaction, never fails partially.
 - **`localDb.ts`** — Re-export layer only. Never add logic here. Consumers import domain modules from this file for convenience.
 
-### Domain Modules (22 total)
+### Domain Modules (38 total)
 
 Each module owns specific tables + CRUD operations:
 
-| Module                  | Tables                    | Responsibility                                          |
-| ----------------------- | ------------------------- | ------------------------------------------------------- |
-| `providers.ts`          | `provider_connections`    | OAuth/API key provider registration and credentials     |
-| `models.ts`             | `models`                  | Model definitions, capabilities, pricing                |
-| `combos.ts`             | `combos`, `combo_targets` | Combo routing configs, target ordering                  |
-| `apiKeys.ts`            | `api_keys`                | API key lifecycle, scopes, quota tracking               |
-| `settings.ts`           | `settings`                | KV store for system configuration                       |
-| `backup.ts`             | Backup export/import ops  | Serialize/deserialize entire DB state                   |
-| `proxies.ts`            | `proxies`                 | MITM proxy configs and routing rules                    |
-| `prompts.ts`            | `prompts`                 | Reusable prompt templates, versioning                   |
-| `webhooks.ts`           | `webhooks`                | Event-driven webhook subscriptions and logs             |
-| `detailedLogs.ts`       | `detailed_logs`           | Per-request audit logging (optional, high volume)       |
-| `domainState.ts`        | `domain_state`            | Transient runtime state (not persisted across restarts) |
-| `registeredKeys.ts`     | `registered_keys`         | Whitelisted API keys for MCP/A2A access                 |
-| `quotaSnapshots.ts`     | `quota_snapshots`         | Historical quota usage for analytics                    |
-| `modelComboMappings.ts` | `model_combo_mappings`    | Map models to combo defaults                            |
-| `cliToolState.ts`       | `cli_tool_state`          | CLI-specific persistent state                           |
-| `encryption.ts`         | —                         | Helpers for encrypting/decrypting sensitive fields      |
-| `readCache.ts`          | —                         | In-memory cache for read-heavy ops (models, providers)  |
-| `secrets.ts`            | `secrets`                 | Encrypted secret storage (API keys at rest)             |
-| `stateReset.ts`         | —                         | Wipe/reset DB state for testing or recovery             |
-| `contextHandoffs.ts`    | `context_handoffs`        | Store/retrieve session context for agent handoff        |
-| `migrations/`           | —                         | Versioned SQL schema evolution                          |
-| `core.ts`               | —                         | Singleton DB instance, helpers, schema definition       |
+| Module                     | Tables                     | Responsibility                                          |
+| -------------------------- | -------------------------- | ------------------------------------------------------- |
+| `providers.ts`             | `provider_connections`     | OAuth/API key provider registration and credentials     |
+| `models.ts`                | `models`                   | Model definitions, capabilities, pricing                |
+| `combos.ts`                | `combos`, `combo_targets`  | Combo routing configs, target ordering                  |
+| `apiKeys.ts`               | `api_keys`                 | API key lifecycle, scopes, quota tracking               |
+| `settings.ts`              | `settings`                 | KV store for system configuration                       |
+| `backup.ts`                | Backup export/import ops   | Serialize/deserialize entire DB state                   |
+| `proxies.ts`               | `proxies`                  | MITM proxy configs and routing rules                    |
+| `prompts.ts`               | `prompts`                  | Reusable prompt templates, versioning                   |
+| `webhooks.ts`              | `webhooks`                 | Event-driven webhook subscriptions and logs             |
+| `detailedLogs.ts`          | `detailed_logs`            | Per-request audit logging (optional, high volume)       |
+| `domainState.ts`           | `domain_state`             | Transient runtime state (not persisted across restarts) |
+| `registeredKeys.ts`        | `registered_keys`          | Whitelisted API keys for MCP/A2A access                 |
+| `quotaSnapshots.ts`        | `quota_snapshots`          | Historical quota usage for analytics                    |
+| `modelComboMappings.ts`    | `model_combo_mappings`     | Map models to combo defaults                            |
+| `cliToolState.ts`          | `cli_tool_state`           | CLI-specific persistent state                           |
+| `encryption.ts`            | —                          | Helpers for encrypting/decrypting sensitive fields      |
+| `readCache.ts`             | —                          | In-memory cache for read-heavy ops (models, providers)  |
+| `secrets.ts`               | `secrets`                  | Encrypted secret storage (API keys at rest)             |
+| `stateReset.ts`            | —                          | Wipe/reset DB state for testing or recovery             |
+| `contextHandoffs.ts`       | `context_handoffs`         | Store/retrieve session context for agent handoff        |
+| `compression.ts`           | —                          | Compression settings, mode selection, config CRUD       |
+| `compressionAnalytics.ts`  | —                          | Per-request compression stats tracking                  |
+| `compressionCacheStats.ts` | —                          | Compression cache hit/miss statistics                   |
+| `batches.ts`               | `batches`                  | Batch request management and lifecycle                  |
+| `evals.ts`                 | `eval_runs`, `eval_suites` | Evaluation suite and run persistence                    |
+| `files.ts`                 | `files`                    | Uploaded file metadata and content storage              |
+| `healthCheck.ts`           | —                          | DB health verification and integrity checks             |
+| `jsonMigration.ts`         | —                          | JSON-based data migration helpers                       |
+| `oneproxy.ts`              | `oneproxy_*`               | OneProxy proxy integration and configuration            |
+| `providerLimits.ts`        | `provider_limits`          | Per-provider rate limit and quota configuration         |
+| `reasoningCache.ts`        | `reasoning_cache`          | Caching reasoning/thinking responses                    |
+| `creditBalance.ts`         | `credit_balances`          | Provider credit balance tracking                        |
+| `syncTokens.ts`            | `sync_tokens`              | Cloud sync authentication tokens                        |
+| `upstreamProxy.ts`         | `upstream_proxies`         | Upstream HTTP proxy configuration per provider          |
+| `versionManager.ts`        | `version_state`            | Application version tracking and migration state        |
+| `migrationRunner.ts`       | `_ozrouter_migrations`     | Applies versioned SQL migrations at startup             |
+| `migrations/`              | —                          | Versioned SQL schema evolution                          |
+| `core.ts`                  | —                          | Singleton DB instance, helpers, schema definition       |
 
 ### Encryption & Security
 

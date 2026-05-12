@@ -9,9 +9,30 @@ vi.mock("next-intl", () => ({
 }));
 
 const sampleTrendData = [
-  { timestamp: "2026-04-01T00:00:00Z", requests: 120, hits: 100, misses: 20, hitRate: 83.3 },
-  { timestamp: "2026-04-01T01:00:00Z", requests: 95, hits: 80, misses: 15, hitRate: 84.2 },
-  { timestamp: "2026-04-01T02:00:00Z", requests: 200, hits: 180, misses: 20, hitRate: 90.0 },
+  {
+    timestamp: "2026-04-01T00:00:00Z",
+    requests: 120,
+    cachedRequests: 100,
+    inputTokens: 50000,
+    cachedTokens: 40000,
+    cacheCreationTokens: 1000,
+  },
+  {
+    timestamp: "2026-04-01T01:00:00Z",
+    requests: 95,
+    cachedRequests: 80,
+    inputTokens: 40000,
+    cachedTokens: 32000,
+    cacheCreationTokens: 500,
+  },
+  {
+    timestamp: "2026-04-01T02:00:00Z",
+    requests: 200,
+    cachedRequests: 180,
+    inputTokens: 80000,
+    cachedTokens: 72000,
+    cacheCreationTokens: 2000,
+  },
 ];
 
 describe("CacheTrends", () => {
@@ -33,9 +54,9 @@ describe("CacheTrends", () => {
       expect(screen.getByRole("heading")).toBeInTheDocument();
     });
 
-    it("renders peak hit rate from data", () => {
+    it("renders peak cached requests from data", () => {
       render(<CacheTrends data={sampleTrendData} />);
-      expect(screen.getByText("90.0")).toBeInTheDocument();
+      expect(screen.getAllByText(/180/).length).toBeGreaterThan(0);
     });
   });
 

@@ -1,6 +1,11 @@
-import { describe, it } from "node:test";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import assert from "node:assert/strict";
 import { detectVolumeSignals, recommendStrategyOverride } from "../volumeDetector";
+
+// Mock localDb to enable adaptiveVolumeRouting for override tests
+vi.mock("@/lib/localDb", () => ({
+  getSettings: vi.fn().mockResolvedValue({ adaptiveVolumeRouting: true }),
+}));
 
 describe("volumeDetector", async () => {
   describe("detectVolumeSignals", async () => {

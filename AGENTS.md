@@ -124,10 +124,10 @@ Schema migrations live in `db/migrations/` and run via `file migrationRunner.ts`
 #### DB Internals
 
 - **`file core.ts`**: `getDbInstance()` returns a singleton `better-sqlite3` instance with WAL\
-  journaling. `SCHEMA_SQL` defines 15 base tables. Helpers: `rowToCamel`, `encryptConnectionFields`.
+  journaling. `SCHEMA_SQL` defines 20 base tables. Helpers: `rowToCamel`, `encryptConnectionFields`.
 - **`file migrationRunner.ts`**: Applies versioned SQL files from `db/migrations/` inside transactions.\
   Tracks applied migrations in `_ozrouter_migrations` table.
-- **Migrations**: 22 files (`file 001_initial_schema.sql` -&gt; `file 022_compression_settings.sql`).\
+- **Migrations**: 39 files (`file 001_initial_schema.sql` -&gt; `file 040_oneproxy_proxy_fields.sql`).\
   Each migration is idempotent and runs in a transaction.
 - **Domain modules** import `getDbInstance()` from `file core.ts` for all CRUD operations.\
   Each module owns a specific table/set of tables (e.g., `file providers.ts` -&gt; `provider_connections`,\
