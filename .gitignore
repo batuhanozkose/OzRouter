@@ -4,11 +4,14 @@
 node_modules/
 /.pnp
 .pnp.*
+.npm/
+.pnpm-store/
 .yarn/*
 !.yarn/patches
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+.yarn/install-state.gz
 
 # ── Next.js ───────────────────────────────────────────────────
 .next/
@@ -40,17 +43,23 @@ app.log
 # ── Test ve Kapsam ────────────────────────────────────────────
 coverage/
 coverage**
+.nyc_output/
 test-results/
 playwright-report/
 blob-report/
+.vitest/
 
 # ── Derleme Çıktıları ─────────────────────────────────────────
 /app/
+/dist/
 *.tgz
 
 # ── Electron ─────────────────────────────────────────────────
 electron/package-lock.json
 electron/dist-electron/
+electron/out/
+electron/release/
+electron/releases/
 electron/node_modules/
 icon.iconset/
 
@@ -63,6 +72,12 @@ icon.iconset/
 *.pem
 .config/
 .vscode/settings.json
+.eslintcache
+
+# ── Araç Önbellekleri ────────────────────────────────────────
+.cache/
+.turbo/
+.vite/
 
 # ── Vercel ───────────────────────────────────────────────────
 .vercel
@@ -82,9 +97,11 @@ security-analysis/
 
 # ── Yerel Agent Yapılandırmaları ─────────────────────────────
 .gemini/
+.omx/
 .gitnexus
 .worktrees
 .gh-discussions.json
+.commandcode
 
 # ── open-sse Testleri ────────────────────────────────────────
 open-sse/test/*
