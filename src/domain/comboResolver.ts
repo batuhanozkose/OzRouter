@@ -1,9 +1,9 @@
 /**
  * Combo Resolver — FASE-09 Domain Extraction (T-46)
  *
- * Extracts combo resolution logic from handleChat into a dedicated
- * domain service. Handles model selection based on combo strategy
- * (priority, round-robin, random, least-used).
+ * @deprecated This module is no longer used by the combo routing engine.
+ * All 13 strategies are handled directly in open-sse/services/combo.ts::handleComboChat.
+ * Kept for backward compatibility — will be removed in a future release.
  *
  * @module domain/comboResolver
  */

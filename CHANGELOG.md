@@ -4,6 +4,14 @@
 
 - Remaining OmniRoute v3.7.9 backports (Gemini CLI transport, combo stabilization, OAuth mutex, etc.)
 
+## [3.8.4] — 2026-05-13
+
+### Fixed
+
+- `ComboStrategy` TypeScript type only had 4 of 13 strategies — added `random`, `least-used`, `cost-optimized`, `strict-random`, `auto`, `fill-first`, `p2c`, `lkgp`, `context-optimized`.
+- Removed dead code: unused `sortModelsByCost`, `sortModelsByUsage`, `sortModelsByContextSize` functions superseded by target-level equivalents.
+- Marked `src/domain/comboResolver.ts` as `@deprecated` — entire module is unused; all 13 strategies routed via `combo.ts::handleComboChat`.
+
 ## [3.8.3] — 2026-05-13
 
 ### Added

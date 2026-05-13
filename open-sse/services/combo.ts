@@ -545,30 +545,6 @@ function orderTargetsForWeightedFallback<T extends { executionKey: string; weigh
  * @param {Array<string>} models - Model strings in "provider/model" format
  * @returns {Promise<Array<string>>} Sorted model strings
  */
-async function sortModelsByCost(models) {
-  try {
-    const { getPricingForModel } = await import("../../src/lib/localDb");
-    const withCost = await Promise.all(
-      models.map(async (modelStr) => {
-        const parsed = parseModel(modelStr);
-        const provider = parsed.provider || parsed.providerAlias || "unknown";
-        const model = parsed.model || modelStr;
-        try {
-          const pricing = await getPricingForModel(provider, model);
-          return { modelStr, cost: pricing?.input ?? Infinity };
-        } catch {
-          return { modelStr, cost: Infinity };
-        }
-      })
-    );
-    withCost.sort((a, b) => a.cost - b.cost);
-    return withCost.map((e) => e.modelStr);
-  } catch {
-    // If pricing lookup fails entirely, return original order
-    return models;
-  }
-}
-
 async function sortTargetsByCost(targets: ResolvedComboTarget[]) {
   if (targets.length <= 1) return targets;
   const { getPricingForModel } = await import("../../src/lib/localDb");
@@ -598,18 +574,6 @@ async function sortTargetsByCost(targets: ResolvedComboTarget[]) {
  * @param {string} comboName - Combo name for metrics lookup
  * @returns {Array<string>} Sorted model strings
  */
-function sortModelsByUsage(models, comboName) {
-  const metrics = getComboMetrics(comboName);
-  if (!metrics || !metrics.byModel) return models;
-
-  const withUsage = models.map((modelStr) => ({
-    modelStr,
-    requests: metrics.byModel[modelStr]?.requests ?? 0,
-  }));
-  withUsage.sort((a, b) => a.requests - b.requests);
-  return withUsage.map((e) => e.modelStr);
-}
-
 function sortTargetsByUsage(targets: ResolvedComboTarget[], comboName: string) {
   const metrics = getComboMetrics(comboName);
   const byModel = metrics?.byModel || {};
@@ -619,24 +583,6 @@ function sortTargetsByUsage(targets: ResolvedComboTarget[], comboName: string) {
   }));
   withUsage.sort((a, b) => a.requests - b.requests);
   return withUsage.map((e) => e.target);
-}
-
-/**
- * Sort models by context window size (largest first) for context-optimized strategy.
- * Uses models.dev synced capabilities to get context limits.
- * @param {Array<string>} models - Model strings in "provider/model" format
- * @returns {Array<string>} Sorted model strings (largest context first)
- */
-function sortModelsByContextSize(models) {
-  const withContext = models.map((modelStr) => {
-    const parsed = parseModel(modelStr);
-    const provider = parsed.provider || parsed.providerAlias || "unknown";
-    const model = parsed.model || modelStr;
-    const limit = getModelContextLimit(provider, model);
-    return { modelStr, context: limit ?? 0 };
-  });
-  withContext.sort((a, b) => b.context - a.context);
-  return withContext.map((e) => e.modelStr);
 }
 
 function sortTargetsByContextSize(targets: ResolvedComboTarget[]) {

@@ -17,7 +17,20 @@ export interface Combo {
   updatedAt: string;
 }
 
-export type ComboStrategy = "priority" | "weighted" | "round-robin" | "context-relay";
+export type ComboStrategy =
+  | "priority"
+  | "weighted"
+  | "round-robin"
+  | "context-relay"
+  | "random"
+  | "least-used"
+  | "cost-optimized"
+  | "strict-random"
+  | "auto"
+  | "fill-first"
+  | "p2c"
+  | "lkgp"
+  | "context-optimized";
 
 export interface ComboNode {
   connectionId: string;
