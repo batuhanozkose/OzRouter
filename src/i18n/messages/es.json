@@ -3874,7 +3874,20 @@
     "weeklyLimitSummary": "Weekly budget limit summary",
     "suiteBuilderDescriptionLabel": "Description",
     "targetComparisonHint": "Side-by-side comparison of evaluation results between targets.",
-    "compareCompletedWithScore": "Comparison completed — {score}% pass rate"
+    "compareCompletedWithScore": "Comparison completed — {score}% pass rate",
+    "historyColumnSuiteName": "Suite",
+    "historyColumnTarget": "Target",
+    "historyColumnPassRate": "Pass rate",
+    "historyColumnAvgLatencyMs": "Avg latency",
+    "historyColumnCreatedAt": "Created",
+    "evalsStrategyContainsLabel": "Contains",
+    "evalsStrategyContainsDescription": "Passes when the output includes the expected text.",
+    "evalsStrategyExactLabel": "Exact",
+    "evalsStrategyExactDescription": "Passes only when the output exactly matches the expected value.",
+    "evalsStrategyRegexLabel": "Regex",
+    "evalsStrategyRegexDescription": "Passes when the output matches the configured regular expression.",
+    "evalsStrategyCustomLabel": "Custom",
+    "evalsStrategyCustomDescription": "Use a custom evaluator for advanced validation logic."
   },
   "modals": {
     "waitingAuth": "Esperando autorización",

@@ -33,7 +33,7 @@ function getTrendMeta(trend: ComboHealthMetrics["quotaHealth"]["providers"][numb
   if (trend === "improving") {
     return {
       icon: "trending_up",
-      label: t("improving"),
+      labelKey: "improving",
       variant: "success" as const,
     };
   }
@@ -41,14 +41,14 @@ function getTrendMeta(trend: ComboHealthMetrics["quotaHealth"]["providers"][numb
   if (trend === "declining") {
     return {
       icon: "trending_down",
-      label: t("declining"),
+      labelKey: "declining",
       variant: "warning" as const,
     };
   }
 
   return {
     icon: "trending_flat",
-    label: t("stable"),
+    labelKey: "stable",
     variant: "default" as const,
   };
 }
@@ -93,6 +93,7 @@ function DistributionBar({ label, value, meta }: { label: string; value: number;
 }
 
 function ComboHealthCard({ combo }: { combo: ComboHealthMetrics }) {
+  const t = useTranslations("analytics");
   const sortedDistribution = useMemo(
     () =>
       [...combo.usageSkew.modelDistribution].sort(
@@ -167,7 +168,7 @@ function ComboHealthCard({ combo }: { combo: ComboHealthMetrics }) {
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant={trendMeta.variant} size="sm" icon={trendMeta.icon}>
-                        {trendMeta.label}
+                        {t(trendMeta.labelKey)}
                       </Badge>
                       {provider.isExhausted ? (
                         <Badge variant="error" size="sm">

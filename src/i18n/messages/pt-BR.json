@@ -4035,7 +4035,15 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "save": "Save",
-    "edit": "Edit"
+    "edit": "Edit",
+    "evalsStrategyContainsLabel": "Contains",
+    "evalsStrategyContainsDescription": "Passes when the output includes the expected text.",
+    "evalsStrategyExactLabel": "Exact",
+    "evalsStrategyExactDescription": "Passes only when the output exactly matches the expected value.",
+    "evalsStrategyRegexLabel": "Regex",
+    "evalsStrategyRegexDescription": "Passes when the output matches the configured regular expression.",
+    "evalsStrategyCustomLabel": "Custom",
+    "evalsStrategyCustomDescription": "Use a custom evaluator for advanced validation logic."
   },
   "modals": {
     "waitingAuth": "Aguardando Autorização",

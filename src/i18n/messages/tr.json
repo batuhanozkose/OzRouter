@@ -4199,7 +4199,20 @@
     "suiteBuilderCaseExpectedPlaceholderExact": "Tam beklenen yanıtı yapıştırın",
     "suiteBuilderCaseExpectedPlaceholderRegex": "ör. ^\\\\s*\\\\{.*\\\\}\\\\s*$",
     "suiteBuilderCaseExpectedHintRegex": "JavaScript normal ifadesini çevreleyen eğik çizgi olmadan kullanın.",
-    "suiteBuilderDuplicateCase": "Kopyala"
+    "suiteBuilderDuplicateCase": "Kopyala",
+    "historyColumnSuiteName": "Suite",
+    "historyColumnTarget": "Hedef",
+    "historyColumnPassRate": "Geçme oranı",
+    "historyColumnAvgLatencyMs": "Ort. gecikme",
+    "historyColumnCreatedAt": "Oluşturulma",
+    "evalsStrategyContainsLabel": "İçerir",
+    "evalsStrategyContainsDescription": "Çıktı beklenen metni içerdiğinde geçer.",
+    "evalsStrategyExactLabel": "Tam eşleşme",
+    "evalsStrategyExactDescription": "Yalnızca çıktı beklenen değerle birebir aynıysa geçer.",
+    "evalsStrategyRegexLabel": "Regex",
+    "evalsStrategyRegexDescription": "Çıktı yapılandırılan düzenli ifadeyle eşleştiğinde geçer.",
+    "evalsStrategyCustomLabel": "Özel",
+    "evalsStrategyCustomDescription": "Gelişmiş doğrulama mantığı için özel değerlendirici kullanır."
   },
   "modals": {
     "waitingAuth": "Yetkilendirme bekleniyor",
