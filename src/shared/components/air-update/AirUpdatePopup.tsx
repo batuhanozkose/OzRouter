@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useAirUpdate } from "./AirUpdateContext";
 import Modal from "../Modal";
 import Button from "../Button";
@@ -12,12 +13,13 @@ import Button from "../Button";
  *   - "Later"       → dismisses popup, shows persistent banner
  */
 export default function AirUpdatePopup() {
+  const t = useTranslations("airUpdate");
   const { versionInfo, popupOpen, dismissPopup, startUpdate } = useAirUpdate();
 
   if (!popupOpen || !versionInfo?.updateAvailable) return null;
 
   return (
-    <Modal isOpen={popupOpen} title="Air Update" onClose={dismissPopup} maxWidth="md">
+    <Modal isOpen={popupOpen} title={t("title")} onClose={dismissPopup} maxWidth="md">
       <div className="flex flex-col gap-5">
         {/* Header icon */}
         <div className="flex flex-col items-center gap-3 pt-2">
@@ -25,7 +27,7 @@ export default function AirUpdatePopup() {
             <span className="material-symbols-outlined text-4xl text-primary">cloud_download</span>
           </div>
           <div className="text-center">
-            <h3 className="text-lg font-semibold text-text-main">New Version Available</h3>
+            <h3 className="text-lg font-semibold text-text-main">{t("newVersionAvailable")}</h3>
             <p className="mt-1 text-sm text-text-muted">
               <span className="font-mono text-text-secondary">v{versionInfo.current}</span>
               <span className="mx-2 text-text-muted">→</span>
@@ -38,7 +40,7 @@ export default function AirUpdatePopup() {
         {versionInfo.releaseName && (
           <div className="rounded-lg border border-border bg-surface p-4">
             <p className="mb-2 text-xs font-medium uppercase tracking-wider text-text-muted">
-              What&apos;s New
+              {t("whatsNew")}
             </p>
             <p className="text-sm font-semibold text-text-main">{versionInfo.releaseName}</p>
             {versionInfo.releaseNotes && (
@@ -56,11 +58,10 @@ export default function AirUpdatePopup() {
           </span>
           <div>
             <p className="text-sm font-medium text-green-700 dark:text-green-400">
-              Your data is safe
+              {t("dataSafeTitle")}
             </p>
             <p className="mt-0.5 text-xs text-green-600/80 dark:text-green-400/70">
-              A full database backup is created before updating. All your settings, API keys,
-              combos, and logs will be preserved.
+              {t("dataSafeDescription")}
             </p>
           </div>
         </div>
@@ -73,11 +74,10 @@ export default function AirUpdatePopup() {
             </span>
             <div>
               <p className="text-sm font-medium text-amber-700 dark:text-amber-400">
-                Manual update required
+                {t("manualUpdateRequired")}
               </p>
               <p className="mt-0.5 text-xs text-amber-600/80 dark:text-amber-400/70">
-                {versionInfo.autoUpdateError ||
-                  "Auto-update is not available for this installation type. Please update manually via git pull."}
+                {versionInfo.autoUpdateError || t("autoUpdateUnavailable")}
               </p>
             </div>
           </div>
@@ -92,10 +92,10 @@ export default function AirUpdatePopup() {
             disabled={!versionInfo.autoUpdateSupported}
             icon="cloud_download"
           >
-            Update Now
+            {t("updateNow")}
           </Button>
           <Button variant="ghost" fullWidth onClick={dismissPopup}>
-            Later
+            {t("later")}
           </Button>
         </div>
 
@@ -108,7 +108,7 @@ export default function AirUpdatePopup() {
             className="flex items-center justify-center gap-1 text-xs text-text-muted hover:text-primary transition-colors"
           >
             <span className="material-symbols-outlined text-[14px]">open_in_new</span>
-            View on GitHub
+            {t("viewOnGitHub")}
           </a>
         )}
       </div>

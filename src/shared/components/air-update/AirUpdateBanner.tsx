@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useAirUpdate } from "./AirUpdateContext";
 
 /**
@@ -9,6 +10,7 @@ import { useAirUpdate } from "./AirUpdateContext";
  * Disappears when update is in progress or not available.
  */
 export default function AirUpdateBanner() {
+  const t = useTranslations("airUpdate");
   const { versionInfo, dismissed, phase, openPopup, progressVisible } = useAirUpdate();
 
   // Only show when: update available + popup dismissed + not currently updating
@@ -26,10 +28,10 @@ export default function AirUpdateBanner() {
         cloud_download
       </span>
       <span className="text-primary font-medium">
-        Update available: <span className="font-semibold">v{versionInfo?.latest}</span>
+        {t("updateAvailable")}: <span className="font-semibold">v{versionInfo?.latest}</span>
       </span>
       <span className="ml-1 rounded-full bg-primary/20 px-2.5 py-0.5 text-xs font-medium text-primary group-hover:bg-primary/30 transition-colors">
-        Click to update
+        {t("clickToUpdate")}
       </span>
     </button>
   );

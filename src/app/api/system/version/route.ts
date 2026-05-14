@@ -50,7 +50,7 @@ async function getGitHubReleaseInfo(version: string): Promise<ReleaseInfo> {
 export const dynamic = "force-dynamic";
 
 function normalizeTagVersion(tag: string): string | null {
-  const match = tag.match(/(?:refs\/tags\/)?v?(\d+\.\d+\.\d+)(?:\^{}|)$/);
+  const match = tag.match(/(?:refs\/tags\/)?v?(\d+\.\d+\.\d+(?:\.\d+)?)(?:\^{}|)$/);
   return match ? match[1] : null;
 }
 
@@ -89,11 +89,14 @@ function isNewer(a: string | null, b: string): boolean {
 
 function compareVersions(a: string, b: string): number {
   const parse = (v: string) => v.split(".").map(Number);
-  const [aMaj, aMin, aPat] = parse(a);
-  const [bMaj, bMin, bPat] = parse(b);
-  if (aMaj !== bMaj) return aMaj - bMaj;
-  if (aMin !== bMin) return aMin - bMin;
-  return aPat - bPat;
+  const aParts = parse(a);
+  const bParts = parse(b);
+  const max = Math.max(aParts.length, bParts.length, 4);
+  for (let i = 0; i < max; i++) {
+    const diff = (aParts[i] || 0) - (bParts[i] || 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
 }
 
 async function getNews() {

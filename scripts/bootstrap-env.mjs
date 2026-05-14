@@ -16,7 +16,7 @@
  *   4. process.env            (shell env, highest priority)
  */
 
-import { randomBytes, createDecipheriv } from "node:crypto";
+import { randomBytes, createDecipheriv, createHash, scryptSync } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { homedir } from "node:os";
@@ -90,8 +90,15 @@ function hasEncryptedCredentials(dataDir) {
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    if (/no such table: provider_connections/i.test(message)) return false;
     throw new Error(`Unable to inspect existing database at ${dbPath}: ${message}`);
   }
+}
+
+function deriveStorageKeys(secret) {
+  const salt = createHash("sha256").update(secret).digest().slice(0, 16);
+  const legacySalt = "ozrouter-field-encryption-v1";
+  return [scryptSync(secret, salt, 32), scryptSync(secret, legacySalt, 32)];
 }
 
 // ── Parse a simple KEY=VALUE env file ───────────────────────────────────────
@@ -155,17 +162,25 @@ export function bootstrapEnv({ dataDirOverride, quiet = false } = {}) {
 
   if (!merged.STORAGE_ENCRYPTION_KEY?.trim()) {
     if (hasEncryptedCredentials(dataDir)) {
-      throw new Error(
-        `Refusing to auto-generate STORAGE_ENCRYPTION_KEY: encrypted credentials already exist in ${join(
+      merged.OZROUTER_ENCRYPTION_RECOVERY_REQUIRED = "true";
+      log(
+        `⚠️  STORAGE_ENCRYPTION_KEY is missing, but encrypted credentials already exist in ${join(
           dataDir,
           "storage.sqlite"
-        )}. Restore the key via ${preferredEnvPath ?? "an appropriate .env file"}, ${serverEnvPath}, or process.env.`
+        )}.`
       );
+      log(
+        `   Starting in credential recovery mode. Restore the key via ${
+          preferredEnvPath ?? "an appropriate .env file"
+        }, ${serverEnvPath}, or process.env.`
+      );
+      log("   Existing encrypted credentials will not be decrypted until the key is restored.");
+    } else {
+      persisted.STORAGE_ENCRYPTION_KEY = randomBytes(32).toString("hex");
+      merged.STORAGE_ENCRYPTION_KEY = persisted.STORAGE_ENCRYPTION_KEY;
+      needsPersist = true;
+      log("✨ STORAGE_ENCRYPTION_KEY auto-generated (first run)");
     }
-    persisted.STORAGE_ENCRYPTION_KEY = randomBytes(32).toString("hex");
-    merged.STORAGE_ENCRYPTION_KEY = persisted.STORAGE_ENCRYPTION_KEY;
-    needsPersist = true;
-    log("✨ STORAGE_ENCRYPTION_KEY auto-generated (first run)");
   }
 
   if (!merged.STORAGE_ENCRYPTION_KEY_VERSION?.trim()) {
@@ -244,14 +259,19 @@ export function bootstrapEnv({ dataDirOverride, quiet = false } = {}) {
               const iv = Buffer.from(parts[2], "hex");
               const ct = Buffer.from(parts[3], "hex");
               const tag = Buffer.from(parts[4], "hex");
-              const key = Buffer.from(merged.STORAGE_ENCRYPTION_KEY, "hex");
-              const decipher = createDecipheriv("aes-256-gcm", key, iv);
-              decipher.setAuthTag(tag);
-              try {
-                decipher.update(ct);
-                decipher.final();
-                // Decrypt succeeded — key matches
-              } catch {
+              const keys = deriveStorageKeys(merged.STORAGE_ENCRYPTION_KEY);
+              const matched = keys.some((key) => {
+                try {
+                  const decipher = createDecipheriv("aes-256-gcm", key, iv);
+                  decipher.setAuthTag(tag);
+                  decipher.update(ct);
+                  decipher.final();
+                  return true;
+                } catch {
+                  return false;
+                }
+              });
+              if (!matched) {
                 log(
                   "⛔ STORAGE_ENCRYPTION_KEY does not match the key used to encrypt your stored credentials."
                 );

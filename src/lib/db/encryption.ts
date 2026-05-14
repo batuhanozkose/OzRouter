@@ -210,7 +210,10 @@ export function encryptConnectionFields<T extends ConnectionFields | null | unde
  */
 export function decryptConnectionFields<T extends ConnectionFields | null | undefined>(row: T): T {
   if (!row) return row;
-  if (!isEncryptionEnabled()) return row;
+  const hasEncryptedField = [row.apiKey, row.accessToken, row.refreshToken, row.idToken].some(
+    (value) => typeof value === "string" && value.startsWith(PREFIX)
+  );
+  if (!isEncryptionEnabled() && !hasEncryptedField) return row;
 
   return {
     ...row,

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useAirUpdate, AirUpdatePhase, AirUpdateStep } from "./AirUpdateContext";
 import Button from "../Button";
 
@@ -8,48 +9,54 @@ import Button from "../Button";
 // ---------------------------------------------------------------------------
 
 type PhaseConfig = {
-  label: string;
+  labelKey: string;
   icon: string;
-  description: string;
+  descriptionKey: string;
 };
 
+type AirUpdateTranslator = ReturnType<typeof useTranslations>;
+
 const PHASE_CONFIG: Record<AirUpdatePhase, PhaseConfig> = {
-  idle: { label: "Ready", icon: "check_circle", description: "" },
-  checking: { label: "Checking", icon: "search", description: "Checking for updates..." },
+  idle: { labelKey: "phaseReady", icon: "check_circle", descriptionKey: "phaseReadyDescription" },
+  checking: {
+    labelKey: "phaseChecking",
+    icon: "search",
+    descriptionKey: "phaseCheckingDescription",
+  },
   backup: {
-    label: "Backup",
+    labelKey: "phaseBackup",
     icon: "backup",
-    description: "Creating a safe backup of your data...",
+    descriptionKey: "phaseBackupDescription",
   },
   updating: {
-    label: "Downloading",
+    labelKey: "phaseDownloading",
     icon: "cloud_download",
-    description: "Fetching the latest version...",
+    descriptionKey: "phaseDownloadingDescription",
   },
   installing: {
-    label: "Installing",
+    labelKey: "phaseInstalling",
     icon: "package_2",
-    description: "Installing dependencies...",
+    descriptionKey: "phaseInstallingDescription",
   },
   rebuilding: {
-    label: "Building",
+    labelKey: "phaseBuilding",
     icon: "build",
-    description: "Rebuilding the application...",
+    descriptionKey: "phaseBuildingDescription",
   },
   restarting: {
-    label: "Restarting",
+    labelKey: "phaseRestarting",
     icon: "restart_alt",
-    description: "Restarting OzRouter...",
+    descriptionKey: "phaseRestartingDescription",
   },
   done: {
-    label: "Complete",
+    labelKey: "phaseComplete",
     icon: "check_circle",
-    description: "Update complete! Reloading...",
+    descriptionKey: "phaseCompleteDescription",
   },
   failed: {
-    label: "Failed",
+    labelKey: "phaseFailed",
     icon: "error",
-    description: "Something went wrong during the update.",
+    descriptionKey: "phaseFailedDescription",
   },
 };
 
@@ -70,9 +77,11 @@ const PHASE_ORDER: AirUpdatePhase[] = [
 function StepIndicator({
   phaseKey,
   currentPhase,
+  t,
 }: {
   phaseKey: AirUpdatePhase;
   currentPhase: AirUpdatePhase;
+  t: AirUpdateTranslator;
 }) {
   const config = PHASE_CONFIG[phaseKey];
   const currentIndex = PHASE_ORDER.indexOf(currentPhase);
@@ -128,10 +137,10 @@ function StepIndicator({
                   : "text-text-muted"
           }`}
         >
-          {config.label}
+          {t(config.labelKey)}
         </span>
         {status === "active" && (
-          <span className="text-xs text-text-muted">{config.description}</span>
+          <span className="text-xs text-text-muted">{t(config.descriptionKey)}</span>
         )}
       </div>
     </div>
@@ -180,6 +189,7 @@ function StepLog({ steps }: { steps: AirUpdateStep[] }) {
 // ---------------------------------------------------------------------------
 
 export default function AirUpdateProgress() {
+  const t = useTranslations("airUpdate");
   const { phase, steps, progressVisible, closeProgress, versionInfo } = useAirUpdate();
 
   if (!progressVisible) return null;
@@ -209,14 +219,14 @@ export default function AirUpdateProgress() {
             </div>
             <div>
               <h2 className="text-lg font-semibold text-text-main">
-                {isDone ? "Update Complete!" : isFailed ? "Update Failed" : "Updating OzRouter"}
+                {isDone ? t("completeTitle") : isFailed ? t("failedTitle") : t("updatingTitle")}
               </h2>
               <p className="text-sm text-text-muted">
                 {isDone
-                  ? `Successfully updated to v${versionInfo?.latest}. Reloading...`
+                  ? t("updatedReloading", { version: versionInfo?.latest ?? "" })
                   : isFailed
-                    ? "The update could not be completed. Your data is safe."
-                    : `Updating to v${versionInfo?.latest}...`}
+                    ? t("failedDescription")
+                    : t("updatingTo", { version: versionInfo?.latest ?? "" })}
               </p>
             </div>
           </div>
@@ -224,7 +234,7 @@ export default function AirUpdateProgress() {
           {/* Phase stepper */}
           <div className="space-y-3">
             {PHASE_ORDER.map((p) => (
-              <StepIndicator key={p} phaseKey={p} currentPhase={phase} />
+              <StepIndicator key={p} phaseKey={p} currentPhase={phase} t={t} />
             ))}
           </div>
 
@@ -233,7 +243,7 @@ export default function AirUpdateProgress() {
             <div className="mt-4 flex items-center gap-2 rounded-lg bg-green-500/5 px-3 py-2 border border-green-500/10">
               <span className="material-symbols-outlined text-[16px] text-green-500">shield</span>
               <span className="text-xs text-green-600 dark:text-green-400">
-                Database backed up — your data is protected
+                {t("backupProtected")}
               </span>
             </div>
           )}
@@ -250,7 +260,7 @@ export default function AirUpdateProgress() {
                 onClick={isDone ? () => window.location.reload() : closeProgress}
                 icon={isDone ? "refresh" : "close"}
               >
-                {isDone ? "Reload Now" : "Close"}
+                {isDone ? t("reloadNow") : t("close")}
               </Button>
             </div>
           )}

@@ -19,6 +19,7 @@ test("getStrategyCategory classifies intelligent and deterministic strategies co
     "fill-first",
     "p2c",
     "context-optimized",
+    "rendezvous-hash",
   ].forEach((strategy) => {
     assert.equal(intelligentRouting.getStrategyCategory(strategy), "deterministic");
   });
@@ -55,12 +56,13 @@ test("combo strategies stay aligned between UI metadata and schema validation", 
     await import("../../src/shared/validation/schemas.ts");
   const strategyValues = ROUTING_STRATEGIES.map((strategy) => strategy.value);
 
-  assert.equal(strategyValues.length, 13);
-  assert.equal(new Set(strategyValues).size, 13);
+  assert.equal(strategyValues.length, 14);
+  assert.equal(new Set(strategyValues).size, 14);
   assert.equal(strategyValues.includes("auto"), true);
   assert.equal(strategyValues.includes("lkgp"), true);
-  assert.equal(comboStrategySchema.options.length, 13);
-  assert.equal(new Set(comboStrategySchema.options).size, 13);
+  assert.equal(strategyValues.includes("rendezvous-hash"), true);
+  assert.equal(comboStrategySchema.options.length, 14);
+  assert.equal(new Set(comboStrategySchema.options).size, 14);
 
   strategyValues.forEach((strategy) => {
     const parsed = createComboSchema.safeParse({

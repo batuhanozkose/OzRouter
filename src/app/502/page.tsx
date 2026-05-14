@@ -1,19 +1,18 @@
 import ErrorPageScaffold from "@/shared/components/ErrorPageScaffold";
+import { useTranslations } from "next-intl";
 
 export default function BadGatewayPage() {
+  const t = useTranslations("errorPages.502");
+
   return (
     <ErrorPageScaffold
       code="502"
       icon="hub"
-      title="Bad Gateway"
-      description="Upstream provider or gateway integration returned an invalid response."
-      suggestions={[
-        "Retry with another provider or active combo route.",
-        "Check provider credentials and model availability.",
-        "Inspect translator output if format conversion is involved.",
-      ]}
-      primaryAction={{ href: "/dashboard/providers", label: "Open Providers" }}
-      secondaryAction={{ href: "/dashboard/translator", label: "Open Translator" }}
+      title={t("title")}
+      description={t("description")}
+      suggestions={[t("suggestion1"), t("suggestion2"), t("suggestion3")]}
+      primaryAction={{ href: "/dashboard/providers", label: t("primaryAction") }}
+      secondaryAction={{ href: "/dashboard/translator", label: t("secondaryAction") }}
     />
   );
 }

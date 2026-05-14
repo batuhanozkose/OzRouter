@@ -64,7 +64,7 @@ test("bootstrapEnv prefers ~/.ozrouter/.env over server.env", () => {
   });
 });
 
-test("bootstrapEnv refuses to generate a new key over encrypted data", () => {
+test("bootstrapEnv starts in recovery mode instead of generating a new key over encrypted data", () => {
   withTempEnv(({ dataDir }) => {
     process.env.DATA_DIR = dataDir;
     fs.mkdirSync(dataDir, { recursive: true });
@@ -87,10 +87,10 @@ test("bootstrapEnv refuses to generate a new key over encrypted data", () => {
       db.close();
     }
 
-    assert.throws(
-      () => bootstrapEnv({ quiet: true }),
-      /Refusing to auto-generate STORAGE_ENCRYPTION_KEY/
-    );
+    const env = bootstrapEnv({ quiet: true });
+
+    assert.equal(env.STORAGE_ENCRYPTION_KEY, undefined);
+    assert.equal(env.OZROUTER_ENCRYPTION_RECOVERY_REQUIRED, "true");
   });
 });
 

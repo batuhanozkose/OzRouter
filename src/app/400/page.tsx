@@ -1,19 +1,18 @@
 import ErrorPageScaffold from "@/shared/components/ErrorPageScaffold";
+import { useTranslations } from "next-intl";
 
 export default function BadRequestPage() {
+  const t = useTranslations("errorPages.400");
+
   return (
     <ErrorPageScaffold
       code="400"
       icon="rule"
-      title="Bad Request"
-      description="The request payload is invalid or incomplete."
-      suggestions={[
-        "Review required fields and payload format before retrying.",
-        "If you are using the API, validate the JSON schema locally.",
-        "If this keeps happening, open the request in Translator Playground to inspect the payload.",
-      ]}
-      primaryAction={{ href: "/docs", label: "Open Documentation" }}
-      secondaryAction={{ href: "/dashboard/translator", label: "Open Translator" }}
+      title={t("title")}
+      description={t("description")}
+      suggestions={[t("suggestion1"), t("suggestion2"), t("suggestion3")]}
+      primaryAction={{ href: "/docs", label: t("primaryAction") }}
+      secondaryAction={{ href: "/dashboard/translator", label: t("secondaryAction") }}
     />
   );
 }

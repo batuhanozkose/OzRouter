@@ -30,6 +30,19 @@ test("encryption stays in passthrough mode when no storage key is configured", a
   assert.equal(encryption.decrypt(undefined), undefined);
 });
 
+test("connection helper clears encrypted credential fields when no storage key is configured", async () => {
+  delete process.env.STORAGE_ENCRYPTION_KEY;
+  const encryption = await importFresh("src/lib/db/encryption.ts");
+
+  const row = encryption.decryptConnectionFields({
+    apiKey: "enc:v1:00112233445566778899aabbccddeeff:deadbeef:cafebabe",
+    accessToken: "plain-access-token",
+  });
+
+  assert.equal(row.apiKey, null);
+  assert.equal(row.accessToken, "plain-access-token");
+});
+
 test("encrypt/decrypt round-trip uses the expected serialized format", async () => {
   process.env.STORAGE_ENCRYPTION_KEY = "task-304-secret-a";
   const encryption = await importFresh("src/lib/db/encryption.ts");

@@ -26,6 +26,7 @@ export default function ErrorPageScaffold({
   secondaryAction,
 }: ErrorPageScaffoldProps) {
   const t = useTranslations("common");
+  const tErrors = useTranslations("errorPages");
   const resolvedPrimary = primaryAction ?? { href: "/dashboard", label: t("goToDashboard") };
   const resolvedSecondary = secondaryAction ?? { href: "/status", label: t("checkSystemStatus") };
 
@@ -55,7 +56,7 @@ export default function ErrorPageScaffold({
         {suggestions.length > 0 && (
           <ul
             className="mt-8 rounded-xl border border-border bg-bg-alt p-5 space-y-2 text-sm text-text-muted"
-            aria-label="Recommended actions"
+            aria-label={tErrors("recommendedActions")}
           >
             {suggestions.map((item) => (
               <li key={item} className="flex items-start gap-2">

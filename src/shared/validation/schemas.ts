@@ -339,6 +339,7 @@ export const comboStrategySchema = z.enum([
   "p2c",
   "lkgp",
   "context-optimized",
+  "rendezvous-hash",
 ]);
 
 const scoringWeightsSchema = z
@@ -434,6 +435,7 @@ const settingsFallbackStrategySchema = z.enum([
   "auto",
   "context-optimized",
   "lkgp",
+  "rendezvous-hash",
 ]);
 
 export const updateSettingsSchema = z.object({

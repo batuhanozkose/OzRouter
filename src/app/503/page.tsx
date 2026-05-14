@@ -1,19 +1,18 @@
 import ErrorPageScaffold from "@/shared/components/ErrorPageScaffold";
+import { useTranslations } from "next-intl";
 
 export default function ServiceUnavailablePage() {
+  const t = useTranslations("errorPages.503");
+
   return (
     <ErrorPageScaffold
       code="503"
       icon="build_circle"
-      title="Service Unavailable"
-      description="The service is temporarily unavailable due to maintenance or degraded dependencies."
-      suggestions={[
-        "Wait a moment and retry.",
-        "Check maintenance notices and system status.",
-        "Use fallback providers if your workflow is latency-sensitive.",
-      ]}
-      primaryAction={{ href: "/maintenance", label: "Maintenance Details" }}
-      secondaryAction={{ href: "/status", label: "System Status" }}
+      title={t("title")}
+      description={t("description")}
+      suggestions={[t("suggestion1"), t("suggestion2"), t("suggestion3")]}
+      primaryAction={{ href: "/maintenance", label: t("primaryAction") }}
+      secondaryAction={{ href: "/status", label: t("secondaryAction") }}
     />
   );
 }

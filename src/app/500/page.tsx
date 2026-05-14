@@ -1,19 +1,18 @@
 import ErrorPageScaffold from "@/shared/components/ErrorPageScaffold";
+import { useTranslations } from "next-intl";
 
 export default function InternalServerErrorPage() {
+  const t = useTranslations("errorPages.500");
+
   return (
     <ErrorPageScaffold
       code="500"
       icon="warning"
-      title="Internal Server Error"
-      description="An unexpected server-side error occurred while processing your request."
-      suggestions={[
-        "Retry once in a few seconds.",
-        "Check health telemetry and server logs for correlated request IDs.",
-        "If persistent, report the issue with timestamp and request context.",
-      ]}
-      primaryAction={{ href: "/dashboard/health", label: "Open Health Dashboard" }}
-      secondaryAction={{ href: "/dashboard/logs", label: "Open Logs" }}
+      title={t("title")}
+      description={t("description")}
+      suggestions={[t("suggestion1"), t("suggestion2"), t("suggestion3")]}
+      primaryAction={{ href: "/dashboard/health", label: t("primaryAction") }}
+      secondaryAction={{ href: "/dashboard/logs", label: t("secondaryAction") }}
     />
   );
 }

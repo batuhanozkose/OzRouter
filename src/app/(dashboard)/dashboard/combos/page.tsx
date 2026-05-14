@@ -64,11 +64,16 @@ const STRATEGY_OPTIONS = ROUTING_STRATEGIES.map((strategy) => ({
 
 const STRATEGY_LABEL_FALLBACK = {
   "context-relay": "Context Relay",
+  "context-optimized": "Context Optimized",
+  "rendezvous-hash": "Rendezvous Hash",
 };
 
 const STRATEGY_DESC_FALLBACK = {
   "context-relay":
     "Priority-style routing with automatic context handoffs when account rotation happens.",
+  "context-optimized": "Routes based on context window requirements and conversation length.",
+  "rendezvous-hash":
+    "Keeps the same conversation or session on the same target using consistent hashing.",
 };
 
 const STRATEGY_GUIDANCE_FALLBACK = {
@@ -137,6 +142,12 @@ const STRATEGY_GUIDANCE_FALLBACK = {
     when: "Use when you need to optimize for context window usage across models.",
     avoid: "Avoid when models have similar context lengths or simple tasks.",
     example: "Example: Distribute long conversations across models with large context windows.",
+  },
+  "rendezvous-hash": {
+    when: "Use when the same conversation or session should stay on the same target.",
+    avoid: "Avoid when you need purely even per-request distribution.",
+    example:
+      "Example: Keep long-running sessions sticky while still allowing stable redistribution when targets change.",
   },
 };
 
@@ -283,6 +294,15 @@ const STRATEGY_RECOMMENDATIONS_FALLBACK = {
       "Best for long conversations that span multiple requests.",
       "Selects models with appropriate context capacity automatically.",
       "Use when context limits are a bottleneck for your workload.",
+    ],
+  },
+  "rendezvous-hash": {
+    title: "Sticky session routing",
+    description: "Uses consistent hashing for deterministic session affinity.",
+    tips: [
+      "Prefer stable session, conversation, or previous response IDs in requests.",
+      "Use with equivalent targets where sticky routing improves continuity.",
+      "Expect minimal remapping when targets are added or removed.",
     ],
   },
 };
@@ -1710,10 +1730,10 @@ function ComboCard({
                 onChange={(e) => handleCompressionOverrideChange(e.target.value)}
                 disabled={isSavingCompression}
                 className="text-xs py-1 px-2 rounded border border-black/10 dark:border-white/10 bg-white dark:bg-bg-main text-text-main focus:border-primary focus:outline-none transition-colors disabled:opacity-50 max-w-[130px] md:max-w-none"
-                title="Compression Override"
+                title={getI18nOrFallback(t, "compressionOverride", "Compression override")}
               >
-                <option value="">Default</option>
-                <option value="off">Off</option>
+                <option value="">{getI18nOrFallback(t, "compressionDefault", "Default")}</option>
+                <option value="off">{getI18nOrFallback(t, "compressionOff", "Off")}</option>
                 <option value="lite">Lite</option>
                 <option value="standard">Standard</option>
                 <option value="aggressive">Aggressive</option>

@@ -152,6 +152,16 @@ test("createComboSchema accepts context-relay strategy with handoff config", () 
   assert.equal(parsed.config.maxMessagesForSummary, 24);
 });
 
+test("createComboSchema accepts rendezvous-hash strategy", () => {
+  const parsed = createComboSchema.parse({
+    name: "sticky-sessions",
+    models: ["openai/gpt-4o-mini", "anthropic/claude-3-5-haiku"],
+    strategy: "rendezvous-hash",
+  });
+
+  assert.equal(parsed.strategy, "rendezvous-hash");
+});
+
 test("createComboSchema accepts structured combo steps with pinned connection and combo refs", () => {
   const parsed = createComboSchema.parse({
     name: "codex-pinned",
