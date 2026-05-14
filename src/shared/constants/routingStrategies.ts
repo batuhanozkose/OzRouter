@@ -11,7 +11,8 @@ export type RoutingStrategyValue =
   | "strict-random"
   | "auto"
   | "context-optimized"
-  | "lkgp";
+  | "lkgp"
+  | "rendezvous-hash";
 
 type RoutingStrategyOption = {
   value: RoutingStrategyValue;
@@ -113,6 +114,13 @@ export const ROUTING_STRATEGIES: RoutingStrategyOption[] = [
     settingsDescKey: "contextOptDesc",
     icon: "text_snippet",
   },
+  {
+    value: "rendezvous-hash",
+    labelKey: "rendezvousHash",
+    combosDescKey: "rendezvousHashDesc",
+    settingsDescKey: "rendezvousHashDesc",
+    icon: "fingerprint",
+  },
 ];
 
 export const SETTINGS_FALLBACK_STRATEGY_VALUES: RoutingStrategyValue[] = [
@@ -128,4 +136,5 @@ export const SETTINGS_FALLBACK_STRATEGY_VALUES: RoutingStrategyValue[] = [
   "auto",
   "context-optimized",
   "lkgp",
+  "rendezvous-hash",
 ];

@@ -1,7 +1,7 @@
 /**
  * Shared combo (model combo) handling with fallback support
  * Supports: priority, weighted, round-robin, random, least-used, cost-optimized,
- * strict-random, auto, fill-first, p2c, lkgp, context-optimized, and context-relay strategies
+ * strict-random, auto, fill-first, p2c, lkgp, context-optimized, rendezvous-hash, and context-relay strategies
  */
 
 import {
@@ -25,6 +25,8 @@ import { classifyWithConfig, DEFAULT_INTENT_CONFIG } from "./intentClassifier.ts
 import { selectProvider as selectAutoProvider } from "./autoCombo/engine.ts";
 import { selectWithStrategy } from "./autoCombo/routerStrategy.ts";
 import { getTaskFitness } from "./autoCombo/taskFitness.ts";
+import { rendezvousHashSelect, extractRoutingKey } from "./rendezvousHash.ts";
+import { isDrained } from "./connectionDrain.ts";
 import {
   calculateFactors,
   calculateScore,
@@ -1215,6 +1217,16 @@ export async function handleComboChat({
 
   orderedTargets = await applyRequestTagRouting(orderedTargets, body, log);
 
+  // Filter out drained connections (quota exhausted or manually drained)
+  const preDrainCount = orderedTargets.length;
+  orderedTargets = orderedTargets.filter((t) => !isDrained(t.executionKey));
+  if (orderedTargets.length < preDrainCount) {
+    log.info(
+      "COMBO",
+      `Drain filter: ${preDrainCount - orderedTargets.length} connection(s) drained, ${orderedTargets.length} remaining`
+    );
+  }
+
   if (strategy === "weighted") {
     log.info(
       "COMBO",
@@ -1431,6 +1443,16 @@ export async function handleComboChat({
       );
     } else {
       log.info("COMBO", "P2C: only one target — using as-is");
+    }
+  } else if (strategy === "rendezvous-hash") {
+    const routingKey = extractRoutingKey(body || {});
+    const targets = orderedTargets.map((t) => ({ id: t.executionKey }));
+    const selectedIdx = rendezvousHashSelect(targets, routingKey);
+    if (selectedIdx >= 0 && selectedIdx < orderedTargets.length) {
+      const selected = orderedTargets[selectedIdx];
+      const rest = orderedTargets.filter((_, i) => i !== selectedIdx);
+      orderedTargets = [selected, ...rest];
+      log.info("COMBO", `Rendezvous-hash: key=${routingKey.slice(0, 40)}… → ${selected.modelStr}`);
     }
   }
 

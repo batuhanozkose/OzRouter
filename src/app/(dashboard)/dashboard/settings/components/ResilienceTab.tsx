@@ -747,6 +747,240 @@ export default function ResilienceTab() {
         saving={savingSection === "waitForCooldown"}
         onSave={(waitForCooldown) => savePatch("waitForCooldown", { waitForCooldown })}
       />
+      <InFlightCard />
+      <DrainCard />
     </div>
+  );
+}
+
+// ── In-Flight Request Tracking Card ──────────────────────────────────────
+
+function InFlightCard() {
+  const [limits, setLimits] = useState({ global: 100, perProvider: 20 });
+  const [stats, setStats] = useState<{
+    global: number;
+    perProvider: Record<string, number>;
+  } | null>(null);
+  const [saving, setSaving] = useState(false);
+  const notify = useNotificationStore((s) => s.addNotification);
+
+  useEffect(() => {
+    fetch("/api/settings/inflight")
+      .then((r) => r.json())
+      .then((d) => {
+        setLimits({
+          global: d.inflight_max_global ?? 100,
+          perProvider: d.inflight_max_per_provider ?? 20,
+        });
+      })
+      .catch(() => {});
+
+    // Poll active stats every 5s
+    const poll = setInterval(() => {
+      fetch("/api/v1/inflight")
+        .then((r) => r.json())
+        .then(setStats)
+        .catch(() => {});
+    }, 5000);
+    // Initial fetch
+    fetch("/api/v1/inflight")
+      .then((r) => r.json())
+      .then(setStats)
+      .catch(() => {});
+    return () => clearInterval(poll);
+  }, []);
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/settings/inflight", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          inflight_max_global: limits.global,
+          inflight_max_per_provider: limits.perProvider,
+        }),
+      });
+      if (res.ok) {
+        notify({ type: "success", message: "In-flight limits updated" });
+      }
+    } catch {
+      notify({ type: "error", message: "Failed to update limits" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Card className="p-6">
+      <div className="flex items-start gap-3 mb-4">
+        <span className="material-symbols-outlined text-xl text-primary">speed</span>
+        <div>
+          <h3 className="text-base font-bold text-text-main">In-Flight Request Tracking</h3>
+          <p className="text-sm text-text-muted">
+            Overload protection — reject new requests when limits exceeded (503).
+          </p>
+        </div>
+      </div>
+
+      {stats && (
+        <div className="mb-4 p-3 rounded-lg bg-background-secondary">
+          <div className="flex items-center gap-4 text-sm">
+            <div>
+              <span className="text-text-muted">Active:</span>{" "}
+              <span className="font-mono font-bold text-text-main">{stats.global}</span>
+              <span className="text-text-muted">/{limits.global}</span>
+            </div>
+            {Object.keys(stats.perProvider).length > 0 && (
+              <div className="flex gap-2 flex-wrap">
+                {Object.entries(stats.perProvider).map(([p, c]) => (
+                  <span key={p} className="px-2 py-0.5 rounded bg-background-main text-xs">
+                    {p}: {c}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-4">
+        <label className="block">
+          <span className="text-sm text-text-muted">Global Max</span>
+          <input
+            type="number"
+            min={1}
+            value={limits.global}
+            onChange={(e) => setLimits((l) => ({ ...l, global: Number(e.target.value) }))}
+            className="mt-1 w-full rounded border border-border bg-background-secondary px-3 py-2 text-sm text-text-main"
+          />
+        </label>
+        <label className="block">
+          <span className="text-sm text-text-muted">Per-Provider Max</span>
+          <input
+            type="number"
+            min={1}
+            value={limits.perProvider}
+            onChange={(e) => setLimits((l) => ({ ...l, perProvider: Number(e.target.value) }))}
+            className="mt-1 w-full rounded border border-border bg-background-secondary px-3 py-2 text-sm text-text-main"
+          />
+        </label>
+      </div>
+      <div className="mt-4 flex justify-end">
+        <Button onClick={handleSave} disabled={saving}>
+          {saving ? "Saving..." : "Save"}
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+// ── Connection Drain Card ────────────────────────────────────────────────
+
+function DrainCard() {
+  const [threshold, setThreshold] = useState(90);
+  const [connections, setConnections] = useState<
+    Array<{ connectionId: string; reason: string; drainedAt: number }>
+  >([]);
+  const [saving, setSaving] = useState(false);
+  const notify = useNotificationStore((s) => s.addNotification);
+
+  useEffect(() => {
+    fetch("/api/settings/drain")
+      .then((r) => r.json())
+      .then((d) => {
+        setThreshold(d.threshold ?? 90);
+        setConnections(d.connections ?? []);
+      })
+      .catch(() => {});
+  }, []);
+
+  async function handleSaveThreshold() {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/settings/drain", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ threshold }),
+      });
+      if (res.ok) notify({ type: "success", message: "Drain threshold updated" });
+    } catch {
+      notify({ type: "error", message: "Failed to update threshold" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleUndrain(connectionId: string) {
+    try {
+      const res = await fetch("/api/settings/drain", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ connectionId, action: "undrain" }),
+      });
+      if (res.ok) {
+        const d = await res.json();
+        setConnections(d.connections ?? []);
+        notify({ type: "success", message: `Undrained ${connectionId}` });
+      }
+    } catch {
+      notify({ type: "error", message: "Failed to undrain" });
+    }
+  }
+
+  return (
+    <Card className="p-6">
+      <div className="flex items-start gap-3 mb-4">
+        <span className="material-symbols-outlined text-xl text-primary">water_drop</span>
+        <div>
+          <h3 className="text-base font-bold text-text-main">Connection Draining</h3>
+          <p className="text-sm text-text-muted">
+            Proactive quota protection — auto-drain connections when usage exceeds threshold.
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-end gap-4 mb-4">
+        <label className="block flex-1">
+          <span className="text-sm text-text-muted">Drain Threshold (%)</span>
+          <input
+            type="number"
+            min={1}
+            max={100}
+            value={threshold}
+            onChange={(e) => setThreshold(Number(e.target.value))}
+            className="mt-1 w-full rounded border border-border bg-background-secondary px-3 py-2 text-sm text-text-main"
+          />
+        </label>
+        <Button onClick={handleSaveThreshold} disabled={saving}>
+          {saving ? "Saving..." : "Save"}
+        </Button>
+      </div>
+
+      {connections.length > 0 ? (
+        <div className="space-y-2">
+          <h4 className="text-sm font-semibold text-text-main">Drained Connections</h4>
+          {connections.map((c) => (
+            <div
+              key={c.connectionId}
+              className="flex items-center justify-between rounded bg-background-secondary px-3 py-2"
+            >
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                  <span className="material-symbols-outlined text-sm">block</span>
+                  {c.reason}
+                </span>
+                <span className="text-sm text-text-main font-mono">{c.connectionId}</span>
+              </div>
+              <Button onClick={() => handleUndrain(c.connectionId)} className="text-xs">
+                Undrain
+              </Button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-text-muted">No connections currently drained.</p>
+      )}
+    </Card>
   );
 }

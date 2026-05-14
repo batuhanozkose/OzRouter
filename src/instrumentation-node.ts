@@ -204,4 +204,57 @@ export async function registerNodejs(): Promise<void> {
     const msg = err instanceof Error ? err.message : String(err);
     console.warn("[COMPLIANCE] Could not initialize audit log:", msg);
   }
+
+  // ── Bootstrap Token (first-run security) ───────────────────────────────
+  try {
+    const { generateBootstrapToken, logBootstrapToken } = await import("@/lib/auth/bootstrapToken");
+    const token = generateBootstrapToken();
+    if (token) {
+      logBootstrapToken(token);
+    }
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn("[STARTUP] Could not initialize bootstrap token:", msg);
+  }
+
+  // ── WebSocket Server ───────────────────────────────────────────────────
+  try {
+    const { initWebSocketServer } = await import("@/server/websocketServer");
+    initWebSocketServer();
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn("[STARTUP] Could not initialize WebSocket server:", msg);
+  }
+
+  // ── In-flight Tracker initialization ────────────────────────────────────
+  try {
+    const { updateLimits } = await import("@ozrouter/open-sse/services/inflightTracker");
+    const settings = (await import("@/lib/db/settings")).getSettings() as Record<string, unknown>;
+    updateLimits(
+      (settings.inflight_max_global as number) ?? 100,
+      (settings.inflight_max_per_provider as number) ?? 20
+    );
+    console.log("[STARTUP] In-flight tracker initialized");
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn("[STARTUP] Could not initialize in-flight tracker:", msg);
+  }
+
+  // ── Connection Drain restore ───────────────────────────────────────────
+  try {
+    const { loadFromPersisted, updateThreshold, startProbeTimer } =
+      await import("@ozrouter/open-sse/services/connectionDrain");
+    const settings = (await import("@/lib/db/settings")).getSettings() as Record<string, unknown>;
+    if (typeof settings.drained_connections === "string") {
+      loadFromPersisted(settings.drained_connections);
+    }
+    if (typeof settings.drain_threshold_percent === "number") {
+      updateThreshold(settings.drain_threshold_percent);
+    }
+    startProbeTimer();
+    console.log("[STARTUP] Connection drain manager initialized");
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn("[STARTUP] Could not initialize drain manager:", msg);
+  }
 }

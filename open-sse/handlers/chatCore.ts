@@ -944,6 +944,42 @@ export async function handleChatCore({
   const requestedModel =
     typeof body?.model === "string" && body.model.trim().length > 0 ? body.model : model;
   const startTime = Date.now();
+
+  // ── In-flight tracking (overload protection) ────────────────────────
+  const inflightProvider = provider || "unknown";
+  let inflightAcquired = false;
+  try {
+    const { acquire: inflightAcquire, release: inflightRelease } =
+      await import("../services/inflightTracker.ts");
+    inflightAcquired = inflightAcquire(inflightProvider);
+    if (inflightAcquired) {
+      // Release on abort signal (covers all exit paths including streams)
+      const releaseOnce = () => {
+        inflightRelease(inflightProvider);
+      };
+      if (signal) {
+        signal.addEventListener("abort", releaseOnce, { once: true });
+      }
+      // Also release after a safety timeout (5 min max per request)
+      setTimeout(releaseOnce, 300_000);
+    }
+  } catch {}
+  if (!inflightAcquired) {
+    log?.warn?.(
+      "INFLIGHT",
+      `Request rejected: inflight limit exceeded for provider=${inflightProvider}`
+    );
+    return new Response(
+      JSON.stringify({
+        error: {
+          message: "Service temporarily unavailable — too many concurrent requests",
+          type: "overloaded",
+          code: "inflight_limit_exceeded",
+        },
+      }),
+      { status: 503, headers: { "Content-Type": "application/json" } }
+    );
+  }
   // Per-request trace id + checkpoint helper. Lets us see exactly which await
   // a hung request was sitting on in `[STAGE_TRACE]` log lines.
   const traceId = Math.random().toString(36).slice(2, 8);
