@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import ClientChart from "./ClientChart";
 
 interface TokenData {
   input: number;
@@ -61,26 +62,28 @@ export default function TokenBreakdown({
       <div className="flex items-center gap-4">
         {/* Donut */}
         {total > 0 ? (
-          <div className="h-[120px] w-[120px] shrink-0 min-w-0">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-              <PieChart>
-                <Pie
-                  data={donutData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={35}
-                  outerRadius={55}
-                  paddingAngle={2}
-                  dataKey="value"
-                  strokeWidth={0}
-                >
-                  {donutData.map((_, i) => (
-                    <Cell key={i} fill={TOKEN_COLORS[i % TOKEN_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip content={<DonutTooltip />} />
-              </PieChart>
-            </ResponsiveContainer>
+          <div className="shrink-0">
+            <ClientChart height="h-[120px] w-[120px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={donutData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={35}
+                    outerRadius={55}
+                    paddingAngle={2}
+                    dataKey="value"
+                    strokeWidth={0}
+                  >
+                    {donutData.map((_, i) => (
+                      <Cell key={i} fill={TOKEN_COLORS[i % TOKEN_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<DonutTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+            </ClientChart>
           </div>
         ) : (
           <div className="flex h-[120px] w-[120px] items-center justify-center">

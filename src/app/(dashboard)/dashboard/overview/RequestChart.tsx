@@ -12,8 +12,8 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from "recharts";
+import ClientChart from "./ClientChart";
 
 interface HourlyPoint {
   hour: string;
@@ -118,8 +118,8 @@ export default function RequestChart({
           <p className="text-xs text-text-muted/60">{t("chartNoData")}</p>
         </div>
       ) : view === "24h" ? (
-        <div className="h-[200px] w-full min-w-0">
-          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+        <ClientChart>
+          <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={hourly} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="grad-success" x1="0" y1="0" x2="0" y2="1">
@@ -167,10 +167,10 @@ export default function RequestChart({
               />
             </AreaChart>
           </ResponsiveContainer>
-        </div>
+        </ClientChart>
       ) : (
-        <div className="h-[200px] w-full min-w-0">
-          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+        <ClientChart>
+          <ResponsiveContainer width="100%" height="100%">
             <BarChart data={daily} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border/30" />
               <XAxis
@@ -197,7 +197,7 @@ export default function RequestChart({
               />
             </BarChart>
           </ResponsiveContainer>
-        </div>
+        </ClientChart>
       )}
     </div>
   );
