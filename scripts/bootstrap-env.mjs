@@ -8,7 +8,6 @@
  *
  * Works across all deployment modes:
  *   - source runners: called from run-standalone.mjs and run-next.mjs
- *   - Electron:       called from main.js startup, persisted in DATA_DIR
  *
  * Priority (lowest → highest):
  *   1. Auto-generated defaults

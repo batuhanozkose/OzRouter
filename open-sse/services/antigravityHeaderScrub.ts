@@ -30,7 +30,7 @@ const HEADERS_TO_REMOVE = [
   "x-stainless-helper-method",
   "http-referer",
   "referer",
-  // Browser / Chromium fingerprint (Electron clients, NOT Node.js)
+  // Browser / Chromium fingerprint (NOT Node.js)
   "sec-ch-ua",
   "sec-ch-ua-mobile",
   "sec-ch-ua-platform",
@@ -39,7 +39,7 @@ const HEADERS_TO_REMOVE = [
   "sec-fetch-dest",
   "priority",
   // Encoding: Antigravity (Node.js) sends "gzip, deflate, br" by default;
-  // Electron clients add "zstd" which is a fingerprint mismatch.
+  // Some clients add "zstd" which is a fingerprint mismatch.
   "accept-encoding",
 ];
 

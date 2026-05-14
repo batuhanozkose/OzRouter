@@ -6,14 +6,12 @@ import Header from "../Header";
 import Breadcrumbs from "../Breadcrumbs";
 import NotificationToast from "../NotificationToast";
 import MaintenanceBanner from "../MaintenanceBanner";
-import { useIsElectron } from "@/shared/hooks/useElectron";
 
 const SIDEBAR_COLLAPSED_KEY = "sidebar-collapsed";
 const isE2EMode = process.env.NEXT_PUBLIC_OZROUTER_E2E_MODE === "1";
 
 export default function DashboardLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const isElectron = useIsElectron();
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window === "undefined") return false;
     try {
@@ -22,19 +20,6 @@ export default function DashboardLayout({ children }) {
       return false;
     }
   });
-
-  const isMacElectron =
-    isElectron && typeof window !== "undefined" && window.electronAPI?.platform === "darwin";
-
-  useEffect(() => {
-    if (typeof document === "undefined") return;
-
-    document.body.classList.toggle("electron-macos", isMacElectron);
-
-    return () => {
-      document.body.classList.remove("electron-macos");
-    };
-  }, [isMacElectron]);
 
   const handleToggleCollapse = () => {
     const next = !collapsed;
@@ -54,11 +39,7 @@ export default function DashboardLayout({ children }) {
 
       {/* Sidebar - Desktop */}
       <div className="hidden min-h-0 lg:flex">
-        <Sidebar
-          collapsed={collapsed}
-          onToggleCollapse={handleToggleCollapse}
-          isMacElectron={isMacElectron}
-        />
+        <Sidebar collapsed={collapsed} onToggleCollapse={handleToggleCollapse} />
       </div>
 
       {/* Sidebar - Mobile: full viewport height with proper scroll containment */}
@@ -67,7 +48,7 @@ export default function DashboardLayout({ children }) {
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <Sidebar onClose={() => setSidebarOpen(false)} isMacElectron={isMacElectron} />
+        <Sidebar onClose={() => setSidebarOpen(false)} />
       </div>
 
       {/* Main content */}

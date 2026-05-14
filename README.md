@@ -25,7 +25,6 @@ There is no official npm package, container image, or hosted cloud service for t
 - Protocol translation between OpenAI-style chat, Responses API flows, Claude-style requests, and Gemini-style requests.
 - MCP and A2A interfaces for agent integrations.
 - Local SQLite storage under a configurable data directory.
-- Optional Electron desktop wrapper for users who prefer an app shell.
 
 ## How It Works
 
@@ -354,7 +353,6 @@ Check:
 - `src/lib` — persistence, auth, settings, jobs, usage, and app services.
 - `src/shared` — UI components, constants, types, and shared utilities.
 - `open-sse` — provider execution, streaming, translation, MCP, and routing core.
-- `electron` — optional desktop wrapper.
 - `docs` — operational documentation.
 - `tests` — unit, integration, and compatibility tests.
 

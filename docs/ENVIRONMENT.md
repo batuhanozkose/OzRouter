@@ -63,14 +63,14 @@ echo "INITIAL_PASSWORD=$(openssl rand -base64 16)"
 
 OzRouter uses **SQLite** (via `better-sqlite3`) for all persistence. These variables control data location, encryption, and lifecycle.
 
-| Variable                         | Default              | Source File                                     | Description                                                                                                        |
-| -------------------------------- | -------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `DATA_DIR`                       | `~/.ozrouter/`       | `src/lib/db/core.ts`                            | Root directory for SQLite DB, backups, and data files. Override for custom paths.                                  |
-| `STORAGE_ENCRYPTION_KEY`         | _(empty = disabled)_ | `src/lib/db/encryption.ts`                      | AES key for full SQLite database encryption at rest. Generate with `openssl rand -hex 32`.                         |
-| `STORAGE_ENCRYPTION_KEY_VERSION` | `v1`                 | `scripts/bootstrap-env.mjs`, `electron/main.js` | Version label for the encryption key. Increment when performing key rotation to support decryption of old backups. |
-| `DISABLE_SQLITE_AUTO_BACKUP`     | `false`              | `src/lib/db/backup.ts`                          | When `true`, skips the automatic database backup that runs before migrations on every startup.                     |
-| `OZROUTER_CRYPT_KEY`             | _(unset)_            | `src/lib/db/encryption.ts`                      | **Legacy alias** for `STORAGE_ENCRYPTION_KEY`. Accepted as a fallback when the primary variable is absent.         |
-| `OZROUTER_API_KEY_BASE64`        | _(unset)_            | `src/lib/db/encryption.ts`                      | **Legacy alias** (Base64-encoded form) accepted as a fallback. Decoded automatically before use.                   |
+| Variable                         | Default              | Source File                 | Description                                                                                                        |
+| -------------------------------- | -------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `DATA_DIR`                       | `~/.ozrouter/`       | `src/lib/db/core.ts`        | Root directory for SQLite DB, backups, and data files. Override for custom paths.                                  |
+| `STORAGE_ENCRYPTION_KEY`         | _(empty = disabled)_ | `src/lib/db/encryption.ts`  | AES key for full SQLite database encryption at rest. Generate with `openssl rand -hex 32`.                         |
+| `STORAGE_ENCRYPTION_KEY_VERSION` | `v1`                 | `scripts/bootstrap-env.mjs` | Version label for the encryption key. Increment when performing key rotation to support decryption of old backups. |
+| `DISABLE_SQLITE_AUTO_BACKUP`     | `false`              | `src/lib/db/backup.ts`      | When `true`, skips the automatic database backup that runs before migrations on every startup.                     |
+| `OZROUTER_CRYPT_KEY`             | _(unset)_            | `src/lib/db/encryption.ts`  | **Legacy alias** for `STORAGE_ENCRYPTION_KEY`. Accepted as a fallback when the primary variable is absent.         |
+| `OZROUTER_API_KEY_BASE64`        | _(unset)_            | `src/lib/db/encryption.ts`  | **Legacy alias** (Base64-encoded form) accepted as a fallback. Decoded automatically before use.                   |
 
 ### Scenarios
 
@@ -90,7 +90,7 @@ OzRouter uses **SQLite** (via `better-sqlite3`) for all persistence. These varia
 | `API_PORT`       | _(unset)_    | `src/lib/runtime/ports.ts` | When set, serves the `/v1/*` proxy API on this separate port.                          |
 | `API_HOST`       | `0.0.0.0`    | `src/lib/runtime/ports.ts` | Bind address for the API port.                                                         |
 | `DASHBOARD_PORT` | _(unset)_    | `src/lib/runtime/ports.ts` | When set, serves the Dashboard UI on this separate port.                               |
-| `OZROUTER_PORT`  | _(unset)_    | `src/lib/runtime/ports.ts` | Takes precedence over `PORT` when running inside Electron or other wrappers.           |
+| `OZROUTER_PORT`  | _(unset)_    | `src/lib/runtime/ports.ts` | Takes precedence over `PORT`.                                                          |
 | `NODE_ENV`       | `production` | Next.js core               | Controls logging verbosity, caching, error detail exposure, and Next.js optimizations. |
 
 ### Port Modes

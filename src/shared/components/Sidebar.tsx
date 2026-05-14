@@ -24,15 +24,9 @@ type SidebarProps = {
   onClose?: () => void;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
-  isMacElectron?: boolean;
 };
 
-export default function Sidebar({
-  onClose,
-  collapsed = false,
-  onToggleCollapse,
-  isMacElectron = false,
-}: SidebarProps) {
+export default function Sidebar({ onClose, collapsed = false, onToggleCollapse }: SidebarProps) {
   const pathname = usePathname();
   const t = useTranslations("sidebar");
   const tc = useTranslations("common");
@@ -196,9 +190,7 @@ export default function Sidebar({
           "flex h-full min-h-0 flex-col border-r border-black/5 bg-sidebar transition-all duration-300 ease-in-out dark:border-white/5",
           collapsed ? "w-16" : "w-80"
         )}
-        style={{
-          paddingTop: isMacElectron ? "var(--desktop-safe-top)" : undefined,
-        }}
+        style={{}}
       >
         <a
           href="#main-content"
@@ -210,7 +202,7 @@ export default function Sidebar({
           <div
             className={cn(
               "flex items-center pb-2",
-              isMacElectron ? "pt-3" : "pt-5",
+              "pt-5",
               collapsed ? "px-3 justify-center" : "px-6 justify-end"
             )}
           >
@@ -221,8 +213,7 @@ export default function Sidebar({
               aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
               className={cn(
                 "rounded-md p-1 text-text-muted/50 transition-colors hover:bg-black/5 hover:text-text-muted dark:hover:bg-white/5",
-                collapsed && !isMacElectron && "mt-2",
-                isMacElectron && "ml-auto"
+                collapsed && "mt-2"
               )}
             >
               <span className="material-symbols-outlined text-[16px]" aria-hidden="true">
@@ -292,9 +283,7 @@ export default function Sidebar({
             "shrink-0 border-t border-black/5 dark:border-white/5",
             collapsed ? "p-2 flex flex-col gap-1" : "p-3 flex gap-2"
           )}
-          style={{
-            paddingBottom: isMacElectron ? "calc(0.75rem + var(--desktop-safe-bottom))" : undefined,
-          }}
+          style={{}}
         >
           <button
             onClick={() => setShowRestartModal(true)}

@@ -6,17 +6,16 @@ OzRouter is a unified AI proxy/router — route any LLM through one endpoint. Mu
 with **160+ providers** (OpenAI, Anthropic, Gemini, DeepSeek, Groq, xAI, Mistral, Fireworks,\
 Cohere, NVIDIA, Cerebras, Pollinations, Puter, Cloudflare AI, HuggingFace, DeepInfra,\
 SambaNova, Meta Llama API, Moonshot AI, AI21 Labs, Databricks, Snowflake, and many more)\
-with **MCP Server** (29 tools), **A2A v0.3 Protocol**, and **Electron desktop app**.
+with **MCP Server** (29 tools) and **A2A v0.3 Protocol**.
 
 ## Stack
 
 - **Runtime**: Next.js 16 (App Router), Node.js &gt;=18 &lt;24, ES Modules (`"type": "module"`)
-- **Language**: TypeScript 5.9 (`src/`) + JavaScript (`open-sse/`, `electron/`)
+- **Language**: TypeScript 5.9 (`src/`) + JavaScript (`open-sse/`)
 - **Database**: better-sqlite3 (SQLite) — `DATA_DIR` configurable, default `~/.ozrouter/`
 - **Streaming**: SSE via `open-sse` internal workspace package
 - **Styling**: Tailwind CSS v4
 - **i18n**: next-intl with 40+ languages
-- **Desktop**: Electron (cross-platform: Windows, macOS, Linux)
 - **Schemas**: Zod v4 for all API / MCP input validation
 
 ---
@@ -33,8 +32,6 @@ with **MCP Server** (29 tools), **A2A v0.3 Protocol**, and **Electron desktop ap
 | `npm run typecheck:core`            | TypeScript core type checking     |
 | `npm run typecheck:noimplicit:core` | Strict checking (no implicit any) |
 | `npm run check`                     | Run lint + test                   |
-| `npm run electron:dev`              | Run Electron app in dev mode      |
-| `npm run electron:build`            | Build Electron app for current OS |
 
 ### Running Tests
 

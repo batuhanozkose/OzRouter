@@ -54,13 +54,6 @@ blob-report/
 /dist/
 *.tgz
 
-# ── Electron ─────────────────────────────────────────────────
-electron/package-lock.json
-electron/dist-electron/
-electron/out/
-electron/release/
-electron/releases/
-electron/node_modules/
 icon.iconset/
 
 # ── SQLite Artıkları ─────────────────────────────────────────

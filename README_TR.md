@@ -23,7 +23,6 @@ Bu proje için resmi bir npm paketi, kontainer imajı veya barındırılan bulut
 - OpenAI tarzı sohbet, Responses API akışları, Claude tarzı istekler ve Gemini tarzı istekler arasında protokol dönüştürme.
 - Agent entegrasyonları için MCP ve A2A arayüzleri.
 - Yapılandırılabilir veri dizini altında yerel SQLite depolama.
-- Uygulama kabuğu tercih eden kullanıcılar için isteğe bağlı Electron masaüstü sarmalayıcı.
 
 ## Nasıl Çalışır
 
@@ -352,7 +351,6 @@ Kontrol edin:
 - `src/lib` — kalıcılık, kimlik doğrulama, ayarlar, görevler, kullanım ve uygulama servisleri.
 - `src/shared` — UI bileşenleri, sabitler, türler ve paylaşılan yardımcı programlar.
 - `open-sse` — sağlayıcı yürütme, akış, dönüştürme, MCP ve yönlendirme çekirdeği.
-- `electron` — isteğe bağlı masaüstü sarmalayıcı.
 - `docs` — operasyonel dokümantasyon.
 - `tests` — birim, entegrasyon ve uyumluluk testleri.
 
