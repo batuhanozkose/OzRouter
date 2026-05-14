@@ -71,7 +71,9 @@ export default function IntelligentComboPanel({
       if (!response.ok) {
         const errorBody = await response.json().catch(() => null);
         throw new Error(
-          errorBody?.error?.message || errorBody?.error || "Failed to update mode pack"
+          errorBody?.error?.message ||
+            errorBody?.error ||
+            getI18nOrFallback(t, "failedUpdateModePack", "Failed to update mode pack")
         );
       }
 
@@ -84,7 +86,10 @@ export default function IntelligentComboPanel({
         )
       );
     } catch (error: any) {
-      notify.error(error?.message || "Failed to update mode pack.");
+      notify.error(
+        error?.message ||
+          getI18nOrFallback(t, "failedUpdateModePackGeneric", "Failed to update mode pack.")
+      );
     } finally {
       setSavingModePack(null);
     }

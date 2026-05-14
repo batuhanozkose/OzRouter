@@ -1,21 +1,41 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
+
+const DISMISS_KEY = "bootstrap-banner-dismissed";
+const DISMISS_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+function shouldShowBootstrapBanner(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const raw = window.localStorage.getItem(DISMISS_KEY);
+    if (!raw) return true;
+    const ts = Number(raw);
+    return Date.now() - ts >= DISMISS_DURATION_MS;
+  } catch {
+    return true;
+  }
+}
 
 /**
  * Shown when OzRouter was started with auto-generated secrets (zero-config mode).
- * The banner is dismissable and persists only for the current session.
+ * Dismissible — stays hidden for 7 days via localStorage.
  */
 export default function BootstrapBanner() {
-  const [dismissed, setDismissed] = useState(false);
+  const t = useTranslations("bootstrap");
+  const [visible, setVisible] = useState(shouldShowBootstrapBanner);
 
-  if (dismissed) return null;
+  if (!visible) return null;
 
-  // Determine default data dir hint based on platform hint from user-agent
-  const dataDir =
-    typeof navigator !== "undefined" && navigator.platform?.startsWith("Win")
-      ? "%APPDATA%\\ozrouter\\server.env"
-      : "~/.ozrouter/server.env";
+  const dismiss = () => {
+    setVisible(false);
+    try {
+      localStorage.setItem(DISMISS_KEY, Date.now().toString());
+    } catch {
+      /* quota */
+    }
+  };
 
   return (
     <div
@@ -24,22 +44,25 @@ export default function BootstrapBanner() {
     >
       <span className="text-amber-400 text-base shrink-0 mt-0.5">⚠️</span>
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-amber-300">Running in zero-config mode</p>
+        <p className="font-semibold text-amber-300">{t("title")}</p>
         <p className="mt-0.5 text-amber-200/80">
-          OzRouter auto-generated secure encryption keys on first launch. They are persisted to{" "}
-          <code className="font-mono bg-amber-500/20 px-1 rounded text-xs">{dataDir}</code>. No
-          action is required — your data is encrypted and safe. To use custom keys, add{" "}
-          <code className="font-mono bg-amber-500/20 px-1 rounded text-xs">JWT_SECRET</code> and{" "}
-          <code className="font-mono bg-amber-500/20 px-1 rounded text-xs">
-            STORAGE_ENCRYPTION_KEY
-          </code>{" "}
-          to that file.
+          {t.rich("description", {
+            dataDir: (chunks) => (
+              <code className="font-mono bg-amber-500/20 px-1 rounded text-xs">{chunks}</code>
+            ),
+            jwtSecret: (chunks) => (
+              <code className="font-mono bg-amber-500/20 px-1 rounded text-xs">{chunks}</code>
+            ),
+            storageKey: (chunks) => (
+              <code className="font-mono bg-amber-500/20 px-1 rounded text-xs">{chunks}</code>
+            ),
+          })}
         </p>
       </div>
       <button
-        onClick={() => setDismissed(true)}
+        onClick={dismiss}
         className="shrink-0 text-amber-400/60 hover:text-amber-300 transition-colors ml-1"
-        aria-label="Dismiss"
+        aria-label={t("dismiss")}
       >
         ✕
       </button>

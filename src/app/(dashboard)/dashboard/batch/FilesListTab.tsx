@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 function relativeTime(ts: number): string {
   const diffMs = Date.now() - ts * 1000;
@@ -58,6 +59,7 @@ function formatBytes(bytes: number): string {
 }
 
 export default function FilesListTab({ files, loading }: FilesListTabProps) {
+  const t = useTranslations("batch");
   const [searchQuery, setSearchQuery] = useState("");
   const [purposeFilter, setPurposeFilter] = useState("all");
 
@@ -78,7 +80,7 @@ export default function FilesListTab({ files, loading }: FilesListTabProps) {
       <div className="flex flex-wrap gap-3 p-4 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)]">
         <input
           type="text"
-          placeholder="Search by ID or filename…"
+          placeholder={t("searchByIdFilename")}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="flex-1 min-w-[200px] px-3 py-2 rounded-lg text-sm bg-[var(--color-bg)] border border-[var(--color-border)] text-[var(--color-text-main)] placeholder:text-[var(--color-text-muted)] focus:outline-2 focus:outline-[var(--color-accent)]"
@@ -90,7 +92,7 @@ export default function FilesListTab({ files, loading }: FilesListTabProps) {
         >
           {purposes.map((p) => (
             <option key={p} value={p}>
-              {p === "all" ? "All purposes" : p}
+              {p === "all" ? t("allPurposes") : p}
             </option>
           ))}
         </select>

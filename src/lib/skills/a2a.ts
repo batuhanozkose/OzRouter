@@ -1,6 +1,6 @@
 export const a2aMemorySkill = {
   name: "memory_aware_routing",
-  version: "1.0.0",
+  version: "1.0.0.0",
   description: "A2A skill for memory-aware request routing",
   schema: {
     input: {

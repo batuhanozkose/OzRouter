@@ -71,17 +71,21 @@ describe("Air Update — AirUpdateContext exports", () => {
     );
   });
 
-  test("auto-reloads after successful update", () => {
+  test("auto-reloads after confirmed successful update", () => {
     const content = readFileSync(join(AIR_UPDATE_DIR, "AirUpdateContext.tsx"), "utf8");
     assert.ok(content.includes("window.location.reload()"), "Should auto-reload on done");
+    assert.ok(
+      content.includes("waitForBackgroundUpdate"),
+      "Background updates should wait for the target version before reload"
+    );
   });
 });
 
 describe("Air Update — AirUpdatePopup", () => {
   test("shows data safety notice", () => {
     const content = readFileSync(join(AIR_UPDATE_DIR, "AirUpdatePopup.tsx"), "utf8");
-    assert.ok(content.includes("Your data is safe"), "Missing data safety notice");
-    assert.ok(content.includes("database backup"), "Should mention backup");
+    assert.ok(content.includes('t("dataSafeTitle")'), "Missing data safety notice");
+    assert.ok(content.includes('t("dataSafeDescription")'), "Should mention backup");
   });
 
   test("shows release notes when available", () => {
@@ -100,8 +104,8 @@ describe("Air Update — AirUpdatePopup", () => {
 describe("Air Update — AirUpdateBanner", () => {
   test("shows version info and click prompt", () => {
     const content = readFileSync(join(AIR_UPDATE_DIR, "AirUpdateBanner.tsx"), "utf8");
-    assert.ok(content.includes("Update available"), "Should show update available text");
-    assert.ok(content.includes("Click to update"), "Should have click prompt");
+    assert.ok(content.includes('t("updateAvailable")'), "Should show update available text");
+    assert.ok(content.includes('t("clickToUpdate")'), "Should have click prompt");
   });
 
   test("only shows when popup is dismissed", () => {
@@ -128,8 +132,7 @@ describe("Air Update — AirUpdateProgress", () => {
 
   test("shows data protection badge during update", () => {
     const content = readFileSync(join(AIR_UPDATE_DIR, "AirUpdateProgress.tsx"), "utf8");
-    assert.ok(content.includes("Database backed up"), "Missing backup badge");
-    assert.ok(content.includes("your data is protected"), "Missing protection text");
+    assert.ok(content.includes('t("backupProtected")'), "Missing backup badge");
   });
 
   test("shows step log with status indicators", () => {
@@ -151,11 +154,90 @@ describe("Air Update — DashboardLayout integration", () => {
   });
 });
 
+describe("Air Update — 4-segment version support (x.y.z.w)", () => {
+  test("package.json uses 4-segment version", () => {
+    const pkg = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8"));
+    const parts = pkg.version.split(".");
+    assert.ok(
+      parts.length === 4,
+      `Expected 4-segment version, got ${parts.length}: ${pkg.version}`
+    );
+    for (const p of parts) {
+      assert.ok(/^\d+$/.test(p), `Non-numeric segment: ${p}`);
+    }
+  });
+
+  test("compareVersions in version route handles 4 segments", () => {
+    const content = readFileSync(join(ROOT, "src/app/api/system/version/route.ts"), "utf8");
+    assert.ok(
+      content.includes('v.split(".").map(Number)'),
+      "compareVersions should split on dot and parse as numbers"
+    );
+    assert.ok(
+      content.includes("Math.max(aParts.length, bParts.length"),
+      "compareVersions should handle variable segment count"
+    );
+  });
+
+  test("normalizeTagVersion regex accepts 4-segment tags", () => {
+    const content = readFileSync(join(ROOT, "src/app/api/system/version/route.ts"), "utf8");
+    assert.ok(
+      content.includes("(?:\\.\\d+)?"),
+      "normalizeTagVersion regex should have optional 4th segment"
+    );
+  });
+
+  test("Air Update client waits for 4-segment target versions", () => {
+    const content = readFileSync(join(AIR_UPDATE_DIR, "AirUpdateContext.tsx"), "utf8");
+    assert.ok(
+      content.includes("\\d+\\.\\d+\\.\\d+(?:\\.\\d+)?"),
+      "Client version normalization should accept x.y.z.w"
+    );
+    assert.ok(
+      content.includes("Math.max(aParts.length, bParts.length, 4)"),
+      "Client version comparison should include the fourth segment"
+    );
+  });
+
+  test("skills registry compareVersions handles 4 segments", () => {
+    const content = readFileSync(join(ROOT, "src/lib/skills/registry.ts"), "utf8");
+    assert.ok(
+      content.includes("aParts.length, bParts.length") || content.includes("aParts[i]"),
+      "Skills compareVersions should iterate dynamically over segments"
+    );
+    assert.ok(
+      !content.includes("[aMajor, aMinor, aPatch]"),
+      "Skills compareVersions should NOT destructure only 3 segments"
+    );
+  });
+
+  test("versionManager checkForUpdates uses numeric comparison", () => {
+    const content = readFileSync(join(ROOT, "src/lib/versionManager/index.ts"), "utf8");
+    assert.ok(
+      !content.includes("updateAvailable: current !== latest"),
+      "checkForUpdates should NOT use string equality for version comparison"
+    );
+    assert.ok(
+      content.includes("Math.max(cParts.length, lParts.length"),
+      "checkForUpdates should compare every available version segment"
+    );
+  });
+
+  test("skill install manifests accept 4-segment versions", () => {
+    const content = readFileSync(join(ROOT, "src/app/api/skills/install/route.ts"), "utf8");
+    assert.ok(
+      content.includes("\\d+\\.\\d+\\.\\d+(\\.\\d+)?"),
+      "Skill install version validation should allow x.y.z.w"
+    );
+  });
+});
+
 describe("Air Update — version route enhancements", () => {
-  test("version route includes backup step in SSE", () => {
+  test("version route creates backup before launching background update", () => {
     const content = readFileSync(join(ROOT, "src/app/api/system/version/route.ts"), "utf8");
     assert.ok(content.includes("backupDbFileAndWait"), "Missing awaited backup step");
-    assert.ok(content.includes('step: "backup"'), "Missing backup SSE step");
+    assert.ok(content.includes("launchAutoUpdate"), "Missing background update launch");
+    assert.ok(content.includes("backupResult.filename"), "Response should expose backup filename");
   });
 
   test("version route fetches GitHub release info", () => {
@@ -174,18 +256,21 @@ describe("Air Update — version route enhancements", () => {
     );
   });
 
-  test("version route emits progress steps matching client phases", () => {
+  test("version route does not run build/restart inside the request handler", () => {
     const content = readFileSync(join(ROOT, "src/app/api/system/version/route.ts"), "utf8");
-    for (const step of ["backup", "fetch", "install", "dependencies", "build", "restart"]) {
-      assert.ok(content.includes(`step: "${step}"`), `Missing SSE step: ${step}`);
-    }
+    assert.ok(!content.includes('"npm", ["run", "build"]'), "Build should run in background");
+    assert.ok(!content.includes('"pm2", ["restart"'), "Restart should run in background");
   });
 
-  test("restart failure prevents complete status", () => {
-    const content = readFileSync(join(ROOT, "src/app/api/system/version/route.ts"), "utf8");
+  test("background updater restores the original ref on failure", () => {
+    const content = readFileSync(join(ROOT, "src/lib/system/autoUpdate.ts"), "utf8");
     assert.ok(
-      content.includes("Update installed, but service restart failed"),
-      "Restart failure should not be reported as a completed update"
+      content.includes("restore_on_failure"),
+      "Background update script should restore the starting ref on failure"
+    );
+    assert.ok(
+      content.includes('git checkout "$start_ref"'),
+      "Background update script should check out the starting ref on failure"
     );
   });
 });

@@ -131,23 +131,30 @@ export function startProbeTimer(): void {
   if (probeInterval) return;
 
   probeInterval = setInterval(async () => {
-    if (!probeCallback) return;
+    try {
+      if (!probeCallback) return;
 
-    for (const [connectionId, state] of drainedConnections) {
-      // Only probe quota-drained connections (manual drains need manual undrain)
-      if (state.reason !== "quota") continue;
+      for (const [connectionId, state] of drainedConnections) {
+        // Only probe quota-drained connections (manual drains need manual undrain)
+        if (state.reason !== "quota") continue;
 
-      try {
-        state.probeCount++;
-        state.lastProbeAt = Date.now();
+        try {
+          state.probeCount++;
+          state.lastProbeAt = Date.now();
 
-        const recovered = await probeCallback(connectionId);
-        if (recovered) {
-          undrainConnection(connectionId);
+          const recovered = await probeCallback(connectionId);
+          if (recovered) {
+            undrainConnection(connectionId);
+          }
+        } catch {
+          // Probe failed — connection still drained
         }
-      } catch {
-        // Probe failed — connection still drained
       }
+    } catch (error) {
+      console.warn(
+        "[ConnectionDrain] Probe timer failed:",
+        error instanceof Error ? error.message : error
+      );
     }
   }, PROBE_INTERVAL_MS);
 

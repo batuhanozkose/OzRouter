@@ -8,6 +8,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface SearchStats {
   total: number;
@@ -76,6 +77,7 @@ function ProviderBar({
 }
 
 export default function SearchAnalyticsTab() {
+  const t = useTranslations("analytics");
   const [stats, setStats] = useState<SearchStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -106,7 +108,7 @@ export default function SearchAnalyticsTab() {
     return (
       <div className="card p-6 text-center text-text-muted">
         <span className="material-symbols-outlined text-[32px] mb-2 block">search_off</span>
-        {error || "No search data available yet."}
+        {error || t("noSearchData")}
         <p className="text-xs mt-2">
           Search requests will appear here after the first search via /v1/search.
         </p>
@@ -122,27 +124,27 @@ export default function SearchAnalyticsTab() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard
           icon="manage_search"
-          label="Total Searches"
+          label={t("totalSearches")}
           value={stats.total.toLocaleString()}
           sub={`${stats.today} today`}
         />
         <StatCard
           icon="cached"
-          label="Cache Hit Rate"
+          label={t("cacheHitRate")}
           value={`${stats.cacheHitRate}%`}
           sub={`${stats.cached} cached requests`}
         />
         <StatCard
           icon="attach_money"
-          label="Total Cost"
+          label={t("totalCost")}
           value={`$${stats.totalCostUsd.toFixed(4)}`}
           sub="search API costs"
         />
         <StatCard
           icon="timer"
-          label="Avg Response"
+          label={t("avgResponse")}
           value={`${stats.avgDurationMs}ms`}
-          sub={stats.errors > 0 ? `${stats.errors} errors` : "No errors"}
+          sub={stats.errors > 0 ? `${stats.errors} errors` : t("noErrors")}
         />
       </div>
 

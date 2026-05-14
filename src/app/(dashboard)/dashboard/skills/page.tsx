@@ -232,7 +232,7 @@ export default function SkillsPage() {
           name: skill.name,
           description: skill.description,
           skillMdContent: skill.skillMdContent || skill.description,
-          version: skill.version || "1.0.0",
+          version: skill.version || "1.0.0.0",
           sourceUrl: skill.sourceUrl,
         }),
       });
@@ -797,7 +797,7 @@ export default function SkillsPage() {
             <textarea
               value={installJson}
               onChange={(e) => setInstallJson(e.target.value)}
-              placeholder='{"name": "my-skill", "version": "1.0.0", "description": "...", "schema": {"input": {}, "output": {}}, "handlerCode": "..."}'
+              placeholder='{"name": "my-skill", "version": "1.0.0.0", "description": "...", "schema": {"input": {}, "output": {}}, "handlerCode": "..."}'
               className="w-full h-48 p-3 rounded-lg bg-background border border-border text-sm font-mono resize-none focus:outline-none focus:ring-1 focus:ring-violet-500"
             />
             <div className="flex items-center gap-3 mt-3">

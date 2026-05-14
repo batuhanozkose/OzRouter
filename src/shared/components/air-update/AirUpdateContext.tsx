@@ -78,8 +78,72 @@ const AirUpdateContext = createContext<AirUpdateContextValue | null>(null);
 
 const CHECK_INTERVAL_MS = 4 * 60 * 60 * 1000; // 4 hours
 const INITIAL_CHECK_DELAY_MS = 10 * 1000; // 10s after mount
+const BACKGROUND_UPDATE_POLL_MS = 5_000;
+const BACKGROUND_UPDATE_TIMEOUT_MS = 30 * 60 * 1000;
 const DISMISS_KEY_PREFIX = "air-update-dismissed-v";
 const LAST_CHECK_KEY = "air-update-last-check";
+
+function normalizeVersion(version: unknown): string | null {
+  if (typeof version !== "string") return null;
+  const match = version.match(/v?(\d+\.\d+\.\d+(?:\.\d+)?)/);
+  return match ? match[1] : null;
+}
+
+function compareVersions(a: string, b: string): number {
+  const aParts = a.split(".").map(Number);
+  const bParts = b.split(".").map(Number);
+  const max = Math.max(aParts.length, bParts.length, 4);
+  for (let i = 0; i < max; i++) {
+    const diff = (aParts[i] || 0) - (bParts[i] || 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+}
+
+function sleep(ms: number, signal: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal.aborted) {
+      reject(new DOMException("Aborted", "AbortError"));
+      return;
+    }
+
+    const timer = window.setTimeout(resolve, ms);
+    signal.addEventListener(
+      "abort",
+      () => {
+        window.clearTimeout(timer);
+        reject(new DOMException("Aborted", "AbortError"));
+      },
+      { once: true }
+    );
+  });
+}
+
+async function waitForBackgroundUpdate(targetVersion: string, signal: AbortSignal): Promise<void> {
+  const target = normalizeVersion(targetVersion);
+  if (!target) return;
+
+  const deadline = Date.now() + BACKGROUND_UPDATE_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    await sleep(BACKGROUND_UPDATE_POLL_MS, signal);
+    if (signal.aborted) throw new DOMException("Aborted", "AbortError");
+
+    try {
+      const res = await fetch("/api/system/version", {
+        cache: "no-store",
+        signal: AbortSignal.timeout(20_000),
+      });
+      if (!res.ok) continue;
+      const data: VersionInfo = await res.json();
+      const current = normalizeVersion(data.current);
+      if (current && compareVersions(current, target) >= 0) return;
+    } catch {
+      // The service can briefly disappear while the background updater restarts it.
+    }
+  }
+
+  throw new Error("Background update did not finish before the timeout. Check the update log.");
+}
 
 // ---------------------------------------------------------------------------
 // Provider
@@ -162,6 +226,7 @@ export function AirUpdateProvider({ children }: { children: React.ReactNode }) {
     return () => {
       clearTimeout(initialTimer);
       if (checkTimerRef.current) clearInterval(checkTimerRef.current);
+      abortRef.current?.abort();
     };
   }, [checkForUpdate]);
 
@@ -219,12 +284,42 @@ export function AirUpdateProvider({ children }: { children: React.ReactNode }) {
       if (!contentType.includes("text/event-stream")) {
         const data = await res.json();
         if (data.success) {
-          setPhase("done");
+          const targetVersion = String(data.to || versionInfo?.latest || "");
+          setPhase("updating");
           setSteps([
             {
+              step: "backup",
+              status: data.backup ? "done" : "skipped",
+              message: data.backup
+                ? `Database backed up: ${data.backup}`
+                : "Database backup completed.",
+            },
+            {
               step: "update",
+              status: "running",
+              message:
+                data.message || `Update to v${targetVersion || data.to} started in the background.`,
+            },
+            {
+              step: "restart",
+              status: "running",
+              message: "Waiting for OzRouter to restart with the new version...",
+            },
+          ]);
+
+          await waitForBackgroundUpdate(targetVersion, controller.signal);
+          setPhase("done");
+          setSteps((prev) => [
+            ...prev.filter((step) => step.step !== "restart" && step.step !== "complete"),
+            {
+              step: "restart",
               status: "done",
-              message: `Update to v${data.to} started in background.`,
+              message: "OzRouter restarted with the new version.",
+            },
+            {
+              step: "complete",
+              status: "done",
+              message: `Update to v${targetVersion || data.to} complete.`,
             },
           ]);
         } else {
@@ -294,7 +389,7 @@ export function AirUpdateProvider({ children }: { children: React.ReactNode }) {
         },
       ]);
     }
-  }, []);
+  }, [versionInfo?.latest]);
 
   // Auto-reload after successful update
   useEffect(() => {

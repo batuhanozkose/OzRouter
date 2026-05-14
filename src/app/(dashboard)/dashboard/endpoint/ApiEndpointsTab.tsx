@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { Card } from "@/shared/components";
 
 /* ─── Types ──────────────────────────────────────────── */
@@ -65,6 +66,7 @@ const WEBHOOK_EVENTS = [
 
 /* ─── Main Component ─────────────────────────────────── */
 export default function ApiEndpointsTab() {
+  const t = useTranslations("apiEndpoints");
   const [catalog, setCatalog] = useState<CatalogData | null>(null);
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -89,7 +91,7 @@ export default function ApiEndpointsTab() {
   const [testingWebhookId, setTestingWebhookId] = useState<string | null>(null);
 
   // Load catalog
-  const loadCatalog = async () => {
+  const loadCatalog = useCallback(async () => {
     try {
       const res = await fetch("/api/openapi/spec");
       if (res.ok) {
@@ -103,10 +105,10 @@ export default function ApiEndpointsTab() {
           : `API catalog request failed with HTTP ${res.status}`;
       return { data: null, error: message };
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to load API catalog";
+      const message = error instanceof Error ? error.message : t("failedToLoadCatalog");
       return { data: null, error: message };
     }
-  };
+  }, [t]);
 
   useEffect(() => {
     let cancelled = false;
@@ -120,7 +122,7 @@ export default function ApiEndpointsTab() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loadCatalog]);
 
   // Load webhooks
   const fetchWebhooksData = async (): Promise<WebhookItem[]> => {
@@ -173,12 +175,12 @@ export default function ApiEndpointsTab() {
   const groupedEndpoints = useMemo(() => {
     const groups: Record<string, Endpoint[]> = {};
     for (const ep of filteredEndpoints) {
-      const tag = ep.tags[0] || "Other";
+      const tag = ep.tags[0] || t("other");
       if (!groups[tag]) groups[tag] = [];
       groups[tag].push(ep);
     }
     return groups;
-  }, [filteredEndpoints]);
+  }, [filteredEndpoints, t]);
 
   const allTags = useMemo(() => {
     if (!catalog) return [];
@@ -253,7 +255,7 @@ export default function ApiEndpointsTab() {
   };
 
   const deleteWebhook = async (id: string) => {
-    if (!confirm("Delete this webhook?")) return;
+    if (!confirm(t("deleteWebhook"))) return;
     try {
       await fetch(`/api/webhooks/${id}`, { method: "DELETE" });
       setWebhooks((prev) => prev.filter((w) => w.id !== id));
@@ -331,7 +333,7 @@ export default function ApiEndpointsTab() {
       <div className="flex gap-1 p-1 rounded-xl bg-black/5 dark:bg-white/[0.03] w-fit">
         {[
           { id: "catalog" as const, label: "API Catalog", icon: "menu_book" },
-          { id: "webhooks" as const, label: "Webhooks", icon: "webhook" },
+          { id: "webhooks" as const, label: t("webhooks"), icon: "webhook" },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -359,7 +361,7 @@ export default function ApiEndpointsTab() {
             <div>
               <h3 className="text-sm font-semibold text-text-main">API catalog unavailable</h3>
               <p className="text-xs text-text-muted mt-1">
-                {catalogError || "The OpenAPI specification could not be loaded."}
+                {catalogError || t("openApiLoadError")}
               </p>
               <a
                 href="/api/openapi/spec"
@@ -387,7 +389,7 @@ export default function ApiEndpointsTab() {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search endpoints..."
+                placeholder={t("searchEndpoints")}
                 className="w-full pl-9 pr-3 py-2 text-xs rounded-lg border border-black/10 dark:border-white/10
                            bg-white dark:bg-black/20 focus:outline-none focus:ring-1 focus:ring-primary"
               />
@@ -467,7 +469,7 @@ export default function ApiEndpointsTab() {
                         {ep.security && (
                           <span
                             className="material-symbols-outlined text-[12px] text-amber-500"
-                            title="Requires auth"
+                            title={t("requiresAuth")}
                           >
                             lock
                           </span>
@@ -526,7 +528,7 @@ export default function ApiEndpointsTab() {
                               <span className="material-symbols-outlined text-[12px]">
                                 {isTrying ? "close" : "play_arrow"}
                               </span>
-                              {isTrying ? "Close" : "Try It"}
+                              {isTrying ? t("close") : t("tryIt")}
                             </button>
                           </div>
 
@@ -576,7 +578,7 @@ export default function ApiEndpointsTab() {
                                 <span className="material-symbols-outlined text-[14px]">
                                   {trying ? "hourglass_empty" : "send"}
                                 </span>
-                                {trying ? "Sending..." : "Send Request"}
+                                {trying ? t("sendingRequest") : t("sendRequest")}
                               </button>
 
                               {tryResult && (
@@ -700,7 +702,7 @@ export default function ApiEndpointsTab() {
                     <input
                       value={whDesc}
                       onChange={(e) => setWhDesc(e.target.value)}
-                      placeholder="Production monitoring"
+                      placeholder={t("productionMonitoring")}
                       className="w-full mt-0.5 px-2.5 py-1.5 text-xs rounded-lg border border-black/10 dark:border-white/10
                                  bg-white dark:bg-black/20 focus:outline-none focus:ring-1 focus:ring-primary"
                     />
@@ -819,7 +821,7 @@ export default function ApiEndpointsTab() {
                         onClick={() => testWebhook(wh.id)}
                         disabled={testingWebhookId === wh.id}
                         className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-                        title="Send test event"
+                        title={t("sendTestEvent")}
                       >
                         <span
                           className={`material-symbols-outlined text-[14px] ${testingWebhookId === wh.id ? "animate-spin text-primary" : "text-text-muted"}`}
@@ -830,7 +832,7 @@ export default function ApiEndpointsTab() {
                       <button
                         onClick={() => toggleWebhook(wh)}
                         className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-                        title={wh.enabled ? "Disable" : "Enable"}
+                        title={wh.enabled ? t("disable") : t("enable")}
                       >
                         <span
                           className={`material-symbols-outlined text-[14px] ${wh.enabled ? "text-emerald-500" : "text-text-muted"}`}
@@ -841,7 +843,7 @@ export default function ApiEndpointsTab() {
                       <button
                         onClick={() => deleteWebhook(wh.id)}
                         className="p-1 rounded hover:bg-red-500/10 transition-colors"
-                        title="Delete"
+                        title={t("deleteTitle")}
                       >
                         <span className="material-symbols-outlined text-[14px] text-red-500">
                           delete

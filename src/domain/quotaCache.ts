@@ -377,7 +377,14 @@ async function backgroundRefreshTick() {
  */
 export function startBackgroundRefresh() {
   if (refreshTimer) return;
-  refreshTimer = setInterval(backgroundRefreshTick, REFRESH_INTERVAL_MS);
+  refreshTimer = setInterval(() => {
+    void backgroundRefreshTick().catch((error) => {
+      console.warn(
+        "[QuotaCache] Background refresh tick failed:",
+        error instanceof Error ? error.message : error
+      );
+    });
+  }, REFRESH_INTERVAL_MS);
   refreshTimer?.unref?.();
 }
 

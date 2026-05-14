@@ -334,7 +334,7 @@ function detectAgent(
     }).trim();
 
     // Extract version number from output
-    const versionMatch = output.match(/(\d+\.\d+\.\d+(?:-\w+)?)/);
+    const versionMatch = output.match(/(\d+\.\d+\.\d+(?:\.\d+)?(?:-\w+)?)/);
     version = versionMatch ? versionMatch[1] : output.split("\n")[0];
     installed = true;
   } catch {

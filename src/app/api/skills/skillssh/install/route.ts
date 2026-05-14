@@ -11,7 +11,7 @@ const skillsshInstallSchema = z.object({
   description: z.string().min(1).max(1024),
   source: z.string().min(1),
   skillId: z.string().min(1),
-  version: z.string().default("1.0.0"),
+  version: z.string().default("1.0.0.0"),
 });
 
 export async function POST(request: Request) {

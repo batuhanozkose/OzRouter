@@ -811,7 +811,33 @@
     "updateNow": "Mettre à jour",
     "updating": "Mise à jour...",
     "updateAvailableDesc": "Une nouvelle version est disponible. Cliquez pour mettre à jour.",
-    "updateStarted": "Mise à jour démarrée..."
+    "updateStarted": "Mise à jour démarrée...",
+    "waitingRestart": "Waiting for OzRouter to restart with the new version.",
+    "restartInProgress": "Service restart in progress. Waiting for OzRouter to come back online...",
+    "updateStartFailed": "Failed to start update.",
+    "noResponseStream": "No response stream received.",
+    "updateComplete": "Update complete!",
+    "updateFailed": "Update failed.",
+    "networkErrorDuringUpdate": "Network error — connection lost during update.",
+    "stepInstallPackage": "Install Package",
+    "stepRebuildNative": "Rebuild Native Modules",
+    "stepRestartService": "Restart Service",
+    "stepComplete": "Complete",
+    "updateCompleteTitle": "Update Complete!",
+    "updateFailedTitle": "Update Failed",
+    "updatingOzRouter": "Updating OzRouter...",
+    "pageWillReload": "The page will reload automatically in a few seconds.",
+    "tryAgainOrManual": "Please try again or update manually via the CLI.",
+    "doNotClosePage": "Do not close this page. The system will restart automatically.",
+    "reloadingPage": "Reloading page automatically...",
+    "reloadNow": "Reload Now",
+    "close": "Close",
+    "manualUpdateRequired": "Manual update required for this installation type.",
+    "manualUpdate": "Manual Update",
+    "readMore": "Read More",
+    "updateAvailableVersion": "Update Available: v{version}",
+    "currentVersionDesc": "You are currently using v{version}. Update to access the latest features and bug fixes.",
+    "stepError": "Error"
   },
   "analytics": {
     "title": "Analyse",
@@ -824,7 +850,45 @@
     "comboHealth": "Santé du combo",
     "comboHealthDescription": "Quota au niveau combo, distribution de l'utilisation et métriques de performance",
     "compressionAnalyticsTitle": "Compression Analytics",
-    "compressionAnalyticsDescription": "Compression analytics — token savings, mode breakdown, and provider stats."
+    "compressionAnalyticsDescription": "Compression analytics — token savings, mode breakdown, and provider stats.",
+    "improving": "Improving",
+    "declining": "Declining",
+    "stable": "Stable",
+    "worstQuotaLeft": "Worst quota left",
+    "usageSkew": "Usage skew",
+    "giniCoefficient": "Gini coefficient",
+    "successRate": "Success rate",
+    "requests": "Requests",
+    "tokens": "Tokens",
+    "avgLatency": "Avg latency",
+    "totalRequests": "Total requests",
+    "success": "Success",
+    "latency": "Latency",
+    "quota": "Quota",
+    "lastHour": "Last hour",
+    "last24Hours": "Last 24 hours",
+    "last7Days": "Last 7 days",
+    "last30Days": "Last 30 days",
+    "providerUtilization": "Provider utilization",
+    "exhausted": "Exhausted",
+    "low": "Low",
+    "healthy": "Healthy",
+    "failedToFetchUtilization": "Failed to fetch utilization data",
+    "noCompressionData": "No compression data yet.",
+    "last24h": "Last 24h",
+    "last7d": "Last 7d",
+    "last30d": "Last 30d",
+    "allTime": "All time",
+    "totalRequestsLabel": "Total Requests",
+    "tokensSaved": "Tokens Saved",
+    "avgSavings": "Avg Savings",
+    "avgDuration": "Avg Duration",
+    "noSearchData": "No search data available yet.",
+    "totalSearches": "Total Searches",
+    "cacheHitRate": "Cache Hit Rate",
+    "totalCost": "Total Cost",
+    "avgResponse": "Avg Response",
+    "noErrors": "No errors"
   },
   "apiManager": {
     "title": "Clés API",
@@ -1335,7 +1399,14 @@
     "guidedClientsTab": "Guided Clients Tab",
     "mitmClientsTab": "Mitm Clients Tab",
     "toolCategories": "Tool Categories",
-    "visibleToolsCount": "Visible Tools Count"
+    "visibleToolsCount": "Visible Tools Count",
+    "requestFailed": "Request failed",
+    "running": "Running",
+    "stopped": "Stopped",
+    "notInstalledStatus": "Not Installed",
+    "installed": "Installed",
+    "unhealthy": "Unhealthy",
+    "unknownStatus": "Unknown"
   },
   "combos": {
     "title": "Combinaisons",
@@ -1456,6 +1527,31 @@
         "when": "Use when you want low-latency selection using Power-of-Two-Choices algorithm.",
         "avoid": "Avoid for small combos with 2 or fewer models — no benefit over round-robin.",
         "example": "Example: High-throughput inference across 4+ equivalent model endpoints."
+      },
+      "fill-first": {
+        "when": "Use when you want to drain one provider's quota fully before moving to the next.",
+        "avoid": "Avoid when you need request-level load balancing across providers.",
+        "example": "Example: Use all $200 Deepgram credits before falling to Groq."
+      },
+      "context-optimized": {
+        "when": "Use when you need intelligent context window management.",
+        "avoid": "Avoid for simple, stateless requests that don't need context tracking.",
+        "example": "Example: Multi-turn conversations where context window capacity matters."
+      },
+      "rendezvous-hash": {
+        "when": "Use when you need consistent routing based on session or conversation identity.",
+        "avoid": "Avoid when you need load balancing — this is sticky, not balanced.",
+        "example": "Example: Always route the same user/session to the same provider endpoint."
+      },
+      "auto": {
+        "when": "Use when you want multi-factor optimization across cost, latency, and quality.",
+        "avoid": "Avoid for simple setups where a single routing factor is enough.",
+        "example": "Example: Complex workloads where no single factor dominates routing decisions."
+      },
+      "lkgp": {
+        "when": "Use when you want history-based routing using past success rates.",
+        "avoid": "Avoid for new setups without enough historical data.",
+        "example": "Example: Stable workloads with consistent model availability over time."
       }
     },
     "advancedHelp": {
@@ -1556,6 +1652,55 @@
         "tip1": "Use at least 2 models for meaningful distribution.",
         "tip2": "Works best with equivalent-performance models.",
         "tip3": "Ideal for load balancing across multiple API accounts."
+      },
+      "context-relay": {
+        "title": "Session continuity first",
+        "description": "Best when account rotation is expected and the next account must inherit a condensed task summary.",
+        "tip1": "Use with providers that rotate accounts for the same model family.",
+        "tip2": "Keep the handoff threshold below the hard quota cutoff to give the summary time to generate.",
+        "tip3": "Set a dedicated summary model only when the primary model is too expensive or unstable."
+      },
+      "p2c": {
+        "title": "Adaptive balancing",
+        "description": "Routes to less-used models to reduce hotspots over time.",
+        "tip1": "Enable health checks for best results.",
+        "tip2": "Works well with 3+ equivalent model targets.",
+        "tip3": "Combine with retry for additional resilience."
+      },
+      "fill-first": {
+        "title": "Quota draining",
+        "description": "Exhausts each provider in order before moving to the next.",
+        "tip1": "Order providers by cost — cheapest first.",
+        "tip2": "Set quota thresholds to trigger rollover early.",
+        "tip3": "Great for maximizing free tier usage."
+      },
+      "auto": {
+        "title": "Multi-factor optimization",
+        "description": "Routes based on real-time scoring of cost, latency, quality, and health.",
+        "tip1": "Let the engine balance across multiple factors automatically.",
+        "tip2": "Monitor which factors drive routing decisions in the logs.",
+        "tip3": "Use for complex workloads where no single factor dominates."
+      },
+      "lkgp": {
+        "title": "History-based routing",
+        "description": "Routes based on historical success rates and persistent performance data.",
+        "tip1": "Let success history accumulate before relying on this strategy.",
+        "tip2": "Models with better track records get preference over time.",
+        "tip3": "Ideal for stable workloads with consistent model availability."
+      },
+      "context-optimized": {
+        "title": "Context-aware distribution",
+        "description": "Routes to optimize context window usage and conversation continuity.",
+        "tip1": "Use for multi-turn conversations where context matters.",
+        "tip2": "Combine with context-relay for full session management.",
+        "tip3": "Monitor context utilization metrics for optimization."
+      },
+      "rendezvous-hash": {
+        "title": "Session-sticky routing",
+        "description": "Consistently routes the same session/conversation to the same target.",
+        "tip1": "Best for maintaining conversation state across requests.",
+        "tip2": "Uses consistent hashing — adding/removing targets minimally disrupts routing.",
+        "tip3": "Combine with fallback for when the sticky target is unavailable."
       }
     },
     "templateFreeStack": "Free Stack ($0)",
@@ -1685,7 +1830,38 @@
     "builderModel": "Model",
     "normalOperation": "Normal Operation",
     "emailVisibilityStateOn": "On",
-    "builderPinnedAccount": "Pinned Account"
+    "builderPinnedAccount": "Pinned Account",
+    "failedUpdateModePack": "Failed to update mode pack",
+    "failedUpdateModePackGeneric": "Failed to update mode pack.",
+    "intelligentRoutingDashboard": "Intelligent Routing Dashboard",
+    "intelligentRoutingDesc": "Real-time scoring and health status for this auto-routing combo.",
+    "configurationView": "Configuration View",
+    "routingInputsOnlyNote": "This panel shows routing inputs only. Live breaker state is available on the Health page.",
+    "switchPresetsHint": "Switch presets to bias the routing engine without rebuilding the combo.",
+    "noCandidatePool": "No candidate pool configured. All active providers are evaluated at runtime.",
+    "routingInputs": "Routing Inputs",
+    "modePackWeightNote": "Mode pack and weighting stay here; breaker runtime state stays on the Health page.",
+    "intelligentRoutingConfig": "Intelligent Routing Configuration",
+    "configScoringEngine": "Configure the multi-factor scoring engine for this auto-routing combo.",
+    "candidatePool": "Candidate Pool",
+    "candidatePoolDesc": "Select which providers this engine should evaluate. Leave empty to use all active providers.",
+    "allActiveProviders": "All active providers",
+    "noActiveProviders": "No active providers available yet.",
+    "modePack": "Mode Pack",
+    "routerStrategy": "Router Strategy",
+    "explorationRate": "Exploration Rate",
+    "budgetCap": "Budget Cap (USD / request)",
+    "noLimit": "No limit",
+    "advancedScoringWeights": "Advanced: Scoring Weights",
+    "manualModel": "Manual model",
+    "manualModelInvalid": "Enter a model as provider/model.",
+    "manualModelUnknownProvider": "Unknown provider prefix.",
+    "strategyLabel_context-relay": "Context Relay",
+    "strategyLabel_context-optimized": "Context Optimized",
+    "strategyLabel_rendezvous-hash": "Rendezvous Hash",
+    "strategyDesc_context-relay": "Priority-style routing with automatic context handoffs when account rotation happens.",
+    "strategyDesc_context-optimized": "Routes based on context window requirements and conversation length.",
+    "strategyDesc_rendezvous-hash": "Keeps the same conversation or session on the same target using consistent hashing."
   },
   "costs": {
     "title": "Coûts",
@@ -1889,7 +2065,17 @@
     "featureRestApi": "Catalogue d'API REST avec documentation interactive",
     "featureWebhooks": "Configuration de webhooks et abonnements aux événements",
     "featureSwagger": "Génération automatique de spécifications OpenAPI / Swagger",
-    "featureAuth": "Gestion des clés API et des portées OAuth par point d'accès"
+    "featureAuth": "Gestion des clés API et des portées OAuth par point d'accès",
+    "online": "Online",
+    "offline": "Offline",
+    "copyUrl": "Copy URL",
+    "copy": "Copy",
+    "transportStdioDesc": "Local — IDE spawns process via ozrouter --mcp",
+    "transportSseDesc": "Remote — Server-Sent Events over HTTP",
+    "transportStreamableHttp": "Streamable HTTP",
+    "transportStreamableDesc": "Remote — Modern bidirectional HTTP",
+    "a2aDisabledTitle": "A2A is disabled",
+    "a2aDisabledDesc": "Enable A2A above to view task telemetry, agent details, and validation tools."
   },
   "mcpDashboard": {
     "loading": "Chargement du tableau de bord MCP...",
@@ -2098,7 +2284,10 @@
     "learnedFromHeaders": "Learned from headers",
     "remainingOfLimit": "{remaining}/{limit} remaining",
     "throttleStatus": "Throttle: {value}",
-    "lastHeaderUpdate": "Header update: {age}"
+    "lastHeaderUpdate": "Header update: {age}",
+    "attentionNeeded": "Attention needed",
+    "repairing": "Repairing...",
+    "runAutoRepair": "Run Auto-Repair"
   },
   "limits": {
     "title": "Limites et quotas",
@@ -3281,7 +3470,20 @@
     "compressionPreservePatterns": "Preserve Patterns",
     "compressionPreservePatternsDesc": "Regex patterns that are never compressed (one per line)",
     "compressionLogTitle": "Compression Log",
-    "compressionLogEmpty": "No compressed requests yet. Compression stats will appear here when requests are processed with compression enabled."
+    "compressionLogEmpty": "No compressed requests yet. Compression stats will appear here when requests are processed with compression enabled.",
+    "failedSavePayloadRules": "Failed to save payload rules",
+    "payloadRulesMustBeJson": "Payload rules must be a JSON object.",
+    "invalidJsonPayload": "Invalid JSON payload.",
+    "failedLoadPayloadRules": "Failed to load payload rules",
+    "editorResetNeutral": "Editor reset to the neutral template. Save to apply it.",
+    "payloadRulesValidJson": "Payload rules must be valid JSON before saving.",
+    "payloadRulesSaved": "Payload rules saved and hot reloaded.",
+    "savePayloadRules": "Save Payload Rules",
+    "settingSaved": "Setting saved",
+    "failedSaveSetting": "Failed to save setting",
+    "unknownStatus": "Unknown",
+    "notInstalled": "Not installed",
+    "unhealthy": "Unhealthy"
   },
   "translator": {
     "title": "Traducteur",
@@ -4508,5 +4710,59 @@
     "noProxyLogs": "No proxy logs yet. Configure proxies and make API calls to see them here.",
     "noMatchingLogs": "No logs match the current filters.",
     "tlsFingerprint": "Chrome 124 TLS Fingerprint"
+  },
+  "bootstrap": {
+    "title": "Running in zero-config mode",
+    "description": "OzRouter auto-generated secure encryption keys on first launch. They are persisted to <dataDir>~/.ozrouter/server.env</dataDir>. No action is required — your data is encrypted and safe. To use custom keys, add <jwtSecret>JWT_SECRET</jwtSecret> and <storageKey>STORAGE_ENCRYPTION_KEY</storageKey> to that file.",
+    "dismiss": "Dismiss"
+  },
+  "apiEndpoints": {
+    "failedToLoadCatalog": "Failed to load API catalog",
+    "other": "Other",
+    "openApiLoadError": "The OpenAPI specification could not be loaded.",
+    "searchEndpoints": "Search endpoints...",
+    "requiresAuth": "Requires auth",
+    "tryIt": "Try It",
+    "sendingRequest": "Sending...",
+    "sendRequest": "Send Request",
+    "productionMonitoring": "Production monitoring",
+    "sendTestEvent": "Send test event",
+    "disable": "Disable",
+    "enable": "Enable",
+    "deleteWebhook": "Delete this webhook?",
+    "webhooks": "Webhooks",
+    "deleteTitle": "Delete",
+    "close": "Close"
+  },
+  "batch": {
+    "batchDetails": "Batch Details",
+    "status": "Status",
+    "endpoint": "Endpoint",
+    "model": "Model",
+    "window": "Window",
+    "created": "Created",
+    "progress": "Progress",
+    "completed": "completed",
+    "failed": "failed",
+    "pending": "pending",
+    "timeline": "Timeline",
+    "inProgress": "In Progress",
+    "finalizing": "Finalizing",
+    "completedLabel": "Completed",
+    "failedLabel": "Failed",
+    "expires": "Expires",
+    "expired": "Expired",
+    "cancelling": "Cancelling",
+    "cancelled": "Cancelled",
+    "files": "Files",
+    "input": "Input",
+    "output": "Output",
+    "errors": "Errors",
+    "close": "Close",
+    "escape": "Escape",
+    "searchByIdFilename": "Search by ID or filename…",
+    "allPurposes": "All purposes",
+    "searchByIdEndpoint": "Search by ID, endpoint, model…",
+    "allStatuses": "All statuses"
   }
 }

@@ -11,8 +11,8 @@ export const SkillCreateInputSchema = z
     name: z.string().min(1).max(100),
     version: z
       .string()
-      .regex(/^\d+\.\d+\.\d+$/)
-      .default("1.0.0"),
+      .regex(/^\d+\.\d+\.\d+(\.\d+)?$/)
+      .default("1.0.0.0"),
     description: z.string().max(500).optional(),
     schema: SkillSchema,
     handler: z.string().min(1),
@@ -25,7 +25,7 @@ export const SkillUpdateInputSchema = z
     name: z.string().min(1).max(100).optional(),
     version: z
       .string()
-      .regex(/^\d+\.\d+\.\d+$/)
+      .regex(/^\d+\.\d+\.\d+(\.\d+)?$/)
       .optional(),
     description: z.string().max(500).optional(),
     schema: SkillSchema.optional(),

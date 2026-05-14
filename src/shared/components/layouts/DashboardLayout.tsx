@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useRef, useSyncExternalStore, useState } from "react";
 import Sidebar from "../Sidebar";
 import Header from "../Header";
 import Breadcrumbs from "../Breadcrumbs";
@@ -18,20 +18,52 @@ const isE2EMode = process.env.NEXT_PUBLIC_OZROUTER_E2E_MODE === "1";
 
 export default function DashboardLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(() => {
-    if (typeof window === "undefined") return false;
+  const getSnapshot = useCallback(() => {
     try {
-      return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "true";
+      const stored = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
+      return stored === null ? true : stored === "true";
     } catch {
-      return false;
+      return true;
     }
-  });
+  }, []);
 
+  const subscribe = useCallback((onStoreChange: () => void) => {
+    const handler = (e: StorageEvent) => {
+      if (e.key === SIDEBAR_COLLAPSED_KEY) onStoreChange();
+    };
+    window.addEventListener("storage", handler);
+    return () => window.removeEventListener("storage", handler);
+  }, []);
+
+  const collapsed = useSyncExternalStore(subscribe, getSnapshot, () => true);
+
+  const [hovered, setHovered] = useState(false);
+  const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleMouseEnter = () => {
+    if (!collapsed) return;
+    if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
+    hoverTimeout.current = setTimeout(() => setHovered(true), 150);
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
+    hoverTimeout.current = null;
+    setHovered(false);
+  };
+
+  // When user manually expands, clear hover state
   const handleToggleCollapse = () => {
     const next = !collapsed;
-    setCollapsed(next);
+    setHovered(false);
     localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(next));
+    window.dispatchEvent(
+      new StorageEvent("storage", { key: SIDEBAR_COLLAPSED_KEY, newValue: String(next) })
+    );
   };
+
+  // Sidebar appears expanded when: actually expanded OR hovered while collapsed
+  const visualCollapsed = collapsed && !hovered;
 
   return (
     <AirUpdateProvider>
@@ -45,8 +77,22 @@ export default function DashboardLayout({ children }) {
         )}
 
         {/* Sidebar - Desktop */}
-        <div className="hidden min-h-0 lg:flex">
-          <Sidebar collapsed={collapsed} onToggleCollapse={handleToggleCollapse} />
+        <div
+          className={`hidden min-h-0 lg:block relative z-30 shrink-0 transition-all duration-300 ease-in-out ${
+            collapsed ? "w-16" : "w-80"
+          }`}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          <div
+            className={`h-full ${
+              hovered && collapsed
+                ? "absolute inset-y-0 left-0 z-40 w-80 shadow-2xl shadow-black/20"
+                : ""
+            }`}
+          >
+            <Sidebar collapsed={visualCollapsed} onToggleCollapse={handleToggleCollapse} />
+          </div>
         </div>
 
         {/* Sidebar - Mobile: full viewport height with proper scroll containment */}

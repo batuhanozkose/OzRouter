@@ -112,10 +112,23 @@ export async function checkForUpdates(tool: string): Promise<{
     return { current: null, latest, updateAvailable: true };
   }
 
+  const cParts = current.split(".").map(Number);
+  const lParts = latest.split(".").map(Number);
+  const len = Math.max(cParts.length, lParts.length);
+  let updateAvailable = false;
+  for (let i = 0; i < len; i++) {
+    const diff = (lParts[i] || 0) - (cParts[i] || 0);
+    if (diff > 0) {
+      updateAvailable = true;
+      break;
+    }
+    if (diff < 0) break;
+  }
+
   return {
     current,
     latest,
-    updateAvailable: current !== latest,
+    updateAvailable,
   };
 }
 

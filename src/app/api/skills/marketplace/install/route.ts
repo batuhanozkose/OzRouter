@@ -10,7 +10,7 @@ const marketplaceInstallSchema = z.object({
   name: z.string().min(1).max(64),
   description: z.string().min(1).max(1024),
   skillMdContent: z.string().min(1),
-  version: z.string().default("1.0.0"),
+  version: z.string().default("1.0.0.0"),
   sourceUrl: z.string().optional(),
 });
 

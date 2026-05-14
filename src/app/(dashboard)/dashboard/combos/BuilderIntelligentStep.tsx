@@ -117,7 +117,7 @@ export default function BuilderIntelligentStep({
           <span className="text-[10px] text-text-muted">
             {normalizedConfig.candidatePool.length > 0
               ? `${normalizedConfig.candidatePool.length} selected`
-              : "All active providers"}
+              : getI18nOrFallback(t, "allActiveProviders", "All active providers")}
           </span>
         </div>
 

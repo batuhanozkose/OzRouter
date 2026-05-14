@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useTranslations } from "next-intl";
 
 function relativeTime(ts: number): string {
   const diffMs = Date.now() - ts * 1000;
@@ -124,6 +125,7 @@ function formatTs(ts: number | null | undefined): string {
 }
 
 export default function BatchDetailModal({ batch, files, onClose }: BatchDetailModalProps) {
+  const t = useTranslations("batch");
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -169,7 +171,7 @@ export default function BatchDetailModal({ batch, files, onClose }: BatchDetailM
           </div>
           <button
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t("close")}
             className="p-1.5 rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-bg-alt)] transition-colors"
           >
             <span className="material-symbols-outlined text-[20px]">close</span>
@@ -182,15 +184,15 @@ export default function BatchDetailModal({ batch, files, onClose }: BatchDetailM
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             <div className="flex flex-col gap-0.5">
               <span className="text-[11px] uppercase tracking-wider font-medium text-[var(--color-text-muted)]">
-                Status
+                {t("status")}
               </span>
               <StatusBadge batch={batch} />
             </div>
-            <Field label="Endpoint" value={batch.endpoint} />
-            {batch.model && <Field label="Model" value={batch.model} />}
-            <Field label="Window" value={batch.completionWindow} />
+            <Field label={t("endpoint")} value={batch.endpoint} />
+            {batch.model && <Field label={t("model")} value={batch.model} />}
+            <Field label={t("window")} value={batch.completionWindow} />
             <Field
-              label="Created"
+              label={t("created")}
               value={<span title={formatTs(batch.createdAt)}>{relativeTime(batch.createdAt)}</span>}
             />
           </div>
@@ -218,15 +220,15 @@ export default function BatchDetailModal({ batch, files, onClose }: BatchDetailM
               </div>
               <div className="flex gap-4 text-xs text-[var(--color-text-muted)]">
                 <span>
-                  <span className="text-emerald-400 font-medium">{completed}</span> completed
+                  <span className="text-emerald-400 font-medium">{completed}</span> {t("completed")}
                 </span>
                 {failed > 0 && (
                   <span>
-                    <span className="text-red-400 font-medium">{failed}</span> failed
+                    <span className="text-red-400 font-medium">{failed}</span> {t("failed")}
                   </span>
                 )}
                 <span>
-                  <span className="font-medium">{total - completed - failed}</span> pending
+                  <span className="font-medium">{total - completed - failed}</span> {t("pending")}
                 </span>
               </div>
             </div>
@@ -235,19 +237,19 @@ export default function BatchDetailModal({ batch, files, onClose }: BatchDetailM
           {/* Timestamps */}
           <div>
             <h3 className="text-[11px] uppercase tracking-wider font-medium text-[var(--color-text-muted)] mb-3">
-              Timeline
+              {t("timeline")}
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
               {[
-                { label: "Created", ts: batch.createdAt },
-                { label: "In Progress", ts: batch.inProgressAt },
-                { label: "Finalizing", ts: batch.finalizingAt },
-                { label: "Completed", ts: batch.completedAt },
-                { label: "Failed", ts: batch.failedAt },
-                { label: "Expires", ts: batch.expiresAt },
-                { label: "Expired", ts: batch.expiredAt },
-                { label: "Cancelling", ts: batch.cancellingAt },
-                { label: "Cancelled", ts: batch.cancelledAt },
+                { label: t("created"), ts: batch.createdAt },
+                { label: t("inProgress"), ts: batch.inProgressAt },
+                { label: t("finalizing"), ts: batch.finalizingAt },
+                { label: t("completedLabel"), ts: batch.completedAt },
+                { label: t("failedLabel"), ts: batch.failedAt },
+                { label: t("expires"), ts: batch.expiresAt },
+                { label: t("expired"), ts: batch.expiredAt },
+                { label: t("cancelling"), ts: batch.cancellingAt },
+                { label: t("cancelled"), ts: batch.cancelledAt },
               ]
                 .filter((t) => t.ts)
                 .map(({ label, ts }) => (
@@ -270,9 +272,9 @@ export default function BatchDetailModal({ batch, files, onClose }: BatchDetailM
             </h3>
             <div className="space-y-2">
               {[
-                { role: "Input", fileId: batch.inputFileId, record: inputFile },
-                { role: "Output", fileId: batch.outputFileId, record: outputFile },
-                { role: "Errors", fileId: batch.errorFileId, record: errorFile },
+                { role: t("input"), fileId: batch.inputFileId, record: inputFile },
+                { role: t("output"), fileId: batch.outputFileId, record: outputFile },
+                { role: t("errors"), fileId: batch.errorFileId, record: errorFile },
               ]
                 .filter((f) => f.fileId)
                 .map(({ role, fileId, record }) => (

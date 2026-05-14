@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Card, Button, Input, Toggle } from "@/shared/components";
+import { useTranslations } from "next-intl";
 
 interface Settings {
   cliproxyapi_fallback_enabled?: boolean;
@@ -28,6 +29,7 @@ function isValidUrl(value: string): boolean {
 }
 
 export default function CliproxyapiSettingsTab() {
+  const t = useTranslations("settings");
   const [settings, setSettings] = useState<Settings>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -90,9 +92,9 @@ export default function CliproxyapiSettingsTab() {
       }
       await res.json();
       setSettings((prev) => ({ ...prev, [key]: value }));
-      setMessage({ type: "success", text: "Setting saved" });
+      setMessage({ type: "success", text: t("settingSaved") });
     } catch {
-      setMessage({ type: "error", text: "Failed to save setting" });
+      setMessage({ type: "error", text: t("failedSaveSetting") });
     } finally {
       setSaving(false);
     }
@@ -203,14 +205,14 @@ export default function CliproxyapiSettingsTab() {
                   {statusIcon}
                 </span>
                 <p className={`text-sm font-medium capitalize ${statusColor}`}>
-                  {toolState.status?.replace("_", " ") || "Unknown"}
+                  {toolState.status?.replace("_", " ") || t("unknownStatus")}
                 </p>
               </div>
             </div>
             <div className="p-3 rounded-lg bg-bg-secondary">
               <p className="text-xs text-text-muted mb-1">Version</p>
               <p className="text-sm font-medium">
-                {toolState.installedVersion ? `v${toolState.installedVersion}` : "Not installed"}
+                {toolState.installedVersion ? `v${toolState.installedVersion}` : t("notInstalled")}
               </p>
             </div>
             <div className="p-3 rounded-lg bg-bg-secondary">
@@ -225,10 +227,10 @@ export default function CliproxyapiSettingsTab() {
                 }`}
               >
                 {toolState.healthStatus === "healthy"
-                  ? "Healthy"
+                  ? t("healthy")
                   : toolState.healthStatus === "unhealthy"
-                    ? "Unhealthy"
-                    : "Unknown"}
+                    ? t("unhealthy")
+                    : t("unknownStatus")}
               </p>
             </div>
             <div className="p-3 rounded-lg bg-bg-secondary">

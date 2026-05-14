@@ -17,6 +17,7 @@ export type AutoUpdateConfig = {
   gitRemote: string;
   patchCommits: string[];
   logPath: string;
+  pm2ProcessName: string;
 };
 
 export type AutoUpdateValidation = {
@@ -61,6 +62,7 @@ export function getAutoUpdateConfig(env: NodeJS.ProcessEnv = process.env): AutoU
     gitRemote: env.AUTO_UPDATE_GIT_REMOTE || "origin",
     patchCommits: parsePatchCommits(env.AUTO_UPDATE_PATCH_COMMITS),
     logPath: env.AUTO_UPDATE_LOG_PATH || path.join(dataDir, "logs", "auto-update.log"),
+    pm2ProcessName: env.AUTO_UPDATE_PM2_PROCESS || "ozrouter",
   };
 }
 
@@ -107,25 +109,43 @@ export async function ensureGitTagExists(
   }
 }
 
-export function buildSourceUpdateScript(latest: string, gitRemote = "origin"): string {
+export function buildSourceUpdateScript(
+  latest: string,
+  gitRemote = "origin",
+  pm2ProcessName = "ozrouter"
+): string {
   const targetTag = latest.startsWith("v") ? latest : `v${latest}`;
 
   return [
     "set -eu",
-    "git stash --include-untracked 2>/dev/null || true",
+    `echo "[AutoUpdate] Starting background update to ${targetTag}."`,
+    'start_ref="$(git rev-parse --verify HEAD)"',
+    'backup_branch="pre-update/$(git rev-parse --short HEAD)-$(date +%Y%m%d-%H%M%S)"',
+    "restore_on_failure() {",
+    "  status=$?",
+    '  if [ "$status" -ne 0 ]; then',
+    '    echo "[AutoUpdate] Update failed with exit code $status. Restoring $start_ref." >&2',
+    '    git checkout "$start_ref" >/dev/null 2>&1 || true',
+    "  fi",
+    '  exit "$status"',
+    "}",
+    "trap restore_on_failure EXIT",
+    "git stash push --include-untracked -m air-update 2>/dev/null || true",
     `git fetch --tags ${shellQuote(gitRemote)}`,
     `if ! git rev-parse -q --verify "refs/tags/${targetTag}" >/dev/null 2>&1; then`,
     `  echo "[AutoUpdate] Tag ${targetTag} not found." >&2`,
     "  exit 1",
     "fi",
-    'backup_branch="pre-update/$(git rev-parse --short HEAD)-$(date +%Y%m%d-%H%M%S)"',
     'git branch "$backup_branch" 2>/dev/null || true',
     `git checkout "${targetTag}"`,
     "npm install --legacy-peer-deps",
     "node scripts/sync-env.mjs 2>/dev/null || true",
     "npm run build",
+    "trap - EXIT",
     "if command -v pm2 >/dev/null 2>&1; then",
-    "  pm2 restart ozrouter --update-env || true",
+    `  pm2 restart ${shellQuote(pm2ProcessName)} --update-env`,
+    "else",
+    '  echo "[AutoUpdate] PM2 is not installed; restart OzRouter manually to activate the update."',
     "fi",
     `echo "[AutoUpdate] Successfully updated to ${targetTag}."`,
   ].join("\n");
@@ -156,7 +176,7 @@ export async function launchAutoUpdate({
     };
   }
 
-  const script = buildSourceUpdateScript(latest, config.gitRemote);
+  const script = buildSourceUpdateScript(latest, config.gitRemote, config.pm2ProcessName);
 
   mkdirSync(path.dirname(config.logPath), { recursive: true });
   const logFd = openSync(config.logPath, "a");

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   CartesianGrid,
   Legend,
@@ -20,7 +21,7 @@ import type {
   UtilizationTimeRange,
 } from "@/shared/types/utilization";
 
-const RANGE_LABELS: Record<UtilizationTimeRange, string> = {
+const RANGE_LABELS_EN: Record<UtilizationTimeRange, string> = {
   "1h": "Last hour",
   "24h": "Last 24 hours",
   "7d": "Last 7 days",
@@ -89,6 +90,7 @@ function getLatestPoints(points: ProviderUtilizationPoint[]) {
 }
 
 export default function ProviderUtilizationTab() {
+  const t = useTranslations("analytics");
   const [range, setRange] = useState<UtilizationTimeRange>("24h");
   const [aggregateBy, setAggregateBy] = useState<"provider" | "connection">("provider");
   const [data, setData] = useState<ProviderUtilizationResponse | null>(null);
@@ -191,8 +193,17 @@ export default function ProviderUtilizationTab() {
   return (
     <div className="flex flex-col gap-6">
       <Card
-        title="Provider utilization"
-        subtitle={RANGE_LABELS[range]}
+        title={t("providerUtilization")}
+        subtitle={
+          (
+            {
+              "1h": t("lastHour"),
+              "24h": t("last24Hours"),
+              "7d": t("last7Days"),
+              "30d": t("last30Days"),
+            } as Record<string, string>
+          )[range]
+        }
         icon="monitoring"
         action={
           <div className="flex items-center gap-4">

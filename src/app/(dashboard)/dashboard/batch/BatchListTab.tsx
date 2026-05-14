@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import BatchDetailModal from "./BatchDetailModal";
 
 function relativeTime(ts: number): string {
@@ -114,6 +115,7 @@ const ALL_STATUSES = [
 ];
 
 export default function BatchListTab({ batches, files, loading }: BatchListTabProps) {
+  const t = useTranslations("batch");
   const [selectedBatch, setSelectedBatch] = useState<BatchRecord | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -137,7 +139,7 @@ export default function BatchListTab({ batches, files, loading }: BatchListTabPr
       <div className="flex flex-wrap gap-3 p-4 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)]">
         <input
           type="text"
-          placeholder="Search by ID, endpoint, model…"
+          placeholder={t("searchByIdEndpoint")}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="flex-1 min-w-[200px] px-3 py-2 rounded-lg text-sm bg-[var(--color-bg)] border border-[var(--color-border)] text-[var(--color-text-main)] placeholder:text-[var(--color-text-muted)] focus:outline-2 focus:outline-[var(--color-accent)]"
@@ -149,7 +151,7 @@ export default function BatchListTab({ batches, files, loading }: BatchListTabPr
         >
           {ALL_STATUSES.map((s) => (
             <option key={s} value={s}>
-              {s === "all" ? "All statuses" : s}
+              {s === "all" ? t("allStatuses") : s}
             </option>
           ))}
         </select>

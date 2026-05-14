@@ -17,6 +17,7 @@ import { Card } from "@/shared/components";
 import { AI_PROVIDERS } from "@/shared/constants/providers";
 import { useTranslations } from "next-intl";
 import TelemetryCard from "./TelemetryCard";
+import { useAirUpdate } from "@/shared/components/air-update";
 
 function formatUptime(seconds) {
   const d = Math.floor(seconds / 86400);
@@ -275,7 +276,7 @@ export default function HealthPage() {
                     dbHealth?.isHealthy ? "text-green-400" : "text-amber-400"
                   }`}
                 >
-                  {dbHealth?.isHealthy ? "Healthy" : "Attention needed"}
+                  {dbHealth?.isHealthy ? t("healthy") : t("attentionNeeded")}
                 </p>
               </div>
               <div className="rounded-xl border border-border bg-surface/50 p-3">
@@ -298,7 +299,7 @@ export default function HealthPage() {
               disabled={repairingDb}
               className="px-4 py-2 rounded-lg bg-primary/10 text-primary text-sm hover:bg-primary/20 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {repairingDb ? "Repairing..." : "Run Auto-Repair"}
+              {repairingDb ? t("repairing") : t("runAutoRepair")}
             </button>
             {dbHealth?.backupCreated && (
               <p className="text-xs text-text-muted">
@@ -340,18 +341,7 @@ export default function HealthPage() {
           <p className="text-xl font-semibold text-text-main">{formatUptime(system.uptime)}</p>
         </Card>
 
-        <Card className="p-4">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="flex items-center justify-center size-8 rounded-lg bg-blue-500/10 text-blue-500">
-              <span className="material-symbols-outlined text-[18px]">info</span>
-            </div>
-            <span className="text-sm text-text-muted">{t("version")}</span>
-          </div>
-          <p className="text-xl font-semibold text-text-main">v{system.version}</p>
-          <p className="text-xs text-text-muted mt-1">
-            {t("nodeVersion", { version: system.nodeVersion })}
-          </p>
-        </Card>
+        <VersionCard system={system} t={t} />
 
         <Card className="p-4">
           <div className="flex items-center gap-3 mb-2">
@@ -1085,5 +1075,52 @@ export default function HealthPage() {
         </Card>
       )}
     </div>
+  );
+}
+
+// ── Version Card with update check button ────────────────────────────────
+
+function VersionCard({
+  system,
+  t,
+}: {
+  system: { version: string; nodeVersion: string };
+  t: ReturnType<typeof useTranslations>;
+}) {
+  const { checkNow, isChecking, versionInfo } = useAirUpdate();
+
+  return (
+    <Card className="p-4">
+      <div className="flex items-center gap-3 mb-2">
+        <div className="flex items-center justify-center size-8 rounded-lg bg-blue-500/10 text-blue-500">
+          <span className="material-symbols-outlined text-[18px]">info</span>
+        </div>
+        <span className="text-sm text-text-muted">{t("version")}</span>
+      </div>
+      <p className="text-xl font-semibold text-text-main">v{system.version}</p>
+      <p className="text-xs text-text-muted mt-1">
+        {t("nodeVersion", { version: system.nodeVersion })}
+      </p>
+
+      {versionInfo?.updateAvailable && (
+        <p className="text-xs text-green-500 mt-1 flex items-center gap-1">
+          <span className="material-symbols-outlined text-[14px]">arrow_upward</span>v
+          {versionInfo.latest}
+        </p>
+      )}
+
+      <button
+        onClick={() => checkNow()}
+        disabled={isChecking}
+        className="mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <span
+          className={`material-symbols-outlined text-[14px] ${isChecking ? "animate-spin" : ""}`}
+        >
+          {isChecking ? "progress_activity" : "sync"}
+        </span>
+        {t("checkNow")}
+      </button>
+    </Card>
   );
 }

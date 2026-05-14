@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import Card from "@/shared/components/Card";
 import Badge from "@/shared/components/Badge";
 import { Skeleton, Spinner } from "@/shared/components/Loading";
@@ -32,7 +33,7 @@ function getTrendMeta(trend: ComboHealthMetrics["quotaHealth"]["providers"][numb
   if (trend === "improving") {
     return {
       icon: "trending_up",
-      label: "Improving",
+      label: t("improving"),
       variant: "success" as const,
     };
   }
@@ -40,14 +41,14 @@ function getTrendMeta(trend: ComboHealthMetrics["quotaHealth"]["providers"][numb
   if (trend === "declining") {
     return {
       icon: "trending_down",
-      label: "Declining",
+      label: t("declining"),
       variant: "warning" as const,
     };
   }
 
   return {
     icon: "trending_flat",
-    label: "Stable",
+    label: t("stable"),
     variant: "default" as const,
   };
 }
@@ -119,18 +120,18 @@ function ComboHealthCard({ combo }: { combo: ComboHealthMetrics }) {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:min-w-[420px]">
             <MetricBlock
               icon="battery_status_good"
-              label="Worst quota left"
+              label={t("worstQuotaLeft")}
               value={formatPercent(combo.quotaHealth.worstRemainingPct)}
             />
             <MetricBlock
               icon="balance"
-              label="Usage skew"
+              label={t("usageSkew")}
               value={combo.usageSkew.giniCoefficient.toFixed(2)}
-              subValue="Gini coefficient"
+              subValue={t("giniCoefficient")}
             />
             <MetricBlock
               icon="bolt"
-              label="Success rate"
+              label={t("successRate")}
               value={formatPercent(combo.performance.successRate * 100, 1)}
               subValue={`${combo.performance.totalRequests.toLocaleString()} requests`}
             />
@@ -214,12 +215,12 @@ function ComboHealthCard({ combo }: { combo: ComboHealthMetrics }) {
 
                 <div className="mt-3 grid gap-2">
                   <DistributionBar
-                    label="Requests"
+                    label={t("requests")}
                     value={entry.requestShare}
                     meta={formatShare(entry.requestShare)}
                   />
                   <DistributionBar
-                    label="Tokens"
+                    label={t("tokens")}
                     value={entry.tokenShare}
                     meta={formatShare(entry.tokenShare)}
                   />
@@ -240,17 +241,17 @@ function ComboHealthCard({ combo }: { combo: ComboHealthMetrics }) {
           <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
             <MetricBlock
               icon="timer"
-              label="Avg latency"
+              label={t("avgLatency")}
               value={formatLatency(combo.performance.avgLatencyMs)}
             />
             <MetricBlock
               icon="task_alt"
-              label="Success rate"
+              label={t("successRate")}
               value={formatPercent(combo.performance.successRate * 100, 1)}
             />
             <MetricBlock
               icon="stacked_line_chart"
-              label="Total requests"
+              label={t("totalRequests")}
               value={combo.performance.totalRequests.toLocaleString()}
             />
           </div>
@@ -297,17 +298,17 @@ function ComboHealthCard({ combo }: { combo: ComboHealthMetrics }) {
 
                 <div className="mt-3 grid gap-2 sm:grid-cols-3">
                   <DistributionBar
-                    label="Success"
+                    label={t("success")}
                     value={Math.max(target.successRate, 0) / 100}
                     meta={formatPercent(target.successRate, 0)}
                   />
                   <DistributionBar
-                    label="Latency"
+                    label={t("latency")}
                     value={target.avgLatencyMs > 0 ? 1 : 0}
                     meta={formatLatency(target.avgLatencyMs)}
                   />
                   <DistributionBar
-                    label="Quota"
+                    label={t("quota")}
                     value={Math.max(target.quotaRemainingPct || 0, 0) / 100}
                     meta={formatPercentOrDash(target.quotaRemainingPct)}
                   />
@@ -361,6 +362,7 @@ function ComboHealthSkeleton() {
 }
 
 export default function ComboHealthTab() {
+  const t = useTranslations("analytics");
   const [range, setRange] = useState<UtilizationTimeRange>("24h");
   const [data, setData] = useState<ComboHealthResponse | null>(null);
   const [loading, setLoading] = useState(true);

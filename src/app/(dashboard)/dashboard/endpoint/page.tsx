@@ -30,6 +30,7 @@ function ServiceToggle({
   onToggle: () => void;
   toggling: boolean;
 }) {
+  const t = useTranslations("endpoints");
   const online = enabled && status.online;
   const loading = enabled && status.loading;
 
@@ -62,7 +63,7 @@ function ServiceToggle({
             animation: online ? "pulse 2s infinite" : "none",
           }}
         />
-        {loading ? "..." : online ? "Online" : "Offline"}
+        {loading ? "..." : online ? t("online") : t("offline")}
       </div>
 
       <button
@@ -140,13 +141,14 @@ function TransportSelector({
   disabled: boolean;
   baseUrl: string;
 }) {
+  const t = useTranslations("endpoints");
   const options: { value: McpTransport; label: string; desc: string }[] = [
-    { value: "stdio", label: "stdio", desc: "Local — IDE spawns process via ozrouter --mcp" },
-    { value: "sse", label: "SSE", desc: "Remote — Server-Sent Events over HTTP" },
+    { value: "stdio", label: "stdio", desc: t("transportStdioDesc") },
+    { value: "sse", label: "SSE", desc: t("transportSseDesc") },
     {
       value: "streamable-http",
-      label: "Streamable HTTP",
-      desc: "Remote — Modern bidirectional HTTP",
+      label: t("transportStreamableHttp"),
+      desc: t("transportStreamableDesc"),
     },
   ];
 
@@ -227,9 +229,9 @@ function TransportSelector({
               color: "var(--color-text-muted)",
             }}
             onClick={() => void copyToClipboard(urlMap[value])}
-            title="Copy URL"
+            title={t("copyUrl")}
           >
-            Copy
+            {t("copy")}
           </button>
         )}
       </div>
@@ -413,10 +415,7 @@ export default function EndpointPage() {
         (a2aEnabled ? (
           <A2ADashboardPage />
         ) : (
-          <DisabledServicePanel
-            title="A2A is disabled"
-            description="Enable A2A above to view task telemetry, agent details, and validation tools."
-          />
+          <DisabledServicePanel title={t("a2aDisabledTitle")} description={t("a2aDisabledDesc")} />
         ))}
       {activeTab === "api-endpoints" && <ApiEndpointsTab />}
     </div>

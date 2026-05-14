@@ -8,6 +8,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface CompressionAnalyticsSummary {
   totalRequests: number;
@@ -105,6 +106,7 @@ function ProviderBar({
 }
 
 export default function CompressionAnalyticsTab() {
+  const t = useTranslations("analytics");
   const [stats, setStats] = useState<CompressionAnalyticsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -136,7 +138,7 @@ export default function CompressionAnalyticsTab() {
     return (
       <div className="card p-6 text-center text-text-muted">
         <span className="material-symbols-outlined text-[32px] mb-2 block">compress</span>
-        {error || "No compression data yet."}
+        {error || t("noCompressionData")}
         <p className="text-xs mt-2">
           Compression requests will appear here after the first request via /v1/chat/completions
           with compression enabled.
@@ -167,12 +169,12 @@ export default function CompressionAnalyticsTab() {
             }`}
           >
             {range === "24h"
-              ? "Last 24h"
+              ? t("last24h")
               : range === "7d"
-                ? "Last 7d"
+                ? t("last7d")
                 : range === "30d"
-                  ? "Last 30d"
-                  : "All time"}
+                  ? t("last30d")
+                  : t("allTime")}
           </button>
         ))}
       </div>
@@ -181,16 +183,16 @@ export default function CompressionAnalyticsTab() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard
           icon="compress"
-          label="Total Requests"
+          label={t("totalRequests")}
           value={stats.totalRequests.toLocaleString()}
         />
         <StatCard
           icon="token"
-          label="Tokens Saved"
+          label={t("tokensSaved")}
           value={stats.totalTokensSaved.toLocaleString()}
         />
-        <StatCard icon="percent" label="Avg Savings" value={`${stats.avgSavingsPct}%`} />
-        <StatCard icon="timer" label="Avg Duration" value={`${stats.avgDurationMs}ms`} />
+        <StatCard icon="percent" label={t("avgSavings")} value={`${stats.avgSavingsPct}%`} />
+        <StatCard icon="timer" label={t("avgDuration")} value={`${stats.avgDurationMs}ms`} />
       </div>
 
       {/* Mode Breakdown */}

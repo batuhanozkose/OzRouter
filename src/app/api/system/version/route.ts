@@ -10,7 +10,6 @@ import { execFile } from "child_process";
 import { promisify } from "util";
 import { isAuthenticated } from "@/shared/utils/apiAuth";
 import {
-  ensureGitTagExists,
   getAutoUpdateConfig,
   launchAutoUpdate,
   validateAutoUpdateRuntime,
@@ -183,168 +182,25 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (config.mode === "source") {
-    const encoder = new TextEncoder();
-    const stream = new ReadableStream({
-      async start(controller) {
-        const send = (data: Record<string, unknown>) => {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
-        };
-
-        try {
-          // ── Air Update: Database backup ──────────────────────────
-          send({
-            step: "backup",
-            status: "running",
-            message: "Creating database backup...",
-          });
-          const backupResult = await backupDbFileAndWait("air-update");
-          if (!backupResult) {
-            throw new Error("Database backup could not be created. Update aborted.");
-          }
-          send({
-            step: "backup",
-            status: "done",
-            message: `Database backed up: ${backupResult.filename}`,
-          });
-
-          // ── Air Update: Fetch & validate ──────────────────────────
-          send({
-            step: "fetch",
-            status: "running",
-            message: `Fetching latest tags from ${config.gitRemote}...`,
-          });
-          await execFileAsync("git", ["fetch", "--tags", config.gitRemote], {
-            timeout: 60_000,
-            cwd: process.cwd(),
-          });
-          send({ step: "fetch", status: "done", message: "Tags fetched" });
-
-          send({
-            step: "install",
-            status: "running",
-            message: `Validating ${resolvedTargetTag}...`,
-          });
-          await ensureGitTagExists(resolvedTargetTag, execFileAsync, process.cwd());
-          send({
-            step: "install",
-            status: "done",
-            message: `Validated ${resolvedTargetTag}`,
-          });
-
-          send({
-            step: "install",
-            status: "running",
-            message: `Checking out ${resolvedTargetTag}...`,
-          });
-          try {
-            await execFileAsync("git", ["stash", "--include-untracked"], {
-              timeout: 30_000,
-              cwd: process.cwd(),
-            });
-          } catch {
-            // No local changes to stash.
-          }
-
-          const shortHead = (
-            await execFileAsync("git", ["rev-parse", "--short", "HEAD"], {
-              timeout: 10_000,
-              cwd: process.cwd(),
-            })
-          ).stdout.trim();
-          const backupBranch = `pre-update/${shortHead}-${new Date().toISOString().replace(/[:.]/g, "-")}`;
-
-          try {
-            await execFileAsync("git", ["branch", backupBranch], {
-              timeout: 10_000,
-              cwd: process.cwd(),
-            });
-          } catch {
-            // Backup branch is best-effort only.
-          }
-
-          await execFileAsync("git", ["checkout", resolvedTargetTag], {
-            timeout: 30_000,
-            cwd: process.cwd(),
-          });
-          send({ step: "install", status: "done", message: `Checked out ${resolvedTargetTag}` });
-
-          send({
-            step: "dependencies",
-            status: "running",
-            message: "Installing dependencies...",
-          });
-          await execFileAsync("npm", ["install", "--legacy-peer-deps"], {
-            timeout: 300_000,
-            cwd: process.cwd(),
-          });
-          send({ step: "dependencies", status: "done", message: "Dependencies installed" });
-
-          try {
-            await execFileAsync("node", ["scripts/sync-env.mjs"], {
-              timeout: 15_000,
-              cwd: process.cwd(),
-            });
-          } catch {
-            // .env sync is non-fatal during update.
-          }
-
-          send({
-            step: "build",
-            status: "running",
-            message: "Building application...",
-          });
-          await execFileAsync("npm", ["run", "build"], {
-            timeout: 600_000,
-            cwd: process.cwd(),
-          });
-          send({ step: "build", status: "done", message: "Build complete" });
-
-          send({ step: "restart", status: "running", message: "Restarting service..." });
-          try {
-            await execFileAsync("pm2", ["restart", "ozrouter", "--update-env"], {
-              timeout: 30_000,
-              cwd: process.cwd(),
-            });
-            send({ step: "restart", status: "done", message: "Service restarted" });
-          } catch (restartErr: unknown) {
-            send({
-              step: "restart",
-              status: "failed",
-              message: "PM2 restart failed — manual restart needed",
-            });
-            throw new Error(
-              restartErr instanceof Error
-                ? `Update installed, but service restart failed: ${restartErr.message}`
-                : "Update installed, but service restart failed. Restart OzRouter manually."
-            );
-          }
-
-          send({
-            step: "complete",
-            status: "done",
-            from: current,
-            to: latest,
-            message: `Update to ${resolvedTargetTag} complete!`,
-          });
-          console.log(`[AirUpdate] Successfully updated to ${resolvedTargetTag} via source mode`);
-        } catch (err: any) {
-          const errMsg = err?.stderr || err?.message || String(err);
-          send({ step: "error", status: "failed", message: errMsg });
-          console.error("[AirUpdate] Source update failed:", err);
-        } finally {
-          controller.close();
-        }
+  let backupResult: Awaited<ReturnType<typeof backupDbFileAndWait>>;
+  try {
+    backupResult = await backupDbFileAndWait("air-update");
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: `Database backup could not be created. Update aborted. ${message}`,
       },
-    });
+      { status: 500 }
+    );
+  }
 
-    return new Response(stream, {
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
-      },
-    });
+  if (!backupResult) {
+    return NextResponse.json(
+      { success: false, error: "Database backup could not be created. Update aborted." },
+      { status: 500 }
+    );
   }
 
   const launched = await launchAutoUpdate({ latest });
@@ -362,10 +218,11 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     success: true,
-    message: `Update to v${latest} started in the background.`,
+    message: `Update to ${resolvedTargetTag} started in the background.`,
     from: current,
     to: latest,
     channel: launched.channel,
     logPath: launched.logPath,
+    backup: backupResult.filename,
   });
 }

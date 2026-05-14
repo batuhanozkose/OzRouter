@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Card, Button } from "@/shared/components";
+import { useTranslations } from "next-intl";
 
 interface ToolState {
   tool: string;
@@ -24,6 +25,7 @@ interface UpdateInfo {
 }
 
 export default function CliproxyapiToolCard({ isExpanded, onToggle }) {
+  const t = useTranslations("cliTools");
   const [toolState, setToolState] = useState<ToolState | null>(null);
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
@@ -83,7 +85,7 @@ export default function CliproxyapiToolCard({ isExpanded, onToggle }) {
         });
       }
     } catch (err) {
-      setMessage({ type: "error", text: err instanceof Error ? err.message : "Request failed" });
+      setMessage({ type: "error", text: err instanceof Error ? err.message : t("requestFailed") });
     } finally {
       setLoading(null);
     }
@@ -93,13 +95,16 @@ export default function CliproxyapiToolCard({ isExpanded, onToggle }) {
     if (!toolState) return null;
     const s = toolState.status;
     const map: Record<string, { label: string; color: string }> = {
-      running: { label: "Running", color: "bg-green-500/10 text-green-600 dark:text-green-400" },
-      stopped: { label: "Stopped", color: "bg-zinc-500/10 text-zinc-500 dark:text-zinc-400" },
+      running: { label: t("running"), color: "bg-green-500/10 text-green-600 dark:text-green-400" },
+      stopped: { label: t("stopped"), color: "bg-zinc-500/10 text-zinc-500 dark:text-zinc-400" },
       not_installed: {
-        label: "Not Installed",
+        label: t("notInstalledStatus"),
         color: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400",
       },
-      installed: { label: "Installed", color: "bg-blue-500/10 text-blue-600 dark:text-blue-400" },
+      installed: {
+        label: t("installed"),
+        color: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+      },
       error: { label: "Error", color: "bg-red-500/10 text-red-600 dark:text-red-400" },
     };
     const badge = map[s] || map.not_installed;
@@ -179,7 +184,7 @@ export default function CliproxyapiToolCard({ isExpanded, onToggle }) {
             <div className="p-3 rounded-lg bg-bg-secondary">
               <p className="text-xs text-text-muted mb-1">Version</p>
               <p className="text-sm font-medium">
-                {toolState?.installedVersion ? `v${toolState.installedVersion}` : "Not installed"}
+                {toolState?.installedVersion ? `v${toolState.installedVersion}` : t("notInstalled")}
               </p>
             </div>
             <div className="p-3 rounded-lg bg-bg-secondary">
@@ -190,8 +195,8 @@ export default function CliproxyapiToolCard({ isExpanded, onToggle }) {
                 {toolState?.healthStatus === "healthy"
                   ? `Healthy`
                   : toolState?.healthStatus === "unhealthy"
-                    ? "Unhealthy"
-                    : "Unknown"}
+                    ? t("unhealthy")
+                    : t("unknownStatus")}
               </p>
             </div>
             <div className="p-3 rounded-lg bg-bg-secondary">

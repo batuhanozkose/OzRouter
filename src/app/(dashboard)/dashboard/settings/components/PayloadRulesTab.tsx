@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card, Button } from "@/shared/components";
+import { useTranslations } from "next-intl";
 
 const EMPTY_PAYLOAD_RULES_TEMPLATE = {
   default: [],
@@ -55,6 +56,7 @@ function getErrorMessage(payload: unknown): string {
 }
 
 export default function PayloadRulesTab() {
+  const t = useTranslations("settings");
   const [editorValue, setEditorValue] = useState(EMPTY_PAYLOAD_RULES_TEXT);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -64,16 +66,16 @@ export default function PayloadRulesTab() {
     try {
       const parsed = JSON.parse(editorValue);
       if (!isObjectRecord(parsed)) {
-        return { value: null, error: "Payload rules must be a JSON object." };
+        return { value: null, error: t("payloadRulesMustBeJson") };
       }
       return { value: parsed, error: null };
     } catch (error) {
       return {
         value: null,
-        error: error instanceof Error ? error.message : "Invalid JSON payload.",
+        error: error instanceof Error ? error.message : t("invalidJsonPayload"),
       };
     }
-  }, [editorValue]);
+  }, [editorValue, t]);
 
   const summary = useMemo(() => {
     const source = parsedEditor.value;
@@ -99,7 +101,7 @@ export default function PayloadRulesTab() {
     } catch (error) {
       setMessage({
         type: "error",
-        text: error instanceof Error ? error.message : "Failed to load payload rules",
+        text: error instanceof Error ? error.message : t("failedLoadPayloadRules"),
       });
     } finally {
       setLoading(false);
@@ -114,7 +116,7 @@ export default function PayloadRulesTab() {
     setEditorValue(EMPTY_PAYLOAD_RULES_TEXT);
     setMessage({
       type: "info",
-      text: "Editor reset to the neutral template. Save to apply it.",
+      text: t("editorResetNeutral"),
     });
   };
 
@@ -122,7 +124,7 @@ export default function PayloadRulesTab() {
     if (parsedEditor.error || !parsedEditor.value) {
       setMessage({
         type: "error",
-        text: parsedEditor.error || "Payload rules must be valid JSON before saving.",
+        text: parsedEditor.error || t("payloadRulesValidJson"),
       });
       return;
     }
@@ -141,7 +143,7 @@ export default function PayloadRulesTab() {
       }
 
       setEditorValue(JSON.stringify(payload, null, 2));
-      setMessage({ type: "success", text: "Payload rules saved and hot reloaded." });
+      setMessage({ type: "success", text: t("payloadRulesSaved") });
     } catch (error) {
       setMessage({
         type: "error",
@@ -273,7 +275,7 @@ export default function PayloadRulesTab() {
             Reset Template
           </Button>
           <Button onClick={handleSave} disabled={loading || saving || !!parsedEditor.error}>
-            {saving ? "Saving..." : "Save Payload Rules"}
+            {saving ? t("saving") : t("savePayloadRules")}
           </Button>
         </div>
       </div>

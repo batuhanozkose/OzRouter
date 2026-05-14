@@ -222,12 +222,14 @@ class SkillRegistry {
   }
 
   private compareVersions(a: string, b: string): number {
-    const [aMajor, aMinor, aPatch] = a.split(".").map(Number);
-    const [bMajor, bMinor, bPatch] = b.split(".").map(Number);
-
-    if (aMajor !== bMajor) return aMajor - bMajor;
-    if (aMinor !== bMinor) return aMinor - bMinor;
-    return aPatch - bPatch;
+    const aParts = a.split(".").map(Number);
+    const bParts = b.split(".").map(Number);
+    const len = Math.max(aParts.length, bParts.length);
+    for (let i = 0; i < len; i++) {
+      const diff = (aParts[i] || 0) - (bParts[i] || 0);
+      if (diff !== 0) return diff;
+    }
+    return 0;
   }
 
   private updateVersionCache(skill: Skill): void {

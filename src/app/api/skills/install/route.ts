@@ -8,8 +8,8 @@ const installManifestSchema = z.object({
   name: z.string().min(1).max(100),
   version: z
     .string()
-    .regex(/^\d+\.\d+\.\d+$/, "Version must be semver (e.g. 1.0.0)")
-    .default("1.0.0"),
+    .regex(/^\d+\.\d+\.\d+(\.\d+)?$/, "Version must be semver (e.g. 1.0.0 or 1.0.0.0)")
+    .default("1.0.0.0"),
   description: z.string().max(500),
   schema: z.object({
     input: z.record(z.string(), z.unknown()).default({}),
