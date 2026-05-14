@@ -1,6 +1,6 @@
 {
   "name": "ozrouter",
-  "version": "3.8.8.2",
+  "version": "3.8.8.3",
   "private": true,
   "description": "Local AI gateway for routing OpenAI-compatible clients across multiple providers, accounts, and fallback chains.",
   "type": "module",

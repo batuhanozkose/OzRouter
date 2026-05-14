@@ -18,6 +18,8 @@ export default function SystemStorageTab() {
   const [importStatus, setImportStatus] = useState({ type: "", message: "" });
   const [confirmImport, setConfirmImport] = useState(false);
   const [pendingImportFile, setPendingImportFile] = useState<File | null>(null);
+  const [confirmFullImport, setConfirmFullImport] = useState(false);
+  const [pendingFullImportFile, setPendingFullImportFile] = useState<File | null>(null);
   const [clearCacheLoading, setClearCacheLoading] = useState(false);
   const [clearCacheStatus, setClearCacheStatus] = useState({ type: "", message: "" });
   const [purgeLogsLoading, setPurgeLogsLoading] = useState(false);
@@ -25,6 +27,7 @@ export default function SystemStorageTab() {
   const [cleanupBackupsLoading, setCleanupBackupsLoading] = useState(false);
   const [cleanupBackupsStatus, setCleanupBackupsStatus] = useState({ type: "", message: "" });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const fullBackupInputRef = useRef<HTMLInputElement>(null);
   const jsonInputRef = useRef<HTMLInputElement>(null);
   const locale = useLocale();
   const t = useTranslations("settings");
@@ -295,6 +298,10 @@ export default function SystemStorageTab() {
     fileInputRef.current?.click();
   };
 
+  const handleFullImportClick = () => {
+    fullBackupInputRef.current?.click();
+  };
+
   const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -308,6 +315,22 @@ export default function SystemStorageTab() {
     setPendingImportFile(file);
     setConfirmImport(true);
     if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleFullBackupSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.endsWith(".tar.gz") && !file.name.endsWith(".tgz")) {
+      setImportStatus({
+        type: "error",
+        message: t("invalidFullImportFileType"),
+      });
+      if (fullBackupInputRef.current) fullBackupInputRef.current.value = "";
+      return;
+    }
+    setPendingFullImportFile(file);
+    setConfirmFullImport(true);
+    if (fullBackupInputRef.current) fullBackupInputRef.current.value = "";
   };
 
   const handleImportConfirm = async () => {
@@ -349,9 +372,53 @@ export default function SystemStorageTab() {
     }
   };
 
+  const handleFullImportConfirm = async () => {
+    if (!pendingFullImportFile) return;
+    setImportLoading(true);
+    setImportStatus({ type: "", message: "" });
+    setConfirmFullImport(false);
+    try {
+      const arrayBuffer = await pendingFullImportFile.arrayBuffer();
+      const res = await fetch(
+        `/api/db-backups/importAll?filename=${encodeURIComponent(pendingFullImportFile.name)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/gzip" },
+          body: arrayBuffer,
+        }
+      );
+      const data = await res.json();
+      if (res.ok) {
+        setImportStatus({
+          type: "success",
+          message: t("fullImportSuccess", {
+            connections: data.connectionCount,
+            nodes: data.nodeCount,
+            combos: data.comboCount,
+            apiKeys: data.apiKeyCount,
+          }),
+        });
+        await loadStorageHealth();
+        if (backupsExpanded) await loadBackups();
+      } else {
+        setImportStatus({ type: "error", message: data.error || t("importFailed") });
+      }
+    } catch {
+      setImportStatus({ type: "error", message: t("errorDuringImport") });
+    } finally {
+      setImportLoading(false);
+      setPendingFullImportFile(null);
+    }
+  };
+
   const handleImportCancel = () => {
     setConfirmImport(false);
     setPendingImportFile(null);
+  };
+
+  const handleFullImportCancel = () => {
+    setConfirmFullImport(false);
+    setPendingFullImportFile(null);
   };
 
   const formatBytes = (bytes) => {
@@ -577,6 +644,19 @@ export default function SystemStorageTab() {
           className="hidden"
           onChange={handleFileSelected}
         />
+        <Button variant="outline" size="sm" onClick={handleFullImportClick} loading={importLoading}>
+          <span className="material-symbols-outlined text-[14px] mr-1" aria-hidden="true">
+            folder_zip
+          </span>
+          {t("importAll")}
+        </Button>
+        <input
+          ref={fullBackupInputRef}
+          type="file"
+          accept=".tar.gz,.tgz,application/gzip,application/x-gzip"
+          className="hidden"
+          onChange={handleFullBackupSelected}
+        />
         <Button variant="outline" size="sm" onClick={handleExportJson} loading={exportLoading}>
           <span className="material-symbols-outlined text-[14px] mr-1" aria-hidden="true">
             data_object
@@ -623,6 +703,38 @@ export default function SystemStorageTab() {
                   {t("yesImport")}
                 </Button>
                 <Button variant="outline" size="sm" onClick={handleImportCancel}>
+                  {tc("cancel")}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmFullImport && pendingFullImportFile && (
+        <div className="p-4 rounded-lg mb-4 bg-amber-500/10 border border-amber-500/30">
+          <div className="flex items-start gap-3">
+            <span
+              className="material-symbols-outlined text-[20px] text-amber-500 mt-0.5"
+              aria-hidden="true"
+            >
+              warning
+            </span>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-amber-500 mb-1">{t("confirmFullImport")}</p>
+              <p className="text-xs text-text-muted mb-2">
+                {t("confirmFullImportDesc", { file: pendingFullImportFile.name })}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleFullImportConfirm}
+                  className="!bg-amber-500 hover:!bg-amber-600"
+                >
+                  {t("yesImport")}
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleFullImportCancel}>
                   {tc("cancel")}
                 </Button>
               </div>

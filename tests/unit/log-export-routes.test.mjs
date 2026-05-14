@@ -13,6 +13,7 @@ const core = await import("../../src/lib/db/core.ts");
 const callLogs = await import("../../src/lib/usage/callLogs.ts");
 const exportRoute = await import("../../src/app/api/logs/export/route.ts");
 const exportAllRoute = await import("../../src/app/api/db-backups/exportAll/route.ts");
+const importAllRoute = await import("../../src/app/api/db-backups/importAll/route.ts");
 
 async function resetStorage() {
   core.resetDbInstance();
@@ -83,4 +84,45 @@ test("GET /api/db-backups/exportAll includes call_logs artifacts in the archive"
   assert.match(listing, /call_logs\/.+\.json/);
   assert.match(listing, /metadata\.json/);
   assert.match(listing, /storage\.sqlite/);
+});
+
+test("POST /api/db-backups/importAll restores database and call log artifacts from full archive", async () => {
+  await callLogs.saveCallLog({
+    id: "full-import-log",
+    timestamp: new Date().toISOString(),
+    method: "POST",
+    path: "/v1/chat/completions",
+    status: 200,
+    model: "openai/gpt-4.1",
+    provider: "openai",
+    requestBody: { hello: "full-import" },
+    responseBody: { restored: true },
+  });
+
+  const exportResponse = await exportAllRoute.GET(
+    new Request("http://localhost/api/db-backups/exportAll")
+  );
+  assert.equal(exportResponse.status, 200);
+  const archiveBuffer = Buffer.from(await exportResponse.arrayBuffer());
+
+  await resetStorage();
+  assert.equal(await callLogs.getCallLogById("full-import-log"), null);
+
+  const importResponse = await importAllRoute.POST(
+    new Request("http://localhost/api/db-backups/importAll?filename=ozrouter-full-backup.tar.gz", {
+      method: "POST",
+      headers: { "Content-Type": "application/gzip" },
+      body: archiveBuffer,
+    })
+  );
+  const body = await importResponse.json();
+
+  assert.equal(importResponse.status, 200);
+  assert.equal(body.imported, true);
+  assert.equal(body.callLogsRestored, true);
+
+  const restoredLog = await callLogs.getCallLogById("full-import-log");
+  assert.equal(restoredLog?.detailState, "ready");
+  assert.deepEqual(restoredLog?.requestBody, { hello: "full-import" });
+  assert.deepEqual(restoredLog?.responseBody, { restored: true });
 });
