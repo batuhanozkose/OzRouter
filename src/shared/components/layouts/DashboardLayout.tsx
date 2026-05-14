@@ -6,6 +6,12 @@ import Header from "../Header";
 import Breadcrumbs from "../Breadcrumbs";
 import NotificationToast from "../NotificationToast";
 import MaintenanceBanner from "../MaintenanceBanner";
+import {
+  AirUpdateProvider,
+  AirUpdatePopup,
+  AirUpdateBanner,
+  AirUpdateProgress,
+} from "../air-update";
 
 const SIDEBAR_COLLAPSED_KEY = "sidebar-collapsed";
 const isE2EMode = process.env.NEXT_PUBLIC_OZROUTER_E2E_MODE === "1";
@@ -28,46 +34,53 @@ export default function DashboardLayout({ children }) {
   };
 
   return (
-    <div className="flex h-dvh min-h-0 w-full overflow-hidden bg-bg">
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/20 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+    <AirUpdateProvider>
+      <div className="flex h-dvh min-h-0 w-full overflow-hidden bg-bg">
+        {/* Mobile sidebar overlay */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-black/20 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
 
-      {/* Sidebar - Desktop */}
-      <div className="hidden min-h-0 lg:flex">
-        <Sidebar collapsed={collapsed} onToggleCollapse={handleToggleCollapse} />
-      </div>
-
-      {/* Sidebar - Mobile: full viewport height with proper scroll containment */}
-      <div
-        className={`fixed inset-y-0 left-0 z-50 transform lg:hidden transition-transform duration-300 ease-in-out h-dvh overflow-y-auto ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <Sidebar onClose={() => setSidebarOpen(false)} />
-      </div>
-
-      {/* Main content */}
-      <main
-        id="main-content"
-        className="relative flex min-h-0 flex-1 min-w-0 flex-col transition-colors duration-300"
-      >
-        <Header onMenuClick={() => setSidebarOpen(true)} />
-        {!isE2EMode && <MaintenanceBanner />}
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar p-4 sm:p-6 lg:p-10">
-          <div className="max-w-7xl mx-auto w-full">
-            <Breadcrumbs />
-            {children}
-          </div>
+        {/* Sidebar - Desktop */}
+        <div className="hidden min-h-0 lg:flex">
+          <Sidebar collapsed={collapsed} onToggleCollapse={handleToggleCollapse} />
         </div>
-      </main>
 
-      {/* Global notification toast system */}
-      <NotificationToast />
-    </div>
+        {/* Sidebar - Mobile: full viewport height with proper scroll containment */}
+        <div
+          className={`fixed inset-y-0 left-0 z-50 transform lg:hidden transition-transform duration-300 ease-in-out h-dvh overflow-y-auto ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
+          <Sidebar onClose={() => setSidebarOpen(false)} />
+        </div>
+
+        {/* Main content */}
+        <main
+          id="main-content"
+          className="relative flex min-h-0 flex-1 min-w-0 flex-col transition-colors duration-300"
+        >
+          <Header onMenuClick={() => setSidebarOpen(true)} />
+          {!isE2EMode && <MaintenanceBanner />}
+          <AirUpdateBanner />
+          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar p-4 sm:p-6 lg:p-10">
+            <div className="max-w-7xl mx-auto w-full">
+              <Breadcrumbs />
+              {children}
+            </div>
+          </div>
+        </main>
+
+        {/* Global notification toast system */}
+        <NotificationToast />
+
+        {/* Air Update — global update popup + progress overlay */}
+        <AirUpdatePopup />
+        <AirUpdateProgress />
+      </div>
+    </AirUpdateProvider>
   );
 }

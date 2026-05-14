@@ -116,6 +116,18 @@ const REAL_023_FIX_MEMORY_FTS_UUID_SQL = fs.readFileSync(
   path.resolve("src/lib/db/migrations/023_fix_memory_fts_uuid.sql"),
   "utf8"
 );
+const REAL_042_BOOTSTRAP_TOKEN_SQL = fs.readFileSync(
+  path.resolve("src/lib/db/migrations/042_bootstrap_token.sql"),
+  "utf8"
+);
+const REAL_043_INFLIGHT_SETTINGS_SQL = fs.readFileSync(
+  path.resolve("src/lib/db/migrations/043_inflight_settings.sql"),
+  "utf8"
+);
+const REAL_044_DRAIN_STATE_SQL = fs.readFileSync(
+  path.resolve("src/lib/db/migrations/044_drain_state.sql"),
+  "utf8"
+);
 
 test("migration infrastructure avoids cwd-based repo tracing fallbacks", () => {
   const runnerSource = fs.readFileSync(path.resolve("src/lib/db/migrationRunner.ts"), "utf8");
@@ -861,6 +873,80 @@ test(
         content: "memory content",
         key: "topic",
       });
+    } finally {
+      db.close();
+    }
+  }
+);
+
+test(
+  "settings migrations use key_value storage when no settings table exists",
+  serial,
+  async () => {
+    const runner = await importFresh("src/lib/db/migrationRunner.ts");
+    const db = createDb();
+
+    try {
+      db.exec(`
+      CREATE TABLE _ozrouter_migrations (
+        version TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        applied_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE TABLE key_value (
+        namespace TEXT NOT NULL,
+        key TEXT NOT NULL,
+        value TEXT NOT NULL,
+        PRIMARY KEY (namespace, key)
+      );
+    `);
+      db.prepare("INSERT INTO _ozrouter_migrations (version, name) VALUES (?, ?)").run(
+        "041",
+        "combo_strategy_tracking"
+      );
+      db.prepare("INSERT INTO key_value (namespace, key, value) VALUES (?, ?, ?)").run(
+        "settings",
+        "inflight_max_global",
+        "250"
+      );
+      db.prepare("INSERT INTO key_value (namespace, key, value) VALUES (?, ?, ?)").run(
+        "settings",
+        "drained_connections",
+        '["conn-1"]'
+      );
+
+      const count = withMockedMigrationFs(
+        {
+          "042_bootstrap_token.sql": REAL_042_BOOTSTRAP_TOKEN_SQL,
+          "043_inflight_settings.sql": REAL_043_INFLIGHT_SETTINGS_SQL,
+          "044_drain_state.sql": REAL_044_DRAIN_STATE_SQL,
+        },
+        () => runner.runMigrations(db)
+      );
+
+      assert.equal(count, 3);
+      assert.deepEqual(
+        db.prepare("SELECT version FROM _ozrouter_migrations ORDER BY version").all(),
+        [{ version: "041" }, { version: "042" }, { version: "043" }, { version: "044" }]
+      );
+      assert.equal(
+        db
+          .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'settings'")
+          .get(),
+        undefined
+      );
+      assert.deepEqual(
+        db
+          .prepare("SELECT key, value FROM key_value WHERE namespace = 'settings' ORDER BY key")
+          .all(),
+        [
+          { key: "drain_threshold_percent", value: "90" },
+          { key: "drained_connections", value: '["conn-1"]' },
+          { key: "inflight_max_global", value: "250" },
+          { key: "inflight_max_per_provider", value: "20" },
+        ]
+      );
     } finally {
       db.close();
     }

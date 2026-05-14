@@ -3,5 +3,8 @@
 -- Global and per-provider max concurrent request limits
 -- for overload protection and graceful shutdown.
 
-ALTER TABLE settings ADD COLUMN inflight_max_global INTEGER DEFAULT 100;
-ALTER TABLE settings ADD COLUMN inflight_max_per_provider INTEGER DEFAULT 20;
+INSERT OR IGNORE INTO key_value (namespace, key, value)
+VALUES ('settings', 'inflight_max_global', '100');
+
+INSERT OR IGNORE INTO key_value (namespace, key, value)
+VALUES ('settings', 'inflight_max_per_provider', '20');

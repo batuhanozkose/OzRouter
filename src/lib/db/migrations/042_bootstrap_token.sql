@@ -1,6 +1,7 @@
 -- 042_bootstrap_token.sql
--- Add bootstrap_token_hash column to settings for first-run security.
+-- Bootstrap token state is stored in key_value under namespace='settings'.
 -- Stores a hashed one-time token that must be provided during initial setup
 -- when accessing OzRouter remotely for the first time.
 
-ALTER TABLE settings ADD COLUMN bootstrap_token_hash TEXT DEFAULT NULL;
+-- No default row is needed: absence of bootstrap_token_hash means no token exists.
+SELECT 1;

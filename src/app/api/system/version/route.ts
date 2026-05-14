@@ -16,8 +16,36 @@ import {
   validateAutoUpdateRuntime,
 } from "@/lib/system/autoUpdate";
 import { NEWS_JSON_URL, parseActiveNewsPayload } from "@/shared/utils/releaseNotes";
+import { backupDbFileAndWait } from "@/lib/db/backup";
 
 const execFileAsync = promisify(execFile);
+
+// ── GitHub Release Info ─────────────────────────────────────────────────
+
+type ReleaseInfo = {
+  releaseName: string | null;
+  releaseNotes: string | null;
+  releaseUrl: string | null;
+};
+
+async function getGitHubReleaseInfo(version: string): Promise<ReleaseInfo> {
+  const empty: ReleaseInfo = { releaseName: null, releaseNotes: null, releaseUrl: null };
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/batuhanozkose/OzRouter/releases/tags/v${version}`,
+      { signal: AbortSignal.timeout(10_000), headers: { Accept: "application/vnd.github+json" } }
+    );
+    if (!res.ok) return empty;
+    const data = await res.json();
+    return {
+      releaseName: data.name || null,
+      releaseNotes: data.body || null,
+      releaseUrl: data.html_url || null,
+    };
+  } catch {
+    return empty;
+  }
+}
 
 export const dynamic = "force-dynamic";
 
@@ -95,6 +123,12 @@ export async function GET(req: NextRequest) {
 
   const updateAvailable = isNewer(latest, current);
 
+  // Fetch release info for the latest version (non-blocking)
+  const releaseInfo =
+    latest && updateAvailable
+      ? await getGitHubReleaseInfo(latest)
+      : { releaseName: null, releaseNotes: null, releaseUrl: null };
+
   return NextResponse.json({
     current,
     latest: latest ?? "unavailable",
@@ -103,6 +137,7 @@ export async function GET(req: NextRequest) {
     autoUpdateSupported: validation.supported,
     autoUpdateError: validation.reason,
     news,
+    ...releaseInfo,
   });
 }
 
@@ -154,8 +189,25 @@ export async function POST(req: NextRequest) {
         };
 
         try {
+          // ── Air Update: Database backup ──────────────────────────
           send({
-            step: "install",
+            step: "backup",
+            status: "running",
+            message: "Creating database backup...",
+          });
+          const backupResult = await backupDbFileAndWait("air-update");
+          if (!backupResult) {
+            throw new Error("Database backup could not be created. Update aborted.");
+          }
+          send({
+            step: "backup",
+            status: "done",
+            message: `Database backed up: ${backupResult.filename}`,
+          });
+
+          // ── Air Update: Fetch & validate ──────────────────────────
+          send({
+            step: "fetch",
             status: "running",
             message: `Fetching latest tags from ${config.gitRemote}...`,
           });
@@ -163,7 +215,7 @@ export async function POST(req: NextRequest) {
             timeout: 60_000,
             cwd: process.cwd(),
           });
-          send({ step: "install", status: "done", message: "Tags fetched" });
+          send({ step: "fetch", status: "done", message: "Tags fetched" });
 
           send({
             step: "install",
@@ -215,7 +267,7 @@ export async function POST(req: NextRequest) {
           send({ step: "install", status: "done", message: `Checked out ${resolvedTargetTag}` });
 
           send({
-            step: "rebuild",
+            step: "dependencies",
             status: "running",
             message: "Installing dependencies...",
           });
@@ -223,7 +275,7 @@ export async function POST(req: NextRequest) {
             timeout: 300_000,
             cwd: process.cwd(),
           });
-          send({ step: "rebuild", status: "done", message: "Dependencies installed" });
+          send({ step: "dependencies", status: "done", message: "Dependencies installed" });
 
           try {
             await execFileAsync("node", ["scripts/sync-env.mjs"], {
@@ -235,7 +287,7 @@ export async function POST(req: NextRequest) {
           }
 
           send({
-            step: "rebuild",
+            step: "build",
             status: "running",
             message: "Building application...",
           });
@@ -243,7 +295,7 @@ export async function POST(req: NextRequest) {
             timeout: 600_000,
             cwd: process.cwd(),
           });
-          send({ step: "rebuild", status: "done", message: "Build complete" });
+          send({ step: "build", status: "done", message: "Build complete" });
 
           send({ step: "restart", status: "running", message: "Restarting service..." });
           try {
@@ -252,12 +304,17 @@ export async function POST(req: NextRequest) {
               cwd: process.cwd(),
             });
             send({ step: "restart", status: "done", message: "Service restarted" });
-          } catch {
+          } catch (restartErr: unknown) {
             send({
               step: "restart",
-              status: "skipped",
-              message: "PM2 not available — manual restart needed",
+              status: "failed",
+              message: "PM2 restart failed — manual restart needed",
             });
+            throw new Error(
+              restartErr instanceof Error
+                ? `Update installed, but service restart failed: ${restartErr.message}`
+                : "Update installed, but service restart failed. Restart OzRouter manually."
+            );
           }
 
           send({
@@ -267,11 +324,11 @@ export async function POST(req: NextRequest) {
             to: latest,
             message: `Update to ${resolvedTargetTag} complete!`,
           });
-          console.log(`[AutoUpdate] Successfully updated to ${resolvedTargetTag} via source mode`);
+          console.log(`[AirUpdate] Successfully updated to ${resolvedTargetTag} via source mode`);
         } catch (err: any) {
           const errMsg = err?.stderr || err?.message || String(err);
           send({ step: "error", status: "failed", message: errMsg });
-          console.error("[AutoUpdate] Source update failed:", err);
+          console.error("[AirUpdate] Source update failed:", err);
         } finally {
           controller.close();
         }

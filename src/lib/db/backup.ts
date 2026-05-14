@@ -25,6 +25,7 @@ const BACKUP_THROTTLE_MS = 60 * 60 * 1000; // 60 minutes
 const MAX_DB_BACKUPS = 20;
 const DEFAULT_DB_BACKUP_RETENTION_DAYS = 0;
 const TRUE_ENV_VALUES = new Set(["1", "true", "yes", "on"]);
+const EXPLICIT_BACKUP_REASONS = new Set(["manual", "pre-restore", "air-update"]);
 
 function parsePositiveInt(value: string | undefined, fallback: number) {
   if (!value) return fallback;
@@ -51,6 +52,10 @@ export function getDbBackupRetentionDays() {
 
 function getBackupDir() {
   return DB_BACKUPS_DIR || path.join(DATA_DIR, "db_backups");
+}
+
+function isExplicitBackupReason(reason: string) {
+  return EXPLICIT_BACKUP_REASONS.has(reason);
 }
 
 function getBackupFamilyBase(filename: string) {
@@ -205,7 +210,7 @@ export function backupDbFile(reason = "auto") {
   try {
     if (isBuildPhase || isCloud) return null;
     if (!SQLITE_FILE || !fs.existsSync(SQLITE_FILE)) return null;
-    if (reason !== "manual" && isSqliteAutoBackupDisabled()) return null;
+    if (!isExplicitBackupReason(reason) && isSqliteAutoBackupDisabled()) return null;
 
     const stat = fs.statSync(SQLITE_FILE);
     if (stat.size < 4096) {
@@ -215,14 +220,13 @@ export function backupDbFile(reason = "auto") {
 
     // Throttle
     const now = Date.now();
-    if (reason !== "manual" && reason !== "pre-restore" && now - _lastBackupAt < BACKUP_THROTTLE_MS)
-      return null;
+    if (!isExplicitBackupReason(reason) && now - _lastBackupAt < BACKUP_THROTTLE_MS) return null;
     _lastBackupAt = now;
 
     const backupDir = getBackupDir();
     if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
 
-    if (reason !== "manual" && reason !== "pre-restore") {
+    if (!isExplicitBackupReason(reason)) {
       // Shrink detection is useful for automatic safety backups, but it should
       // never block an explicit operator action like manual backup or pre-restore.
       const existingBackups = fs
@@ -259,6 +263,36 @@ export function backupDbFile(reason = "auto") {
     const message = err instanceof Error ? err.message : String(err);
     console.error("[DB] Backup failed:", message);
     return null;
+  }
+}
+
+export async function backupDbFileAndWait(reason = "manual") {
+  try {
+    if (isBuildPhase || isCloud) return null;
+    if (!SQLITE_FILE || !fs.existsSync(SQLITE_FILE)) return null;
+
+    const stat = fs.statSync(SQLITE_FILE);
+    if (stat.size < 4096) {
+      console.warn(`[DB] Backup SKIPPED — DB too small (${stat.size}B)`);
+      return null;
+    }
+
+    const backupDir = getBackupDir();
+    if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const backupFile = path.join(backupDir, `db_${timestamp}_${reason}.sqlite`);
+    const db = getDbInstance();
+
+    await db.backup(backupFile);
+    console.log(`[DB] Backup created: ${backupFile} (${stat.size} bytes)`);
+    cleanupDbBackups();
+
+    return { filename: path.basename(backupFile), size: stat.size };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[DB] Backup failed:", message);
+    throw err;
   }
 }
 

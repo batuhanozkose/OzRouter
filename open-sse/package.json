@@ -1,6 +1,6 @@
 {
   "name": "@ozrouter/open-sse",
-  "version": "3.8.6",
+  "version": "3.8.7",
   "description": "Express SSE sidecar for OzRouter — handles streaming, protocol translation, and provider orchestration",
   "type": "module",
   "main": "index.js",
