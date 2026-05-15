@@ -715,15 +715,12 @@ function consumeResponsesStoreMarker(body: Record<string, unknown>): unknown {
 }
 
 export function isCodexResponsesWebSocketRequired(_model: string, credentials: unknown): boolean {
-  // OzRouter is an HTTP→SSE gateway — WebSocket transport is unnecessary and
-  // breaks when upstream requests go through an HTTP proxy (403 on WS upgrade).
-  // Default to the standard HTTP Responses SSE endpoint for all Codex models.
-  // Users who need WebSocket can opt in via the provider codexTransport setting.
-  const providerSpecificData =
-    credentials && typeof credentials === "object"
-      ? (credentials as { providerSpecificData?: Record<string, unknown> }).providerSpecificData
-      : null;
-  return !!(providerSpecificData?.codexTransport === "websocket" && getCodexWebSocketTransport());
+  void _model;
+  void credentials;
+  // Keep the normal Codex router path on HTTP/SSE. Stale provider configs may
+  // still contain codexTransport=websocket, but WebSocket responses hide upstream
+  // 429s inside a 200 SSE stream and prevent combo fallback from trying the next target.
+  return false;
 }
 
 function toStatusCode(value: unknown): number | null {

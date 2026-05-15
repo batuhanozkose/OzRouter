@@ -37,7 +37,6 @@ export function getCodexDefaultHeaders(): Record<string, string> {
   return {
     Version: getCodexClientVersion(),
     "Openai-Beta": "responses=experimental",
-    "X-Codex-Beta-Features": "responses_websockets",
     "User-Agent": getCodexUserAgent(),
   };
 }
