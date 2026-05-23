@@ -81,6 +81,44 @@ section() {
 # ── Check command ─────────────────────────────────────────────────────────
 has_cmd() { command -v "$1" &>/dev/null; }
 
+node_version_from_bin() {
+  local bin="$1"
+  "$bin" -v 2>/dev/null | sed 's/^v//' | cut -d- -f1
+}
+
+node_candidates() {
+  {
+    type -P -a node 2>/dev/null || true
+    printf '%s\n' \
+      /usr/bin/node \
+      /usr/local/bin/node \
+      /opt/homebrew/opt/node@22/bin/node \
+      /usr/local/opt/node@22/bin/node
+  } | awk 'NF && !seen[$0]++'
+}
+
+prefer_node_bin() {
+  local bin="$1"
+  local dir
+  dir=$(dirname "$bin")
+  export PATH="${dir}:${PATH}"
+  hash -r 2>/dev/null || true
+}
+
+use_supported_node_if_available() {
+  local bin version
+  while IFS= read -r bin; do
+    [[ -x "$bin" ]] || continue
+    version=$(node_version_from_bin "$bin")
+    if [[ -n "$version" ]] && is_supported_node_version "$version"; then
+      prefer_node_bin "$bin"
+      return 0
+    fi
+  done < <(node_candidates)
+
+  return 1
+}
+
 pm2_bin() {
   if has_cmd pm2; then
     command -v pm2
@@ -182,23 +220,35 @@ install_system_dependencies() {
   if has_cmd apt-get; then
     spin_ok "APT detected"
     spin_start "Installing system dependencies..."
-    install_apt_packages git curl ca-certificates gnupg openssl python3 make g++ build-essential
-    spin_ok "System dependencies installed"
+    if install_apt_packages git curl ca-certificates gnupg openssl python3 make g++ build-essential; then
+      spin_ok "System dependencies installed"
+    else
+      spin_warn "System dependency installation failed; continuing with existing tools"
+    fi
   elif has_cmd dnf; then
     spin_ok "DNF detected"
     spin_start "Installing system dependencies..."
-    install_dnf_packages git curl ca-certificates openssl python3 make gcc-c++
-    spin_ok "System dependencies installed"
+    if install_dnf_packages git curl ca-certificates openssl python3 make gcc-c++; then
+      spin_ok "System dependencies installed"
+    else
+      spin_warn "System dependency installation failed; continuing with existing tools"
+    fi
   elif has_cmd yum; then
     spin_ok "YUM detected"
     spin_start "Installing system dependencies..."
-    install_yum_packages git curl ca-certificates openssl python3 make gcc-c++
-    spin_ok "System dependencies installed"
+    if install_yum_packages git curl ca-certificates openssl python3 make gcc-c++; then
+      spin_ok "System dependencies installed"
+    else
+      spin_warn "System dependency installation failed; continuing with existing tools"
+    fi
   elif has_cmd brew; then
     spin_ok "Homebrew detected"
     spin_start "Installing system dependencies..."
-    install_brew_packages git openssl python make
-    spin_ok "System dependencies installed"
+    if install_brew_packages git openssl python make; then
+      spin_ok "System dependencies installed"
+    else
+      spin_warn "System dependency installation failed; continuing with existing tools"
+    fi
   else
     spin_warn "No supported package manager detected; continuing with existing tools"
   fi
@@ -236,15 +286,20 @@ check_node() {
     install_supported_node
   fi
 
+  use_supported_node_if_available || true
+
   local version
   version=$(node -v | sed 's/^v//' | cut -d- -f1)
   if ! is_supported_node_version "$version"; then
     spin_warn "Node.js v${version} found; installing supported runtime..."
     install_supported_node
+    use_supported_node_if_available || true
     version=$(node -v | sed 's/^v//' | cut -d- -f1)
     if ! is_supported_node_version "$version"; then
-      spin_fail "Node.js v${version} found, but supported range is ${NODE_SUPPORTED_RANGE}"
-      exit 1
+      spin_warn "Node.js v${version} is outside supported range; continuing anyway"
+      echo -e "  ${YELLOW}⚠${NC}  Supported range: ${NODE_SUPPORTED_RANGE}"
+      echo -e "  ${DIM}   OzRouter may fail to build or run with this Node.js version.${NC}"
+      return 0
     fi
   fi
 
@@ -423,10 +478,31 @@ build_app() {
   fi
 }
 
+start_normal() {
+  spin_start "Starting OzRouter without PM2..."
+  cd "$INSTALL_DIR"
+
+  local log_dir pid_file log_file
+  log_dir="$INSTALL_DIR/logs"
+  pid_file="$log_dir/ozrouter.pid"
+  log_file="$log_dir/ozrouter.log"
+  mkdir -p "$log_dir"
+
+  if nohup npm run start >"$log_file" 2>&1 & then
+    echo $! >"$pid_file"
+    spin_ok "OzRouter started without PM2"
+    echo -e "  ${DIM}PID:${NC}  $(cat "$pid_file")"
+    echo -e "  ${DIM}Logs:${NC} ${log_file}"
+  else
+    spin_fail "Failed to start OzRouter without PM2"
+    echo -e "  ${YELLOW}⚠${NC}  Start manually: cd ${INSTALL_DIR} && npm run start"
+  fi
+}
+
 start_pm2() {
   if ! pm2_bin >/dev/null 2>&1; then
-    spin_warn "PM2 not available — skipping process registration"
-    echo -e "  ${YELLOW}⚠${NC}  Start manually: cd ${INSTALL_DIR} && npm run start"
+    spin_warn "PM2 not available — falling back to normal start"
+    start_normal
     return
   fi
 
@@ -436,7 +512,11 @@ start_pm2() {
   run_pm2 delete "$PM2_APP_NAME" 2>/dev/null || true
 
   cd "$INSTALL_DIR"
-  run_pm2 start npm --name "$PM2_APP_NAME" -- run start
+  if ! run_pm2 start npm --name "$PM2_APP_NAME" -- run start; then
+    spin_warn "PM2 could not start OzRouter — falling back to normal start"
+    start_normal
+    return
+  fi
 
   spin_ok "OzRouter started via PM2"
 
@@ -467,6 +547,11 @@ show_summary() {
     echo -e "  ${GREEN}║${NC}  ${DIM}Logs:${NC}       npm run pm2:logs                      ${GREEN}║${NC}"
     echo -e "  ${GREEN}║${NC}  ${DIM}Restart:${NC}    npm run pm2:restart                   ${GREEN}║${NC}"
     echo -e "  ${GREEN}║${NC}  ${DIM}Stop:${NC}       npm run pm2:stop                      ${GREEN}║${NC}"
+  elif [[ -f "$INSTALL_DIR/logs/ozrouter.pid" ]]; then
+    echo -e "  ${GREEN}║${NC}                                                        ${GREEN}║${NC}"
+    echo -e "  ${GREEN}║${NC}  ${DIM}PID:${NC}        $(cat "$INSTALL_DIR/logs/ozrouter.pid")"
+    echo -e "  ${GREEN}║${NC}  ${DIM}Logs:${NC}       ${INSTALL_DIR}/logs/ozrouter.log${NC}"
+    echo -e "  ${GREEN}║${NC}  ${DIM}Stop:${NC}       kill \\$(cat ${INSTALL_DIR}/logs/ozrouter.pid)${NC}"
   else
     echo -e "  ${GREEN}║${NC}  ${DIM}Start:${NC}      cd ${INSTALL_DIR} && npm run start          ${GREEN}║${NC}"
     echo -e "  ${GREEN}║${NC}                                                        ${GREEN}║${NC}"
@@ -509,7 +594,7 @@ main() {
   install_deps
 
   section "Process Manager"
-  install_pm2
+  install_pm2 || true
 
   section "Build"
   build_app
