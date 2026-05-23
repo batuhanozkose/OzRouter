@@ -93,7 +93,7 @@ One command — clones the repo, installs dependencies, sets up PM2, builds, and
 curl -fsSL https://raw.githubusercontent.com/batuhanozkose/OzRouter/main/scripts/install.sh | bash
 ```
 
-The installer handles Node.js checks, git, npm dependencies, environment setup, PM2 process management with auto-start on boot, and the first build. After it finishes, open:
+The installer handles Node.js checks, git, npm dependencies, environment setup, PM2 process management with auto-start on boot, and the first build. It starts OzRouter through PM2 automatically. After it finishes, open:
 
 ```txt
 http://localhost:20128/dashboard
@@ -186,13 +186,31 @@ Build the app:
 npm run build
 ```
 
-Start the production server:
+Start the production server in the foreground:
 
 ```bash
 npm run start
 ```
 
-The server uses the same values from `.env`.
+Use this mode for simple manual runs. The process stops when the terminal/session stops.
+
+For a persistent PM2-managed process, install PM2 and start OzRouter through the PM2 script:
+
+```bash
+npm install -g pm2
+npm run pm2:start
+```
+
+PM2 commands:
+
+```bash
+npm run pm2:status
+npm run pm2:logs
+npm run pm2:restart
+npm run pm2:stop
+```
+
+The quick installer performs the PM2 setup automatically. Manual clone users can choose either `npm run start` for foreground mode or the PM2 flow for a persistent production service. The server uses the same values from `.env` in both modes.
 
 For a local-only installation, keep it bound to localhost and use:
 
@@ -266,6 +284,9 @@ Back it up if the installation is important.
 npm run dev
 npm run build
 npm run start
+npm run pm2:start
+npm run pm2:restart
+npm run pm2:logs
 npm run lint
 npm run typecheck:core
 npm run test:unit
@@ -301,7 +322,18 @@ Rebuild if you run production mode:
 
 ```bash
 npm run build
+```
+
+Then restart the running process. For foreground mode:
+
+```bash
 npm run start
+```
+
+For PM2-managed installs:
+
+```bash
+npm run pm2:restart
 ```
 
 Before updating a production instance, back up your `DATA_DIR`.

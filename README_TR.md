@@ -91,7 +91,7 @@ Tek komut — depoyu klonlar, bağımlılıkları yükler, PM2'yi kurar, derler 
 curl -fsSL https://raw.githubusercontent.com/batuhanozkose/OzRouter/main/scripts/install.sh | bash
 ```
 
-Kurulum sihirbazı Node.js kontrolü, git, npm bağımlılıkları, ortam ayarları, sistem açılışında otomatik başlayan PM2 süreç yönetimi ve ilk derlemeyi gerçekleştirir. Tamamlandıktan sonra şu adresi açın:
+Kurulum sihirbazı Node.js kontrolü, git, npm bağımlılıkları, ortam ayarları, sistem açılışında otomatik başlayan PM2 süreç yönetimi ve ilk derlemeyi gerçekleştirir. OzRouter'ı otomatik olarak PM2 üzerinden başlatır. Tamamlandıktan sonra şu adresi açın:
 
 ```txt
 http://localhost:20128/dashboard
@@ -184,13 +184,31 @@ Uygulamayı derleyin:
 npm run build
 ```
 
-Üretim sunucusunu başlatın:
+Üretim sunucusunu terminale bağlı olarak başlatın:
 
 ```bash
 npm run start
 ```
 
-Sunucu, `.env` dosyasındaki aynı değerleri kullanır.
+Bu mod basit manuel çalıştırmalar içindir. Terminal/oturum kapanırsa süreç de durur.
+
+Kalıcı bir PM2 süreci için PM2'yi kurup OzRouter'ı PM2 script'iyle başlatın:
+
+```bash
+npm install -g pm2
+npm run pm2:start
+```
+
+PM2 komutları:
+
+```bash
+npm run pm2:status
+npm run pm2:logs
+npm run pm2:restart
+npm run pm2:stop
+```
+
+Hızlı kurulum script'i PM2 ayarını otomatik yapar. GitHub'dan manuel clone yapanlar `npm run start` ile terminale bağlı çalıştırabilir veya kalıcı üretim servisi için PM2 akışını kullanabilir. Sunucu iki modda da `.env` dosyasındaki aynı değerleri kullanır.
 
 Yalnızca yerel bir kurulum için, localhost'a bağlı tutun ve şunu kullanın:
 
@@ -264,6 +282,9 @@ Kurulum önemliyse yedekleyin.
 npm run dev
 npm run build
 npm run start
+npm run pm2:start
+npm run pm2:restart
+npm run pm2:logs
 npm run lint
 npm run typecheck:core
 npm run test:unit
@@ -299,7 +320,18 @@ npm install
 
 ```bash
 npm run build
+```
+
+Ardından çalışan süreci yeniden başlatın. Terminale bağlı mod için:
+
+```bash
 npm run start
+```
+
+PM2 ile yönetilen kurulumlar için:
+
+```bash
+npm run pm2:restart
 ```
 
 Üretim örneğini güncellemeden önce `DATA_DIR` dizininizi yedekleyin.
