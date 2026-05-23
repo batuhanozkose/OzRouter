@@ -64,6 +64,7 @@ const nextConfig = {
     "keytar",
     "wreq-js",
     "zod",
+    "ssh2",
     "tls-client-node",
     "koffi",
     "tough-cookie",
@@ -102,10 +103,12 @@ const nextConfig = {
         })
       );
 
-      // Mark @ngrok/ngrok as external to prevent webpack from trying to bundle its .node binaries
+      // Mark native/server-only packages as external to prevent webpack from trying
+      // to bundle their .node binaries.
       config.externals = config.externals || [];
       config.externals.push({
         "@ngrok/ngrok": "commonjs @ngrok/ngrok",
+        ssh2: "commonjs ssh2",
       });
       // ── Turbopack / Next.js 16 module-hash patch (#394, #396, #398) ────────
       //
@@ -130,6 +133,7 @@ const nextConfig = {
         "keytar",
         "wreq-js",
         "zod",
+        "ssh2",
         "pino",
         "pino-pretty",
         "pino-abstract-transport",
