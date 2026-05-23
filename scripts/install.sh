@@ -259,6 +259,16 @@ rand_hex() { openssl rand -hex 32 2>/dev/null || python3 -c "import secrets; pri
 rand_b64() { openssl rand -base64 48 2>/dev/null || python3 -c "import secrets,base64; print(base64.b64encode(secrets.token_bytes(48)).decode())" 2>/dev/null || echo "CHANGE_ME_$(date +%s)"; }
 
 # ── Resolve a value from .env (handles KEY=VALUE, KEY = VALUE, and ~) ─────
+expand_path_value() {
+  local val="$1"
+  case "$val" in
+    "~"|"~/"*) val="${HOME}${val:1}" ;;
+    '$HOME'|'$HOME/'*) val="${HOME}${val:5}" ;;
+    '${HOME}'|'${HOME}/'*) val="${HOME}${val:7}" ;;
+  esac
+  echo "$val"
+}
+
 env_val() {
   local key="$1" default="$2"
   local val
@@ -273,7 +283,7 @@ env_val() {
     }
   ' "$INSTALL_DIR/.env" 2>/dev/null || true)
   val="${val:-$default}"
-  val="${val/#\~/$HOME}"
+  val=$(expand_path_value "$val")
   echo "$val"
 }
 
@@ -419,7 +429,7 @@ NEXT_PUBLIC_BASE_URL=http://localhost:20128
 HOST=0.0.0.0
 
 # Data
-DATA_DIR=\$HOME/.ozrouter
+DATA_DIR=${HOME}/.ozrouter
 
 # Secrets (auto-generated — change if desired)
 INITIAL_PASSWORD=${pass}

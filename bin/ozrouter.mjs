@@ -25,11 +25,21 @@ const __dirname = dirname(__filename);
 const ROOT = join(__dirname, "..");
 const APP_DIR = join(ROOT, "app");
 
+function expandConfiguredPath(value) {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  return trimmed
+    .replace(/^~(?=$|[\\/])/, homedir())
+    .replace(/^\$HOME(?=$|[\\/])/, homedir())
+    .replace(/^\${HOME}(?=$|[\\/])/, homedir());
+}
+
 function loadEnvFile() {
   const envPaths = [];
 
-  if (process.env.DATA_DIR) {
-    envPaths.push(join(process.env.DATA_DIR, ".env"));
+  const configuredDataDir = expandConfiguredPath(process.env.DATA_DIR);
+  if (configuredDataDir) {
+    envPaths.push(join(configuredDataDir, ".env"));
   }
 
   const home = homedir();
@@ -114,13 +124,13 @@ if (args.includes("--version") || args.includes("-v")) {
 // Recovery tool for users who lost STORAGE_ENCRYPTION_KEY after upgrade (#1622)
 if (args.includes("reset-encrypted-columns")) {
   const dataDir = (() => {
-    const configured = process.env.DATA_DIR?.trim();
+    const configured = expandConfiguredPath(process.env.DATA_DIR);
     if (configured) return configured;
     if (platform() === "win32") {
       const appData = process.env.APPDATA || join(homedir(), "AppData", "Roaming");
       return join(appData, "ozrouter");
     }
-    const xdg = process.env.XDG_CONFIG_HOME?.trim();
+    const xdg = expandConfiguredPath(process.env.XDG_CONFIG_HOME);
     if (xdg) return join(xdg, "ozrouter");
     return join(homedir(), ".ozrouter");
   })();

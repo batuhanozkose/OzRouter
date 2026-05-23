@@ -440,6 +440,32 @@ test("module exports honor DATA_DIR from the environment", serial, async () => {
   }
 });
 
+test("module expands shell-style home references in DATA_DIR", serial, async () => {
+  const fakeHome = makeTempDir("ozrouter-home-expand-");
+  const expectedDir = path.join(fakeHome, ".ozrouter");
+
+  try {
+    await withEnv(
+      {
+        DATA_DIR: "$HOME/.ozrouter",
+        HOME: fakeHome,
+        USERPROFILE: fakeHome,
+        XDG_CONFIG_HOME: undefined,
+      },
+      async () => {
+        const core = await importFresh("src/lib/db/core.ts");
+
+        assert.equal(core.DATA_DIR, expectedDir);
+        assert.equal(core.SQLITE_FILE, path.join(expectedDir, "storage.sqlite"));
+        assert.equal(fs.existsSync(path.join(process.cwd(), "$HOME")), false);
+      }
+    );
+  } finally {
+    removePath(fakeHome);
+    removePath(path.join(process.cwd(), "$HOME"));
+  }
+});
+
 test(
   "module falls back to the default home data directory when DATA_DIR is absent",
   serial,

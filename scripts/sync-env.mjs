@@ -36,8 +36,17 @@ const CRYPTO_SECRETS = {
 const ENCRYPTION_BOUND_KEYS = new Set(["STORAGE_ENCRYPTION_KEY"]);
 
 // ── Resolve DATA_DIR (mirrors bootstrap-env.mjs / dataPaths.ts) ─────────────
+function expandConfiguredPath(value) {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  return trimmed
+    .replace(/^~(?=$|[\\/])/, homedir())
+    .replace(/^\$HOME(?=$|[\\/])/, homedir())
+    .replace(/^\${HOME}(?=$|[\\/])/, homedir());
+}
+
 function resolveDataDir(env = process.env) {
-  const configured = env.DATA_DIR?.trim();
+  const configured = expandConfiguredPath(env.DATA_DIR);
   if (configured) return resolve(configured);
 
   if (process.platform === "win32") {
@@ -45,7 +54,7 @@ function resolveDataDir(env = process.env) {
     return join(appData, "ozrouter");
   }
 
-  const xdg = env.XDG_CONFIG_HOME?.trim();
+  const xdg = expandConfiguredPath(env.XDG_CONFIG_HOME);
   if (xdg) return join(resolve(xdg), "ozrouter");
 
   return join(homedir(), ".ozrouter");

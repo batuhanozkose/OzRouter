@@ -35,10 +35,20 @@ const OPTIONAL_OAUTH_SECRETS = [
 ];
 
 // ── Resolve DATA_DIR (mirrors dataPaths.ts logic) ───────────────────────────
-function resolveDataDir(overridePath, env = process.env) {
-  if (overridePath?.trim()) return resolve(overridePath);
+function expandConfiguredPath(value) {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  return trimmed
+    .replace(/^~(?=$|[\\/])/, homedir())
+    .replace(/^\$HOME(?=$|[\\/])/, homedir())
+    .replace(/^\${HOME}(?=$|[\\/])/, homedir());
+}
 
-  const configured = env.DATA_DIR?.trim();
+function resolveDataDir(overridePath, env = process.env) {
+  const override = expandConfiguredPath(overridePath);
+  if (override) return resolve(override);
+
+  const configured = expandConfiguredPath(env.DATA_DIR);
   if (configured) return resolve(configured);
 
   if (process.platform === "win32") {
@@ -46,7 +56,7 @@ function resolveDataDir(overridePath, env = process.env) {
     return join(appData, "ozrouter");
   }
 
-  const xdg = env.XDG_CONFIG_HOME?.trim();
+  const xdg = expandConfiguredPath(env.XDG_CONFIG_HOME);
   if (xdg) return join(resolve(xdg), "ozrouter");
 
   return join(homedir(), ".ozrouter");
@@ -56,7 +66,7 @@ function getPreferredEnvFilePath(env = process.env) {
   const candidates = [];
 
   if (env.DATA_DIR?.trim()) {
-    candidates.push(join(resolve(env.DATA_DIR.trim()), ".env"));
+    candidates.push(join(resolveDataDir(env.DATA_DIR, env), ".env"));
   }
 
   candidates.push(join(resolveDataDir(null, env), ".env"));

@@ -7,8 +7,18 @@ const os = require("os");
 
 // Resolve data directory — mirrors src/lib/dataPaths.ts logic.
 // This file runs as a standalone CommonJS process and cannot import the ES module.
+function expandConfiguredPath(value) {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  return trimmed
+    .replace(/^~(?=$|[\\/])/, os.homedir())
+    .replace(/^\$HOME(?=$|[\\/])/, os.homedir())
+    .replace(/^\${HOME}(?=$|[\\/])/, os.homedir());
+}
+
 function getDataDir() {
-  if (process.env.DATA_DIR) return path.resolve(process.env.DATA_DIR.trim());
+  const configured = expandConfiguredPath(process.env.DATA_DIR);
+  if (configured) return path.resolve(configured);
   return path.join(os.homedir(), ".ozrouter");
 }
 

@@ -24,7 +24,12 @@ function normalizeConfiguredPath(dir: unknown): string | null {
   if (typeof dir !== "string") return null;
   const trimmed = dir.trim();
   if (!trimmed) return null;
-  return path.resolve(trimmed);
+  const homeDir = safeHomeDir();
+  const expanded = trimmed
+    .replace(/^~(?=$|[\\/])/, homeDir)
+    .replace(/^\$HOME(?=$|[\\/])/, homeDir)
+    .replace(/^\${HOME}(?=$|[\\/])/, homeDir);
+  return path.resolve(expanded);
 }
 
 export function getLegacyDotDataDir() {

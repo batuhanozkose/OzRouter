@@ -19,7 +19,13 @@ function safeHomeDir(): string {
 function normalizeConfiguredPath(dir: unknown): string | null {
   if (typeof dir !== "string") return null;
   const trimmed = dir.trim();
-  return trimmed ? path.resolve(trimmed) : null;
+  if (!trimmed) return null;
+  const homeDir = safeHomeDir();
+  const expanded = trimmed
+    .replace(/^~(?=$|[\\/])/, homeDir)
+    .replace(/^\$HOME(?=$|[\\/])/, homeDir)
+    .replace(/^\${HOME}(?=$|[\\/])/, homeDir);
+  return path.resolve(expanded);
 }
 
 export function resolveMitmDataDir(): string {

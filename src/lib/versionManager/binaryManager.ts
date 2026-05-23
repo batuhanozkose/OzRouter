@@ -10,7 +10,21 @@ import { promisify } from "util";
 import { getChecksums, getReleaseByVersion } from "./releaseChecker.ts";
 
 const execFileAsync = promisify(execFile);
-const DEFAULT_DATA_DIR = process.env.DATA_DIR || path.join(os.homedir(), ".ozrouter");
+
+function expandConfiguredPath(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const homeDir = os.homedir();
+  return path.resolve(
+    trimmed
+      .replace(/^~(?=$|[\\/])/, homeDir)
+      .replace(/^\$HOME(?=$|[\\/])/, homeDir)
+      .replace(/^\${HOME}(?=$|[\\/])/, homeDir)
+  );
+}
+
+const DEFAULT_DATA_DIR = expandConfiguredPath(process.env.DATA_DIR) || path.join(os.homedir(), ".ozrouter");
 
 type Platform = "linux" | "darwin" | "windows" | "freebsd";
 type Arch = "amd64" | "arm64";
