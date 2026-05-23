@@ -406,6 +406,19 @@ install_deps() {
   fi
 }
 
+rebuild_native_deps() {
+  spin_start "Rebuilding native dependencies for $(node -v)..."
+  cd "$INSTALL_DIR"
+
+  if npm rebuild better-sqlite3 2>&1 | tail -3; then
+    spin_ok "Native dependencies rebuilt"
+  else
+    spin_warn "Native dependency rebuild failed"
+    echo -e "  ${YELLOW}⚠${NC}  If startup reports better-sqlite3 ABI errors, run:"
+    echo -e "  ${DIM}   cd ${INSTALL_DIR} && npm rebuild better-sqlite3${NC}"
+  fi
+}
+
 setup_env() {
   cd "$INSTALL_DIR"
 
@@ -602,6 +615,7 @@ main() {
 
   section "Dependencies"
   install_deps
+  rebuild_native_deps
 
   section "Process Manager"
   install_pm2 || true
