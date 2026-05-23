@@ -8,7 +8,6 @@ import { getActiveSidebarHref } from "@/shared/utils/sidebarRouteMatch";
 import { APP_CONFIG } from "@/shared/constants/appConfig";
 import OzRouterLogo from "./OzRouterLogo";
 import Button from "./Button";
-import { ConfirmModal } from "./Modal";
 import CloudSyncStatus from "./CloudSyncStatus";
 import { useTranslations } from "next-intl";
 import {
@@ -29,12 +28,6 @@ type SidebarProps = {
 export default function Sidebar({ onClose, collapsed = false, onToggleCollapse }: SidebarProps) {
   const pathname = usePathname();
   const t = useTranslations("sidebar");
-  const tc = useTranslations("common");
-  const [showShutdownModal, setShowShutdownModal] = useState(false);
-  const [showRestartModal, setShowRestartModal] = useState(false);
-  const [isShuttingDown, setIsShuttingDown] = useState(false);
-  const [isRestarting, setIsRestarting] = useState(false);
-  const [isDisconnected, setIsDisconnected] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
   const [hiddenSidebarItems, setHiddenSidebarItems] = useState<string[]>([]);
   const [customAppName, setCustomAppName] = useState<string | null>(null);
@@ -86,33 +79,6 @@ export default function Sidebar({ onClose, collapsed = false, onToggleCollapse }
       );
     };
   }, []);
-
-  const handleShutdown = async () => {
-    setIsShuttingDown(true);
-    try {
-      await fetch("/api/shutdown", { method: "POST" });
-    } catch (e) {
-      // Expected to fail as server shuts down; ignore error
-    }
-    setIsShuttingDown(false);
-    setShowShutdownModal(false);
-    setIsDisconnected(true);
-  };
-
-  const handleRestart = async () => {
-    setIsRestarting(true);
-    try {
-      await fetch("/api/restart", { method: "POST" });
-    } catch (e) {
-      // Expected to fail as server restarts
-    }
-    setIsRestarting(false);
-    setShowRestartModal(false);
-    setIsDisconnected(true);
-    setTimeout(() => {
-      globalThis.location.reload();
-    }, 3000);
-  };
 
   const getSidebarLabel = (key: string, fallback: string) =>
     typeof t.has === "function" && t.has(key) ? t(key) : fallback;
@@ -277,81 +243,7 @@ export default function Sidebar({ onClose, collapsed = false, onToggleCollapse }
         </nav>
 
         {!isE2EMode && <CloudSyncStatus collapsed={collapsed} />}
-
-        <div
-          className={cn(
-            "shrink-0 border-t border-black/5 dark:border-white/5",
-            collapsed ? "p-2 flex flex-col gap-1" : "p-3 flex gap-2"
-          )}
-          style={{}}
-        >
-          <button
-            onClick={() => setShowRestartModal(true)}
-            title={t("restart")}
-            className={cn(
-              "flex items-center justify-center gap-2 rounded-lg font-medium transition-all",
-              "text-amber-500 hover:bg-amber-500/10 border border-amber-500/20 hover:border-amber-500/40",
-              collapsed ? "p-2" : "flex-1 min-w-0 px-3 py-2 text-xs"
-            )}
-          >
-            <span className="material-symbols-outlined text-[18px]">restart_alt</span>
-            {!collapsed && t("restart")}
-          </button>
-          <button
-            onClick={() => setShowShutdownModal(true)}
-            title={t("shutdown")}
-            className={cn(
-              "flex items-center justify-center gap-2 rounded-lg font-medium transition-all",
-              "text-red-500 hover:bg-red-500/10 border border-red-500/20 hover:border-red-500/40",
-              collapsed ? "p-2" : "flex-1 min-w-0 px-3 py-2 text-xs"
-            )}
-          >
-            <span className="material-symbols-outlined text-[18px]">power_settings_new</span>
-            {!collapsed && t("shutdown")}
-          </button>
-        </div>
       </aside>
-
-      <ConfirmModal
-        isOpen={showShutdownModal}
-        onClose={() => setShowShutdownModal(false)}
-        onConfirm={handleShutdown}
-        title={t("shutdown")}
-        message={t("shutdownConfirm")}
-        confirmText={t("shutdown")}
-        cancelText={tc("cancel")}
-        variant="danger"
-        loading={isShuttingDown}
-      />
-
-      <ConfirmModal
-        isOpen={showRestartModal}
-        onClose={() => setShowRestartModal(false)}
-        onConfirm={handleRestart}
-        title={t("restart")}
-        message={t("restartConfirm")}
-        confirmText={t("restart")}
-        cancelText={tc("cancel")}
-        variant="warning"
-        loading={isRestarting}
-      />
-
-      {isDisconnected && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="text-center p-8">
-            <div className="flex items-center justify-center size-16 rounded-full bg-red-500/20 text-red-500 mx-auto mb-4">
-              <span className="material-symbols-outlined text-[32px]">power_off</span>
-            </div>
-            <h2 className="text-xl font-semibold text-white mb-2">Server Disconnected</h2>
-            <p className="text-text-muted mb-6">
-              The proxy server has been stopped or is restarting.
-            </p>
-            <Button variant="secondary" onClick={() => globalThis.location.reload()}>
-              Reload Page
-            </Button>
-          </div>
-        </div>
-      )}
     </>
   );
 }

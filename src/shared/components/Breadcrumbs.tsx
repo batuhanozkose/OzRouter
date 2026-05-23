@@ -25,6 +25,7 @@ const PATH_LABELS = {
   logger: "Logger",
   translator: "Translator",
   playground: "Playground",
+  studio: "Studio",
   add: "Add",
   edit: "Edit",
   keys: "API Keys",

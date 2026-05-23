@@ -226,20 +226,6 @@ export async function registerNodejs(): Promise<void> {
     console.warn("[STARTUP] Could not initialize WebSocket server:", msg);
   }
 
-  // ── In-flight Tracker initialization ────────────────────────────────────
-  try {
-    const { updateLimits } = await import("@ozrouter/open-sse/services/inflightTracker");
-    const settings = (await import("@/lib/db/settings")).getSettings() as Record<string, unknown>;
-    updateLimits(
-      (settings.inflight_max_global as number) ?? 100,
-      (settings.inflight_max_per_provider as number) ?? 20
-    );
-    console.log("[STARTUP] In-flight tracker initialized");
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.warn("[STARTUP] Could not initialize in-flight tracker:", msg);
-  }
-
   // ── Connection Drain restore ───────────────────────────────────────────
   try {
     const { loadFromPersisted, updateThreshold, startProbeTimer } =

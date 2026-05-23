@@ -411,7 +411,12 @@ export default function DocsPage() {
                 <li>{t("protocolMcpStep3")}</li>
               </ol>
               <pre className="mt-3 p-3 rounded-lg border border-border bg-bg overflow-x-auto text-xs">
-                <code>{`ozrouter --mcp`}</code>
+                <code>{`# SSE Transport
+GET /api/mcp/sse
+POST /api/mcp/sse
+
+# Streamable HTTP Transport
+POST /api/mcp/stream`}</code>
               </pre>
             </article>
 

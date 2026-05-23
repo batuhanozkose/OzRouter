@@ -13,7 +13,7 @@ The MCP Server allows any AI agent (Claude Desktop, Cursor, VS Code Copilot, cus
 │                         AI Agent / IDE                           │
 │          (Claude Desktop, Cursor, VS Code, Custom)               │
 └──────────────────────┬───────────────────────────────────────────┘
-                       │  MCP Protocol (stdio or HTTP)
+                       │  MCP Protocol (SSE / Streamable HTTP)
                        ▼
 ┌──────────────────────────────────────────────────────────────────┐
 │                      OzRouter MCP Server                        │
@@ -48,70 +48,14 @@ export OZROUTER_MCP_ENFORCE_SCOPES="true"
 export OZROUTER_MCP_SCOPES="read:health,read:combos,read:quota,read:usage,read:models,read:cache,read:compression,execute:completions,write:combos,write:budget,write:resilience,write:cache,write:compression"
 ```
 
-### 2. stdio Transport (IDE Integration)
+### 2. HTTP Transport (SSE / Streamable HTTP)
 
-Add to your MCP client configuration:
+Enable MCP from the Endpoints page and choose your transport. Connect your MCP client to:
 
-**Claude Desktop** (`claude_desktop_config.json`):
+- **SSE**: `GET /api/mcp/sse` (event stream) + `POST /api/mcp/sse` (messages)
+- **Streamable HTTP**: `POST /api/mcp/stream` (session-based, uses `Mcp-Session-Id` header)
 
-```json
-{
-  "mcpServers": {
-    "ozrouter": {
-      "command": "node",
-      "args": ["path/to/9router/open-sse/mcp-server/server.ts"],
-      "env": {
-        "OZROUTER_BASE_URL": "http://localhost:20128",
-        "OZROUTER_API_KEY": "your-key"
-      }
-    }
-  }
-}
-```
-
-**Cursor** (`.cursor/mcp.json`):
-
-```json
-{
-  "mcpServers": {
-    "ozrouter": {
-      "command": "npx",
-      "args": ["tsx", "open-sse/mcp-server/server.ts"],
-      "env": {
-        "OZROUTER_BASE_URL": "http://localhost:20128"
-      }
-    }
-  }
-}
-```
-
-**VS Code** (`.vscode/settings.json`):
-
-```json
-{
-  "mcp": {
-    "servers": {
-      "ozrouter": {
-        "command": "npx",
-        "args": ["tsx", "open-sse/mcp-server/server.ts"],
-        "env": {
-          "OZROUTER_BASE_URL": "http://localhost:20128"
-        }
-      }
-    }
-  }
-}
-```
-
-### 3. Start via CLI
-
-```bash
-# Direct start (stdio)
-npx tsx open-sse/mcp-server/server.ts
-
-# Or via OzRouter CLI
-ozrouter --mcp
-```
+The MCP server runs inside the Next.js process — no separate process needed.
 
 ---
 
@@ -164,20 +108,11 @@ OzRouter MCP Client — Python example using the mcp SDK.
 Install: pip install mcp
 """
 import asyncio
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
+from mcp import ClientSession
+from mcp.client.sse import sse_client
 
 async def main():
-    server = StdioServerParameters(
-        command="npx",
-        args=["tsx", "open-sse/mcp-server/server.ts"],
-        env={
-            "OZROUTER_BASE_URL": "http://localhost:20128",
-            "OZROUTER_API_KEY": "your-key",
-        },
-    )
-
-    async with stdio_client(server) as (read, write):
+    async with sse_client(url="http://localhost:20128/api/mcp/sse") as (read, write):
         async with ClientSession(read, write) as session:
             await session.initialize()
 
@@ -228,17 +163,12 @@ asyncio.run(main())
 
 ```typescript
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 
 async function main() {
-  const transport = new StdioClientTransport({
-    command: "npx",
-    args: ["tsx", "open-sse/mcp-server/server.ts"],
-    env: {
-      OZROUTER_BASE_URL: "http://localhost:20128",
-      OZROUTER_API_KEY: "your-key",
-    },
-  });
+  const transport = new SSEClientTransport(
+    new URL("http://localhost:20128/api/mcp/sse")
+  );
 
   const client = new Client({ name: "my-agent", version: "1.0.0" });
   await client.connect(transport);

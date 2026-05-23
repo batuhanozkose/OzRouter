@@ -1,58 +1,50 @@
 import { NextResponse } from "next/server";
 import { getAuditStats, queryAuditEntries } from "@ozrouter/open-sse/mcp-server/audit";
-import {
-  isMcpHeartbeatOnline,
-  isProcessAlive,
-  readMcpHeartbeat,
-  resolveMcpHeartbeatPath,
-} from "@ozrouter/open-sse/mcp-server/runtimeHeartbeat";
-import { getMcpHttpStatus } from "../../../../../open-sse/mcp-server/httpTransport";
+import { getMcpHttpStatus, ensureMcpTransport } from "../../../../../open-sse/mcp-server/httpTransport";
 import { getSettings } from "@/lib/db/settings";
 
 export async function GET() {
   try {
-    const [heartbeat, stats, lastCallPage, settings] = await Promise.all([
-      readMcpHeartbeat(),
+    const [stats, lastCallPage, settings] = await Promise.all([
       getAuditStats(),
       queryAuditEntries({ limit: 1, offset: 0 }),
       getSettings(),
     ]);
 
     const mcpEnabled = !!settings.mcpEnabled;
-    const mcpTransport = (settings.mcpTransport as string) || "stdio";
+    const mcpTransport = (settings.mcpTransport as string) || "sse";
 
-    // Check HTTP transport (SSE / Streamable HTTP) if active
+    // Eagerly initialize SSE transport if enabled — so status shows online immediately
+    if (mcpEnabled && mcpTransport === "sse") {
+      ensureMcpTransport(mcpTransport);
+    }
+
     const httpStatus = getMcpHttpStatus();
-
-    // stdio uses heartbeat file; HTTP transports use in-process state
-    const stdioOnline = isMcpHeartbeatOnline(heartbeat, { requireLivePid: true });
-    const online = mcpTransport === "stdio" ? stdioOnline : httpStatus.online;
-
-    const lastCall = lastCallPage.entries[0] || null;
+    const online = mcpEnabled && !!httpStatus.transport;
     const now = Date.now();
-    const lastHeartbeatAtMs = heartbeat ? new Date(heartbeat.lastHeartbeatAt).getTime() : null;
-    const startedAtMs = heartbeat ? new Date(heartbeat.startedAt).getTime() : null;
-    const heartbeatAgeMs =
-      typeof lastHeartbeatAtMs === "number" && Number.isFinite(lastHeartbeatAtMs)
-        ? Math.max(0, now - lastHeartbeatAtMs)
-        : null;
+    const startedAtMs = httpStatus.startedAt ? new Date(httpStatus.startedAt).getTime() : null;
     const uptimeMs =
       typeof startedAtMs === "number" && Number.isFinite(startedAtMs)
         ? Math.max(0, now - startedAtMs)
         : null;
+
+    const lastCall = lastCallPage.entries[0] || null;
 
     return NextResponse.json({
       status: online ? "online" : "offline",
       online,
       enabled: mcpEnabled,
       transport: mcpTransport,
-      heartbeatPath: resolveMcpHeartbeatPath(),
-      heartbeat: heartbeat
+      heartbeatPath: null,
+      heartbeat: online
         ? {
-            ...heartbeat,
-            pidAlive: isProcessAlive(heartbeat.pid),
-            heartbeatAgeMs,
+            pid: null,
+            transport: mcpTransport,
+            startedAt: httpStatus.startedAt || null,
             uptimeMs,
+            lastHeartbeatAt: new Date().toISOString(),
+            pidAlive: null,
+            heartbeatAgeMs: 0,
           }
         : null,
       httpTransport: httpStatus,

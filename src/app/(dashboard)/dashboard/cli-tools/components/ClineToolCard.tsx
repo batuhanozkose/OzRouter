@@ -1,11 +1,15 @@
 "use client";
 
+/* eslint-disable react-hooks/exhaustive-deps, react-hooks/immutability, react-hooks/set-state-in-effect */
+
 import { useState, useEffect, useRef } from "react";
 import { Card, Button, ModelSelectModal, ManualConfigModal } from "@/shared/components";
 import Image from "next/image";
 import CliStatusBadge from "./CliStatusBadge";
 import { useTranslations } from "next-intl";
 import { getDisplayBaseUrl } from "@/shared/utils/origin";
+import InstallProgressModal from "./InstallProgressModal";
+import { runRemoteInstall } from "./remoteInstall";
 
 const CLOUD_URL = process.env.NEXT_PUBLIC_CLOUD_URL;
 
@@ -20,6 +24,9 @@ export default function ClineToolCard({
   cloudEnabled,
   batchStatus,
   lastConfiguredAt,
+  isRemote = false,
+  instanceId = null,
+  onConfigApplied,
 }) {
   const t = useTranslations("cliTools");
   const [clineStatus, setClineStatus] = useState(null);
@@ -30,6 +37,10 @@ export default function ClineToolCard({
   const [selectedApiKeyId, setSelectedApiKeyId] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [installing, setInstalling] = useState(false);
+  const [installOutput, setInstallOutput] = useState<string | null>(null);
+  const [installError, setInstallError] = useState<string | null>(null);
+  const [showInstallModal, setShowInstallModal] = useState(false);
   const [modelAliases, setModelAliases] = useState({});
   const [showManualConfigModal, setShowManualConfigModal] = useState(false);
   const [customBaseUrl, setCustomBaseUrl] = useState("");
@@ -54,6 +65,31 @@ export default function ClineToolCard({
 
   // Use batch status as fallback when card hasn't been expanded yet
   const effectiveConfigStatus = configStatus || batchStatus?.configStatus || null;
+
+  const handleRemoteInstall = async () => {
+    if (!instanceId) return;
+    setShowInstallModal(true);
+    setInstalling(true);
+    setInstallOutput("");
+    setInstallError(null);
+    try {
+      const result = await runRemoteInstall({
+        instanceId,
+        toolId: "cline",
+        onOutput: setInstallOutput,
+      });
+      if (result.success) {
+        await checkClineStatus();
+        onConfigApplied?.();
+      } else {
+        setInstallError(result.output || "Install failed");
+      }
+    } catch (err: any) {
+      setInstallError(err?.message || "Install failed");
+    } finally {
+      setInstalling(false);
+    }
+  };
 
   // (#523) Store the key *id* (not the masked string) so the backend can
   // resolve the real secret from DB before writing to config files.
@@ -135,13 +171,27 @@ export default function ClineToolCard({
 
   const checkClineStatus = async () => {
     setCheckingCline(true);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
     try {
-      const res = await fetch("/api/cli-tools/cline-settings");
-      const data = await res.json();
-      setClineStatus(data);
-    } catch (error) {
-      setClineStatus({ error: error.message });
+      if (isRemote) {
+        const res = await fetch("/api/cli-tools/remote/tool-status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ instanceId, toolId: "cline" }),
+          signal: controller.signal,
+        });
+        const data = await res.json();
+        setClineStatus(data);
+      } else {
+        const res = await fetch("/api/cli-tools/cline-settings", { signal: controller.signal });
+        const data = await res.json();
+        setClineStatus(data);
+      }
+    } catch (error: any) {
+      setClineStatus({ error: error.name === "AbortError" ? "Timeout" : error.message });
     } finally {
+      clearTimeout(timer);
       setCheckingCline(false);
     }
   };
@@ -163,26 +213,52 @@ export default function ClineToolCard({
       // (#523) Prefer keyId lookup so the backend writes the real key to disk.
       const selectedKeyId = selectedApiKeyId?.trim() || null;
 
-      const res = await fetch("/api/cli-tools/cline-settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          baseUrl: normalizedBaseUrl,
-          apiKey: !cloudEnabled ? "sk_ozrouter" : null,
-          keyId: selectedKeyId,
-          model: selectedModel,
-        }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setMessage({ type: "success", text: data.message || t("applied") });
-        await checkClineStatus();
-        await fetchBackups();
-      } else {
-        setMessage({
-          type: "error",
-          text: (typeof data.error === "string" ? data.error : data.error?.message) || t("failed"),
+      if (isRemote) {
+        const res = await fetch("/api/cli-tools/remote/apply", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            instanceId,
+            toolId: "cline",
+            baseUrl: normalizedBaseUrl,
+            keyId: selectedKeyId,
+            model: selectedModel,
+          }),
         });
+        const data = await res.json();
+        if (res.ok) {
+          setMessage({ type: "success", text: data.message || t("applied") });
+          onConfigApplied?.();
+        } else {
+          setMessage({
+            type: "error",
+            text:
+              (typeof data.error === "string" ? data.error : data.error?.message) || t("failed"),
+          });
+        }
+      } else {
+        const res = await fetch("/api/cli-tools/cline-settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            baseUrl: normalizedBaseUrl,
+            apiKey: !cloudEnabled ? "sk_ozrouter" : null,
+            keyId: selectedKeyId,
+            model: selectedModel,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setMessage({ type: "success", text: data.message || t("applied") });
+          await checkClineStatus();
+          await fetchBackups();
+        } else {
+          setMessage({
+            type: "error",
+            text:
+              (typeof data.error === "string" ? data.error : data.error?.message) || t("failed"),
+          });
+        }
       }
     } catch (error) {
       setMessage({ type: "error", text: error.message });
@@ -195,19 +271,39 @@ export default function ClineToolCard({
     setRestoring(true);
     setMessage(null);
     try {
-      const res = await fetch("/api/cli-tools/cline-settings", { method: "DELETE" });
-      const data = await res.json();
-      if (res.ok) {
-        setMessage({ type: "success", text: data.message || t("resetDone") });
-        setSelectedModel("");
-        hasInitializedModel.current = false;
-        await checkClineStatus();
-        await fetchBackups();
-      } else {
-        setMessage({
-          type: "error",
-          text: (typeof data.error === "string" ? data.error : data.error?.message) || t("failed"),
+      if (isRemote) {
+        const res = await fetch("/api/cli-tools/remote/apply", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ instanceId, toolId: "cline" }),
         });
+        const data = await res.json();
+        if (res.ok) {
+          setMessage({ type: "success", text: data.message || t("resetDone") });
+          onConfigApplied?.();
+        } else {
+          setMessage({
+            type: "error",
+            text:
+              (typeof data.error === "string" ? data.error : data.error?.message) || t("failed"),
+          });
+        }
+      } else {
+        const res = await fetch("/api/cli-tools/cline-settings", { method: "DELETE" });
+        const data = await res.json();
+        if (res.ok) {
+          setMessage({ type: "success", text: data.message || t("resetDone") });
+          setSelectedModel("");
+          hasInitializedModel.current = false;
+          await checkClineStatus();
+          await fetchBackups();
+        } else {
+          setMessage({
+            type: "error",
+            text:
+              (typeof data.error === "string" ? data.error : data.error?.message) || t("failed"),
+          });
+        }
       }
     } catch (error) {
       setMessage({ type: "error", text: error.message });
@@ -321,6 +417,19 @@ export default function ClineToolCard({
                         {clineStatus.globalStatePath}
                       </code>
                     </p>
+                  )}
+                  {isRemote && !cliReady && (
+                    <div className="pt-2">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={handleRemoteInstall}
+                        loading={installing}
+                      >
+                        <span className="material-symbols-outlined text-[16px]">download</span>
+                        {t("install")}
+                      </Button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -503,6 +612,13 @@ export default function ClineToolCard({
           } as any)}
         />
       )}
+      <InstallProgressModal
+        open={showInstallModal}
+        output={installOutput}
+        error={installError}
+        installing={installing}
+        onClose={() => setShowInstallModal(false)}
+      />
     </Card>
   );
 }

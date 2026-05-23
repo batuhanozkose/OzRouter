@@ -1,7 +1,11 @@
 "use client";
 
+/* eslint-disable react-hooks/exhaustive-deps, react-hooks/immutability, react-hooks/set-state-in-effect */
+
 import { useState, useEffect, useRef } from "react";
 import { Card, Button, ModelSelectModal, ManualConfigModal } from "@/shared/components";
+import InstallProgressModal from "./InstallProgressModal";
+import { runRemoteInstall } from "./remoteInstall";
 import Image from "next/image";
 import CliStatusBadge from "./CliStatusBadge";
 import { useTranslations } from "next-intl";
@@ -19,6 +23,9 @@ export default function DroidToolCard({
   cloudEnabled,
   batchStatus,
   lastConfiguredAt,
+  isRemote = false,
+  instanceId = null,
+  onConfigApplied,
 }) {
   const t = useTranslations("cliTools");
   const [droidStatus, setDroidStatus] = useState(null);
@@ -27,6 +34,11 @@ export default function DroidToolCard({
   const [restoring, setRestoring] = useState(false);
   const [message, setMessage] = useState(null);
   const [selectedApiKeyId, setSelectedApiKeyId] = useState("");
+  const [showInstallGuide, setShowInstallGuide] = useState(false);
+  const [installing, setInstalling] = useState(false);
+  const [installOutput, setInstallOutput] = useState<string | null>(null);
+  const [installError, setInstallError] = useState<string | null>(null);
+  const [showInstallModal, setShowInstallModal] = useState(false);
   const [selectedModel, setSelectedModel] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [modelAliases, setModelAliases] = useState({});
@@ -106,13 +118,30 @@ export default function DroidToolCard({
 
   const checkDroidStatus = async () => {
     setCheckingDroid(true);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
     try {
-      const res = await fetch("/api/cli-tools/droid-settings");
-      const data = await res.json();
-      setDroidStatus(data);
-    } catch (error) {
-      setDroidStatus({ installed: false, error: error.message });
+      if (isRemote) {
+        const res = await fetch("/api/cli-tools/remote/tool-status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ instanceId, toolId: "droid" }),
+          signal: controller.signal,
+        });
+        const data = await res.json();
+        setDroidStatus(data);
+      } else {
+        const res = await fetch("/api/cli-tools/droid-settings", { signal: controller.signal });
+        const data = await res.json();
+        setDroidStatus(data);
+      }
+    } catch (error: any) {
+      setDroidStatus({
+        installed: false,
+        error: error.name === "AbortError" ? "Timeout" : error.message,
+      });
     } finally {
+      clearTimeout(timer);
       setCheckingDroid(false);
     }
   };
@@ -135,27 +164,53 @@ export default function DroidToolCard({
       const selectedKeyId =
         selectedApiKeyId?.trim() || (apiKeys?.length > 0 ? apiKeys[0].id : null);
 
-      const res = await fetch("/api/cli-tools/droid-settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          baseUrl: getEffectiveBaseUrl(),
-          apiKey: !cloudEnabled ? "sk_ozrouter" : null,
-          keyId: selectedKeyId,
-          model: selectedModel,
-        }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setMessage({ type: "success", text: t("settingsApplied") });
-        checkDroidStatus();
-      } else {
-        setMessage({
-          type: "error",
-          text:
-            (typeof data.error === "string" ? data.error : data.error?.message) ||
-            t("failedApplySettings"),
+      if (isRemote) {
+        const res = await fetch("/api/cli-tools/remote/apply", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            instanceId,
+            toolId: "droid",
+            baseUrl: getEffectiveBaseUrl(),
+            keyId: selectedKeyId,
+            model: selectedModel,
+          }),
         });
+        const data = await res.json();
+        if (res.ok) {
+          setMessage({ type: "success", text: t("settingsApplied") });
+          onConfigApplied?.();
+        } else {
+          setMessage({
+            type: "error",
+            text:
+              (typeof data.error === "string" ? data.error : data.error?.message) ||
+              t("failedApplySettings"),
+          });
+        }
+      } else {
+        const res = await fetch("/api/cli-tools/droid-settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            baseUrl: getEffectiveBaseUrl(),
+            apiKey: !cloudEnabled ? "sk_ozrouter" : null,
+            keyId: selectedKeyId,
+            model: selectedModel,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setMessage({ type: "success", text: t("settingsApplied") });
+          checkDroidStatus();
+        } else {
+          setMessage({
+            type: "error",
+            text:
+              (typeof data.error === "string" ? data.error : data.error?.message) ||
+              t("failedApplySettings"),
+          });
+        }
       }
     } catch (error) {
       setMessage({ type: "error", text: error.message });
@@ -168,20 +223,42 @@ export default function DroidToolCard({
     setRestoring(true);
     setMessage(null);
     try {
-      const res = await fetch("/api/cli-tools/droid-settings", { method: "DELETE" });
-      const data = await res.json();
-      if (res.ok) {
-        setMessage({ type: "success", text: t("settingsReset") });
-        setSelectedModel("");
-        setSelectedApiKeyId("");
-        checkDroidStatus();
-      } else {
-        setMessage({
-          type: "error",
-          text:
-            (typeof data.error === "string" ? data.error : data.error?.message) ||
-            t("failedResetSettings"),
+      if (isRemote) {
+        const res = await fetch("/api/cli-tools/remote/apply", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ instanceId, toolId: "droid" }),
         });
+        const data = await res.json();
+        if (res.ok) {
+          setMessage({ type: "success", text: t("settingsReset") });
+          setSelectedModel("");
+          setSelectedApiKeyId("");
+          onConfigApplied?.();
+        } else {
+          setMessage({
+            type: "error",
+            text:
+              (typeof data.error === "string" ? data.error : data.error?.message) ||
+              t("failedResetSettings"),
+          });
+        }
+      } else {
+        const res = await fetch("/api/cli-tools/droid-settings", { method: "DELETE" });
+        const data = await res.json();
+        if (res.ok) {
+          setMessage({ type: "success", text: t("settingsReset") });
+          setSelectedModel("");
+          setSelectedApiKeyId("");
+          checkDroidStatus();
+        } else {
+          setMessage({
+            type: "error",
+            text:
+              (typeof data.error === "string" ? data.error : data.error?.message) ||
+              t("failedResetSettings"),
+          });
+        }
       }
     } catch (error) {
       setMessage({ type: "error", text: error.message });
@@ -317,23 +394,89 @@ export default function DroidToolCard({
           )}
 
           {!checkingDroid && droidStatus && !cliReady && (
-            <div className="flex items-center gap-3 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-              <span className="material-symbols-outlined text-yellow-500">warning</span>
-              <div className="flex-1">
-                <p className="font-medium text-yellow-600 dark:text-yellow-400">
-                  {droidStatus.installed
-                    ? t("cliNotRunnable", { tool: "Factory Droid" })
-                    : t("cliNotInstalled", { tool: "Factory Droid" })}
-                </p>
-                <p className="text-sm text-text-muted">
-                  {droidStatus.installed
-                    ? t("cliFoundFailedHealthcheck", {
-                        tool: "Factory Droid",
-                        reason: droidStatus.reason ? ` (${droidStatus.reason})` : "",
-                      })
-                    : t("installCliPrompt", { tool: "Factory Droid" })}
-                </p>
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-3 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                <span className="material-symbols-outlined text-yellow-500">warning</span>
+                <div className="flex-1">
+                  <p className="font-medium text-yellow-600 dark:text-yellow-400">
+                    {droidStatus.installed
+                      ? t("cliNotRunnable", { tool: "Factory Droid" })
+                      : t("cliNotInstalled", { tool: "Factory Droid" })}
+                  </p>
+                  <p className="text-sm text-text-muted">
+                    {droidStatus.installed
+                      ? t("cliFoundFailedHealthcheck", {
+                          tool: "Factory Droid",
+                          reason: droidStatus.reason ? ` (${droidStatus.reason})` : "",
+                        })
+                      : t("installCliPrompt", { tool: "Factory Droid" })}
+                  </p>
+                </div>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowInstallGuide(!showInstallGuide)}
+              >
+                <span className="material-symbols-outlined text-[16px]">
+                  {showInstallGuide ? "expand_less" : "help"}
+                </span>
+                {showInstallGuide ? t("hide") : t("howToInstall")}
+              </Button>
+              {showInstallGuide && (
+                <div className="p-4 bg-surface border border-border rounded-lg">
+                  <h4 className="font-medium mb-3">{t("installationGuide")}</h4>
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <p className="text-text-muted mb-1">{t("platforms")}</p>
+                      <code className="block px-3 py-2 bg-black/5 dark:bg-white/5 rounded font-mono text-xs">
+                        curl -fsSL https://app.factory.ai/cli | sh
+                      </code>
+                    </div>
+                    <p className="text-text-muted">
+                      {t("afterInstallationRun")}{" "}
+                      <code className="px-1 bg-black/5 dark:bg-white/5 rounded">droid</code>{" "}
+                      {t("toVerify")}
+                    </p>
+                    {isRemote && (
+                      <div className="pt-2 border-t border-border">
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={async () => {
+                            if (!instanceId) return;
+                            setShowInstallModal(true);
+                            setInstalling(true);
+                            setInstallOutput("");
+                            setInstallError(null);
+                            try {
+                              const result = await runRemoteInstall({
+                                instanceId,
+                                toolId: "droid",
+                                onOutput: setInstallOutput,
+                              });
+                              if (result.success) {
+                                await checkDroidStatus();
+                                onConfigApplied?.();
+                              } else {
+                                setInstallError(result.output || "Install failed");
+                              }
+                            } catch (err: any) {
+                              setInstallError(err.message);
+                            } finally {
+                              setInstalling(false);
+                            }
+                          }}
+                          loading={installing}
+                        >
+                          <span className="material-symbols-outlined text-[16px]">download</span>
+                          {t("install")}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -554,6 +697,13 @@ export default function DroidToolCard({
         onClose={() => setShowManualConfigModal(false)}
         title={t("droidManualConfiguration")}
         configs={getManualConfigs()}
+      />
+      <InstallProgressModal
+        open={showInstallModal}
+        output={installOutput}
+        error={installError}
+        installing={installing}
+        onClose={() => setShowInstallModal(false)}
       />
     </Card>
   );

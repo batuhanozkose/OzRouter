@@ -15,20 +15,6 @@ export async function GET(request) {
     return NextResponse.json({
       ...summary,
       budgetCheck,
-      dailyLimitUsd: summary.dailyLimitUsd,
-      weeklyLimitUsd: summary.weeklyLimitUsd,
-      monthlyLimitUsd: summary.monthlyLimitUsd,
-      warningThreshold: summary.warningThreshold,
-      resetInterval: summary.resetInterval,
-      resetTime: summary.resetTime,
-      budgetResetAt: summary.budgetResetAt,
-      lastBudgetResetAt: summary.lastBudgetResetAt,
-      totalCostToday: summary.totalCostToday,
-      totalCostMonth: summary.totalCostMonth,
-      totalCostPeriod: summary.totalCostPeriod,
-      activeLimitUsd: summary.activeLimitUsd,
-      nextResetAt: summary.nextResetAt,
-      periodStartAt: summary.periodStartAt,
     });
   } catch (error) {
     console.error("Error fetching budget summary:", error);

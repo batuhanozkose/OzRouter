@@ -7,7 +7,6 @@
  *   ozrouter                          Start the server (default port 20128)
  *   ozrouter --port 3000              Start on custom port
  *   ozrouter --no-open                Start without opening browser
- *   ozrouter --mcp                    Start MCP server (stdio transport for IDEs)
  *   ozrouter reset-encrypted-columns  Reset broken encrypted credentials
  *   ozrouter --help                   Show help
  *   ozrouter --version                Show version
@@ -82,17 +81,9 @@ if (args.includes("--help") || args.includes("-h")) {
     ozrouter                 Start the server
     ozrouter --port <port>   Use custom API port (default: 20128)
     ozrouter --no-open       Don't open browser automatically
-    ozrouter --mcp           Start MCP server (stdio transport for IDEs)
     ozrouter reset-encrypted-columns  Reset encrypted credentials (recovery)
     ozrouter --help          Show this help
     ozrouter --version       Show version
-
-  \x1b[1mMCP Integration:\x1b[0m
-    The --mcp flag starts an MCP server over stdio, exposing OzRouter
-    tools for AI agents in VS Code, Cursor, Claude Desktop, and Copilot.
-
-    Available tools: ozrouter_get_health, ozrouter_list_combos,
-    ozrouter_check_quota, ozrouter_route_request, and more.
 
   \x1b[1mConfig:\x1b[0m
     Loads .env from: ~/.ozrouter/.env or ./.env
@@ -214,16 +205,6 @@ if (args.includes("reset-encrypted-columns")) {
   process.exit(0);
 }
 
-if (args.includes("--mcp")) {
-  try {
-    const { startMcpCli } = await import(pathToFileURL(join(ROOT, "bin", "mcp-server.mjs")).href);
-    await startMcpCli(ROOT);
-  } catch (err) {
-    console.error("\x1b[31m✖ Failed to start MCP server:\x1b[0m", err.message || err);
-    process.exit(1);
-  }
-  process.exit(0);
-}
 
 function parsePort(value, fallback) {
   const parsed = parseInt(String(value), 10);

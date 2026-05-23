@@ -10,13 +10,10 @@ export const HIDEABLE_SIDEBAR_ITEM_IDS = [
   "cache",
   "limits",
   "cli-tools",
-  "agents",
   "memory",
   "skills",
   "translator",
-  "playground",
-  "media",
-  "search-tools",
+  "studio",
   "logs",
   "audit",
   "webhooks",
@@ -59,25 +56,17 @@ const PRIMARY_SIDEBAR_ITEMS: readonly SidebarItemDefinition[] = [
   { id: "analytics", href: "/dashboard/analytics", i18nKey: "analytics", icon: "analytics" },
   { id: "cache", href: "/dashboard/cache", i18nKey: "cache", icon: "cached" },
   { id: "limits", href: "/dashboard/limits", i18nKey: "limits", icon: "tune" },
-  { id: "media", href: "/dashboard/cache/media", i18nKey: "media", icon: "perm_media" },
+  { id: "studio", href: "/dashboard/studio", i18nKey: "studio", icon: "science" },
 ];
 
 const CLI_SIDEBAR_ITEMS: readonly SidebarItemDefinition[] = [
   { id: "cli-tools", href: "/dashboard/cli-tools", i18nKey: "cliToolsShort", icon: "terminal" },
-  { id: "agents", href: "/dashboard/agents", i18nKey: "agents", icon: "smart_toy" },
   { id: "memory", href: "/dashboard/memory", i18nKey: "memory", icon: "psychology" },
   { id: "skills", href: "/dashboard/skills", i18nKey: "skills", icon: "auto_fix_high" },
 ];
 
 const DEBUG_SIDEBAR_ITEMS: readonly SidebarItemDefinition[] = [
   { id: "translator", href: "/dashboard/translator", i18nKey: "translator", icon: "translate" },
-  { id: "playground", href: "/dashboard/playground", i18nKey: "playground", icon: "science" },
-  {
-    id: "search-tools",
-    href: "/dashboard/search-tools",
-    i18nKey: "searchTools",
-    icon: "manage_search",
-  },
 ];
 
 const SYSTEM_SIDEBAR_ITEMS: readonly SidebarItemDefinition[] = [

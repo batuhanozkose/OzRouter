@@ -596,369 +596,255 @@ export default function SystemStorageTab() {
         )}
       </div>
 
-      {/* Export / Import */}
-      <div className="flex flex-wrap items-center gap-2 mb-4">
-        <Button variant="outline" size="sm" onClick={handleExport} loading={exportLoading}>
-          <span className="material-symbols-outlined text-[14px] mr-1" aria-hidden="true">
-            download
-          </span>
-          {t("exportDatabase")}
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={async () => {
-            setExportLoading(true);
-            try {
-              await fetchAndDownload(
-                "/api/db-backups/exportAll",
-                "ozrouter-full-backup.tar.gz",
-                t("exportFailed")
-              );
-            } catch (err) {
-              setImportStatus({
-                type: "error",
-                message: t("fullExportFailedWithError", { error: (err as Error).message }),
-              });
-            } finally {
-              setExportLoading(false);
-            }
-          }}
-          loading={exportLoading}
-        >
-          <span className="material-symbols-outlined text-[14px] mr-1" aria-hidden="true">
-            folder_zip
-          </span>
-          {t("exportAll")}
-        </Button>
-        <Button variant="outline" size="sm" onClick={handleImportClick} loading={importLoading}>
-          <span className="material-symbols-outlined text-[14px] mr-1" aria-hidden="true">
-            upload
-          </span>
-          {t("importDatabase")}
-        </Button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".sqlite"
-          className="hidden"
-          onChange={handleFileSelected}
-        />
-        <Button variant="outline" size="sm" onClick={handleFullImportClick} loading={importLoading}>
-          <span className="material-symbols-outlined text-[14px] mr-1" aria-hidden="true">
-            folder_zip
-          </span>
-          {t("importAll")}
-        </Button>
-        <input
-          ref={fullBackupInputRef}
-          type="file"
-          accept=".tar.gz,.tgz,application/gzip,application/x-gzip"
-          className="hidden"
-          onChange={handleFullBackupSelected}
-        />
-        <Button variant="outline" size="sm" onClick={handleExportJson} loading={exportLoading}>
-          <span className="material-symbols-outlined text-[14px] mr-1" aria-hidden="true">
-            data_object
-          </span>
-          Export JSON
-        </Button>
-        <Button variant="outline" size="sm" onClick={handleImportJsonClick} loading={importLoading}>
-          <span className="material-symbols-outlined text-[14px] mr-1" aria-hidden="true">
-            data_object
-          </span>
-          Import JSON
-        </Button>
-        <input
-          ref={jsonInputRef}
-          type="file"
-          accept=".json"
-          className="hidden"
-          onChange={handleJsonSelected}
-        />
-      </div>
-
-      {/* Import confirmation dialog */}
-      {confirmImport && pendingImportFile && (
-        <div className="p-4 rounded-lg mb-4 bg-amber-500/10 border border-amber-500/30">
-          <div className="flex items-start gap-3">
-            <span
-              className="material-symbols-outlined text-[20px] text-amber-500 mt-0.5"
-              aria-hidden="true"
-            >
-              warning
-            </span>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-amber-500 mb-1">{t("confirmDbImport")}</p>
-              <p className="text-xs text-text-muted mb-2">
-                {t("confirmDbImportDesc", { file: pendingImportFile.name })}
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={handleImportConfirm}
-                  className="!bg-amber-500 hover:!bg-amber-600"
-                >
-                  {t("yesImport")}
-                </Button>
-                <Button variant="outline" size="sm" onClick={handleImportCancel}>
-                  {tc("cancel")}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {confirmFullImport && pendingFullImportFile && (
-        <div className="p-4 rounded-lg mb-4 bg-amber-500/10 border border-amber-500/30">
-          <div className="flex items-start gap-3">
-            <span
-              className="material-symbols-outlined text-[20px] text-amber-500 mt-0.5"
-              aria-hidden="true"
-            >
-              warning
-            </span>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-amber-500 mb-1">{t("confirmFullImport")}</p>
-              <p className="text-xs text-text-muted mb-2">
-                {t("confirmFullImportDesc", { file: pendingFullImportFile.name })}
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={handleFullImportConfirm}
-                  className="!bg-amber-500 hover:!bg-amber-600"
-                >
-                  {t("yesImport")}
-                </Button>
-                <Button variant="outline" size="sm" onClick={handleFullImportCancel}>
-                  {tc("cancel")}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Import status */}
-      {importStatus.message && (
-        <div
-          className={`p-3 rounded-lg mb-4 text-sm ${
-            importStatus.type === "success"
-              ? "bg-green-500/10 text-green-500 border border-green-500/20"
-              : "bg-red-500/10 text-red-500 border border-red-500/20"
-          }`}
-          role="alert"
-        >
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[16px]" aria-hidden="true">
-              {importStatus.type === "success" ? "check_circle" : "error"}
-            </span>
-            {importStatus.message}
-          </div>
-        </div>
-      )}
-      <div className="flex items-center justify-between p-3 rounded-lg bg-bg border border-border mb-4">
-        <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-[16px] text-amber-500" aria-hidden="true">
-            schedule
-          </span>
-          <div>
-            <p className="text-sm font-medium">{t("lastBackup")}</p>
-            <p className="text-xs text-text-muted">
-              {storageHealth.lastBackupAt
-                ? `${new Date(storageHealth.lastBackupAt).toLocaleString(locale)} (${formatRelativeTime(storageHealth.lastBackupAt)})`
-                : t("noBackupYet")}
-            </p>
-          </div>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleManualBackup}
-          loading={manualBackupLoading}
-        >
-          <span className="material-symbols-outlined text-[14px] mr-1" aria-hidden="true">
+      {/* Backups & Snapshots */}
+      <div className="pt-3 border-t border-border/50 mb-4">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="material-symbols-outlined text-[18px] text-amber-500" aria-hidden="true">
             backup
           </span>
-          {t("backupNow")}
-        </Button>
+          <p className="font-medium">{t("backupsAndSnapshots")}</p>
+        </div>
+
+        {/* Last backup + Backup Now */}
+        <div className="p-3 rounded-lg bg-bg border border-border mb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[16px] text-amber-500" aria-hidden="true">
+                schedule
+              </span>
+              <div>
+                <p className="text-sm font-medium">{t("lastBackup")}</p>
+                <p className="text-xs text-text-muted">
+                  {storageHealth.lastBackupAt
+                    ? `${new Date(storageHealth.lastBackupAt).toLocaleString(locale)} (${formatRelativeTime(storageHealth.lastBackupAt)})`
+                    : t("noBackupYet")}
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleManualBackup}
+              loading={manualBackupLoading}
+            >
+              <span className="material-symbols-outlined text-[14px] mr-1" aria-hidden="true">
+                add
+              </span>
+              {t("backupNow")}
+            </Button>
+          </div>
+          {manualBackupStatus.message && (
+            <div
+              className={`mt-2 p-2 rounded-lg text-xs ${
+                manualBackupStatus.type === "success"
+                  ? "bg-green-500/10 text-green-500 border border-green-500/20"
+                  : manualBackupStatus.type === "info"
+                    ? "bg-blue-500/10 text-blue-500 border border-blue-500/20"
+                    : "bg-red-500/10 text-red-500 border border-red-500/20"
+              }`}
+              role="alert"
+            >
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[14px]" aria-hidden="true">
+                  {manualBackupStatus.type === "success" ? "check_circle" : manualBackupStatus.type === "info" ? "info" : "error"}
+                </span>
+                {manualBackupStatus.message}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Restore from backups */}
+        <div className="p-3 rounded-lg bg-bg border border-border">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[16px] text-amber-500" aria-hidden="true">
+                history
+              </span>
+              <div>
+                <p className="text-sm font-medium">{t("restoreFromBackup")}</p>
+                <p className="text-xs text-text-muted">{storageHealth.backupCount || 0} {t("snapshotsAvailable")}</p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setBackupsExpanded(!backupsExpanded);
+                if (!backupsExpanded && backups.length === 0) loadBackups();
+              }}
+            >
+              {backupsExpanded ? t("hide") : t("viewBackups")}
+            </Button>
+          </div>
+
+          {restoreStatus.message && (
+            <div
+              className={`p-2 rounded-lg mb-2 text-xs ${
+                restoreStatus.type === "success"
+                  ? "bg-green-500/10 text-green-500 border border-green-500/20"
+                  : "bg-red-500/10 text-red-500 border border-red-500/20"
+              }`}
+              role="alert"
+            >
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[14px]" aria-hidden="true">
+                  {restoreStatus.type === "success" ? "check_circle" : "error"}
+                </span>
+                {restoreStatus.message}
+              </div>
+            </div>
+          )}
+
+          {backupsExpanded && (
+            <div className="flex flex-col gap-2 mt-2">
+              {backupsLoading ? (
+                <div className="flex items-center justify-center py-4 text-text-muted">
+                  <span className="material-symbols-outlined animate-spin text-[20px] mr-2" aria-hidden="true">
+                    progress_activity
+                  </span>
+                  {t("loadingBackups")}
+                </div>
+              ) : backups.length === 0 ? (
+                <div className="text-center py-4 text-text-muted text-sm">
+                  <span className="material-symbols-outlined text-[28px] mb-1 block opacity-40" aria-hidden="true">
+                    folder_off
+                  </span>
+                  {t("noBackupsYet")}
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-text-muted">
+                      {t("backupsAvailable", { count: backups.length })}
+                    </span>
+                    <button onClick={loadBackups} className="text-xs text-primary hover:underline flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[14px]" aria-hidden="true">refresh</span>
+                      {t("refresh")}
+                    </button>
+                  </div>
+                  {backups.map((backup) => (
+                    <div
+                      key={backup.id}
+                      className="flex items-center justify-between p-2.5 rounded-lg bg-black/[0.03] dark:bg-white/[0.03] border border-border/50 hover:border-border transition-colors"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="material-symbols-outlined text-[14px] text-amber-500" aria-hidden="true">
+                            description
+                          </span>
+                          <span className="text-xs font-medium truncate">
+                            {new Date(backup.createdAt).toLocaleString(locale)}
+                          </span>
+                          <Badge
+                            variant={backup.reason === "pre-restore" ? "warning" : backup.reason === "manual" ? "success" : "default"}
+                            size="sm"
+                          >
+                            {formatBackupReason(backup.reason)}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2 text-[11px] text-text-muted ml-6">
+                          <span>{t("connectionsCount", { count: backup.connectionCount })}</span>
+                          <span>•</span>
+                          <span>{formatBytes(backup.size)}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 ml-2">
+                        {confirmRestoreId === backup.id ? (
+                          <>
+                            <span className="text-[11px] text-amber-500 font-medium">{t("confirm")}</span>
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={() => handleRestore(backup.id)}
+                              loading={restoringId === backup.id}
+                              className="!bg-amber-500 hover:!bg-amber-600 !text-xs !py-1"
+                            >
+                              {t("yes")}
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => setConfirmRestoreId(null)} className="!text-xs !py-1">
+                              {t("no")}
+                            </Button>
+                          </>
+                        ) : (
+                          <Button variant="outline" size="sm" onClick={() => setConfirmRestoreId(backup.id)} className="!text-xs !py-1">
+                            <span className="material-symbols-outlined text-[12px] mr-1" aria-hidden="true">restore</span>
+                            {t("restore")}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
-      {manualBackupStatus.message && (
-        <div
-          className={`p-3 rounded-lg mb-4 text-sm ${
-            manualBackupStatus.type === "success"
-              ? "bg-green-500/10 text-green-500 border border-green-500/20"
-              : manualBackupStatus.type === "info"
-                ? "bg-blue-500/10 text-blue-500 border border-blue-500/20"
-                : "bg-red-500/10 text-red-500 border border-red-500/20"
-          }`}
-          role="alert"
-        >
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[16px]" aria-hidden="true">
-              {manualBackupStatus.type === "success"
-                ? "check_circle"
-                : manualBackupStatus.type === "info"
-                  ? "info"
-                  : "error"}
-            </span>
-            {manualBackupStatus.message}
-          </div>
-        </div>
-      )}
-
-      {/* Maintenance */}
+      {/* Export & Import */}
       <div className="pt-3 border-t border-border/50 mb-4">
         <div className="flex items-center gap-2 mb-3">
           <span className="material-symbols-outlined text-[18px] text-blue-500" aria-hidden="true">
-            build
+            move_item
           </span>
-          <p className="font-medium">{t("maintenance") || "Maintenance"}</p>
+          <p className="font-medium">{t("exportImport")}</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2 mb-3">
-          <Button
-            variant="outline"
-            size="sm"
-            loading={clearCacheLoading}
-            onClick={async () => {
-              setClearCacheLoading(true);
-              setClearCacheStatus({ type: "", message: "" });
-              try {
-                const res = await fetch("/api/cache", { method: "DELETE" });
-                const data = await res.json();
-                if (res.ok) {
-                  setClearCacheStatus({
-                    type: "success",
-                    message: t("cacheCleared") || "Cache cleared successfully",
-                  });
-                } else {
-                  setClearCacheStatus({
-                    type: "error",
-                    message: data.error || t("clearCacheFailed") || "Failed to clear cache",
-                  });
-                }
-              } catch {
-                setClearCacheStatus({ type: "error", message: t("errorOccurred") });
-              } finally {
-                setClearCacheLoading(false);
-              }
-            }}
-          >
-            <span className="material-symbols-outlined text-[14px] mr-1" aria-hidden="true">
-              delete_sweep
-            </span>
-            {t("clearCache") || "Clear Cache"}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            loading={purgeLogsLoading}
-            onClick={async () => {
-              setPurgeLogsLoading(true);
-              setPurgeLogsStatus({ type: "", message: "" });
-              try {
-                const res = await fetch("/api/settings/purge-logs", { method: "POST" });
-                const data = await res.json();
-                if (res.ok) {
-                  setPurgeLogsStatus({
-                    type: "success",
-                    message:
-                      t("logsDeleted", { count: data.deleted }) ||
-                      `Purged ${data.deleted} expired log(s)`,
-                  });
-                } else {
-                  setPurgeLogsStatus({
-                    type: "error",
-                    message: data.error || t("purgeLogsFailed") || "Failed to purge logs",
-                  });
-                }
-              } catch {
-                setPurgeLogsStatus({ type: "error", message: t("errorOccurred") });
-              } finally {
-                setPurgeLogsLoading(false);
-              }
-            }}
-          >
-            <span className="material-symbols-outlined text-[14px] mr-1" aria-hidden="true">
-              auto_delete
-            </span>
-            {t("purgeExpiredLogs") || "Purge Expired Logs"}
-          </Button>
-        </div>
-        {(clearCacheStatus.message || purgeLogsStatus.message) && (
-          <div className="flex flex-col gap-2">
-            {clearCacheStatus.message && (
-              <div
-                className={`p-3 rounded-lg text-sm ${
-                  clearCacheStatus.type === "success"
-                    ? "bg-green-500/10 text-green-500 border border-green-500/20"
-                    : "bg-red-500/10 text-red-500 border border-red-500/20"
-                }`}
-                role="alert"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[16px]" aria-hidden="true">
-                    {clearCacheStatus.type === "success" ? "check_circle" : "error"}
-                  </span>
-                  {clearCacheStatus.message}
-                </div>
-              </div>
-            )}
-            {purgeLogsStatus.message && (
-              <div
-                className={`p-3 rounded-lg text-sm ${
-                  purgeLogsStatus.type === "success"
-                    ? "bg-green-500/10 text-green-500 border border-green-500/20"
-                    : "bg-red-500/10 text-red-500 border border-red-500/20"
-                }`}
-                role="alert"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[16px]" aria-hidden="true">
-                    {purgeLogsStatus.type === "success" ? "check_circle" : "error"}
-                  </span>
-                  {purgeLogsStatus.message}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
 
-      {/* Backup/Restore section */}
-      <div className="pt-3 border-t border-border/50">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <span
-              className="material-symbols-outlined text-[18px] text-amber-500"
-              aria-hidden="true"
-            >
-              restore
-            </span>
-            <p className="font-medium">{t("backupRestore")}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Export column */}
+          <div className="p-3 rounded-lg bg-bg border border-border">
+            <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">{t("exportSection")}</p>
+            <div className="space-y-2">
+              <Button variant="outline" size="sm" onClick={handleExport} loading={exportLoading} className="w-full justify-start">
+                <span className="material-symbols-outlined text-[14px] mr-2" aria-hidden="true">database</span>
+                {t("exportDatabaseSqlite")}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  setExportLoading(true);
+                  try {
+                    await fetchAndDownload("/api/db-backups/exportAll", "ozrouter-full-backup.tar.gz", t("exportFailed"));
+                  } catch (err) {
+                    setImportStatus({ type: "error", message: t("fullExportFailedWithError", { error: (err as Error).message }) });
+                  } finally {
+                    setExportLoading(false);
+                  }
+                }}
+                loading={exportLoading}
+                className="w-full justify-start"
+              >
+                <span className="material-symbols-outlined text-[14px] mr-2" aria-hidden="true">folder_zip</span>
+                {t("exportAllTarGz")}
+              </Button>
+            </div>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setBackupsExpanded(!backupsExpanded);
-              if (!backupsExpanded && backups.length === 0) loadBackups();
-            }}
-          >
-            {backupsExpanded ? t("hide") : t("viewBackups")}
-          </Button>
-        </div>
-        <p className="text-xs text-text-muted mb-3">{t("backupRetentionDesc")}</p>
 
-        {restoreStatus.message && (
+          {/* Import column */}
+          <div className="p-3 rounded-lg bg-bg border border-border">
+            <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">{t("importSection")}</p>
+            <div className="space-y-2">
+              <Button variant="outline" size="sm" onClick={handleImportClick} loading={importLoading} className="w-full justify-start">
+                <span className="material-symbols-outlined text-[14px] mr-2" aria-hidden="true">database</span>
+                {t("importDatabaseSqlite")}
+              </Button>
+              <input ref={fileInputRef} type="file" accept=".sqlite" className="hidden" onChange={handleFileSelected} />
+              <Button variant="outline" size="sm" onClick={handleFullImportClick} loading={importLoading} className="w-full justify-start">
+                <span className="material-symbols-outlined text-[14px] mr-2" aria-hidden="true">folder_zip</span>
+                {t("importAllTarGz")}
+              </Button>
+              <input ref={fullBackupInputRef} type="file" accept=".tar.gz,.tgz,application/gzip,application/x-gzip" className="hidden" onChange={handleFullBackupSelected} />
+            </div>
+          </div>
+        </div>
+
+        {/* Import status banner */}
+        {importStatus.message && (
           <div
-            className={`p-3 rounded-lg mb-3 text-sm ${
-              restoreStatus.type === "success"
+            className={`mt-3 p-3 rounded-lg text-sm ${
+              importStatus.type === "success"
                 ? "bg-green-500/10 text-green-500 border border-green-500/20"
                 : "bg-red-500/10 text-red-500 border border-red-500/20"
             }`}
@@ -966,129 +852,77 @@ export default function SystemStorageTab() {
           >
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-[16px]" aria-hidden="true">
-                {restoreStatus.type === "success" ? "check_circle" : "error"}
+                {importStatus.type === "success" ? "check_circle" : "error"}
               </span>
-              {restoreStatus.message}
+              {importStatus.message}
             </div>
           </div>
         )}
 
-        {backupsExpanded && (
-          <div className="flex flex-col gap-2">
-            {backupsLoading ? (
-              <div className="flex items-center justify-center py-6 text-text-muted">
-                <span
-                  className="material-symbols-outlined animate-spin text-[20px] mr-2"
-                  aria-hidden="true"
-                >
-                  progress_activity
-                </span>
-                {t("loadingBackups")}
-              </div>
-            ) : backups.length === 0 ? (
-              <div className="text-center py-6 text-text-muted text-sm">
-                <span
-                  className="material-symbols-outlined text-[32px] mb-2 block opacity-40"
-                  aria-hidden="true"
-                >
-                  folder_off
-                </span>
-                {t("noBackupsYet")}
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-text-muted">
-                    {t("backupsAvailable", { count: backups.length })}
-                  </span>
-                  <button
-                    onClick={loadBackups}
-                    className="text-xs text-primary hover:underline flex items-center gap-1"
-                  >
-                    <span className="material-symbols-outlined text-[14px]" aria-hidden="true">
-                      refresh
-                    </span>
-                    {t("refresh")}
-                  </button>
+        {/* Import confirmation dialogs */}
+        {confirmImport && pendingImportFile && (
+          <div className="mt-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+            <div className="flex items-start gap-2">
+              <span className="material-symbols-outlined text-[18px] text-amber-500 mt-0.5" aria-hidden="true">warning</span>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-amber-500 mb-1">{t("confirmDbImport")}</p>
+                <p className="text-xs text-text-muted mb-2">{t("confirmDbImportDesc", { file: pendingImportFile.name })}</p>
+                <div className="flex items-center gap-2">
+                  <Button variant="primary" size="sm" onClick={handleImportConfirm} className="!bg-amber-500 hover:!bg-amber-600 !text-xs">
+                    {t("yesImport")}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleImportCancel} className="!text-xs">{tc("cancel")}</Button>
                 </div>
-                {backups.map((backup) => (
-                  <div
-                    key={backup.id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-black/[0.02] dark:bg-white/[0.02] border border-border/50 hover:border-border transition-colors"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span
-                          className="material-symbols-outlined text-[16px] text-amber-500"
-                          aria-hidden="true"
-                        >
-                          description
-                        </span>
-                        <span className="text-sm font-medium truncate">
-                          {new Date(backup.createdAt).toLocaleString(locale)}
-                        </span>
-                        <Badge
-                          variant={
-                            backup.reason === "pre-restore"
-                              ? "warning"
-                              : backup.reason === "manual"
-                                ? "success"
-                                : "default"
-                          }
-                          size="sm"
-                        >
-                          {formatBackupReason(backup.reason)}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-3 text-xs text-text-muted ml-6">
-                        <span>{t("connectionsCount", { count: backup.connectionCount })}</span>
-                        <span>•</span>
-                        <span>{formatBytes(backup.size)}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 ml-3">
-                      {confirmRestoreId === backup.id ? (
-                        <>
-                          <span className="text-xs text-amber-500 font-medium">{t("confirm")}</span>
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={() => handleRestore(backup.id)}
-                            loading={restoringId === backup.id}
-                            className="!bg-amber-500 hover:!bg-amber-600"
-                          >
-                            {t("yes")}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setConfirmRestoreId(null)}
-                          >
-                            {t("no")}
-                          </Button>
-                        </>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setConfirmRestoreId(backup.id)}
-                        >
-                          <span
-                            className="material-symbols-outlined text-[14px] mr-1"
-                            aria-hidden="true"
-                          >
-                            restore
-                          </span>
-                          {t("restore")}
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </>
-            )}
+              </div>
+            </div>
           </div>
         )}
+
+        {confirmFullImport && pendingFullImportFile && (
+          <div className="mt-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+            <div className="flex items-start gap-2">
+              <span className="material-symbols-outlined text-[18px] text-amber-500 mt-0.5" aria-hidden="true">warning</span>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-amber-500 mb-1">{t("confirmFullImport")}</p>
+                <p className="text-xs text-text-muted mb-2">{t("confirmFullImportDesc", { file: pendingFullImportFile.name })}</p>
+                <div className="flex items-center gap-2">
+                  <Button variant="primary" size="sm" onClick={handleFullImportConfirm} className="!bg-amber-500 hover:!bg-amber-600 !text-xs">
+                    {t("yesImport")}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleFullImportCancel} className="!text-xs">{tc("cancel")}</Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Legacy JSON Format (collapsible, closed by default) */}
+      <div className="pt-3 border-t border-border/50 mb-4">
+        <button
+          onClick={() => {
+            const el = document.getElementById("legacy-json-section");
+            if (el) el.classList.toggle("hidden");
+          }}
+          className="flex items-center gap-2 text-xs text-text-muted hover:text-text-main transition-colors w-full text-left"
+        >
+          <span className="material-symbols-outlined text-[14px]" aria-hidden="true">expand_more</span>
+          {t("legacyJsonFormat")}
+        </button>
+        <div id="legacy-json-section" className="hidden mt-2 p-3 rounded-lg bg-bg border border-border">
+          <p className="text-xs text-text-muted mb-2">{t("legacyJsonFormatDesc")}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleExportJson} loading={exportLoading}>
+              <span className="material-symbols-outlined text-[14px] mr-1" aria-hidden="true">data_object</span>
+              Export JSON
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleImportJsonClick} loading={importLoading}>
+              <span className="material-symbols-outlined text-[14px] mr-1" aria-hidden="true">data_object</span>
+              Import JSON
+            </Button>
+            <input ref={jsonInputRef} type="file" accept=".json" className="hidden" onChange={handleJsonSelected} />
+          </div>
+        </div>
       </div>
     </Card>
   );

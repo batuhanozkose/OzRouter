@@ -94,6 +94,8 @@ let syncTimer: ReturnType<typeof setInterval> | null = null;
 let lastSyncTime: string | null = null;
 let lastSyncModelCount = 0;
 let activeSyncIntervalMs = SYNC_INTERVAL_MS;
+let syncInProgress = false;
+let runtimeEnabled = process.env.PRICING_SYNC_ENABLED === "true";
 
 // ─── Core: Fetch + Transform ─────────────────────────────
 
@@ -224,10 +226,15 @@ export function saveSyncedPricing(data: PricingByProvider): void {
  * Clear all synced pricing data.
  */
 export function clearSyncedPricing(): void {
-  const db = getDbInstance();
-  db.prepare("DELETE FROM key_value WHERE namespace = 'pricing_synced'").run();
-  backupDbFile("pre-write");
-  invalidateDbCache("pricing");
+  syncInProgress = true;
+  try {
+    const db = getDbInstance();
+    db.prepare("DELETE FROM key_value WHERE namespace = 'pricing_synced'").run();
+    backupDbFile("pre-write");
+    invalidateDbCache("pricing");
+  } finally {
+    syncInProgress = false;
+  }
 }
 
 // ─── Main sync function ─────────────────────────────────
@@ -242,7 +249,17 @@ export async function syncPricingFromSources(opts?: {
   const requestedSources = opts?.sources || SYNC_SOURCES;
   const dryRun = opts?.dryRun ?? false;
 
-  // Validate sources
+  if (!dryRun && syncInProgress) {
+    return {
+      success: false,
+      modelCount: 0,
+      providerCount: 0,
+      source: requestedSources.join(","),
+      dryRun,
+      error: "Sync already in progress",
+    };
+  }
+
   const validSources = requestedSources.filter((s): s is SupportedSource =>
     SUPPORTED_SOURCES.includes(s as SupportedSource)
   );
@@ -261,6 +278,8 @@ export async function syncPricingFromSources(opts?: {
       error: `No valid sources provided. Supported: ${supported}. Invalid: ${invalidSources.join(", ")}`,
     };
   }
+
+  if (!dryRun) syncInProgress = true;
 
   try {
     const aggregated: PricingByProvider = {};
@@ -310,6 +329,8 @@ export async function syncPricingFromSources(opts?: {
       dryRun,
       error: message,
     };
+  } finally {
+    if (!dryRun) syncInProgress = false;
   }
 }
 
@@ -339,6 +360,7 @@ export function startPeriodicSync(intervalMs?: number): void {
     });
 
   syncTimer = setInterval(() => {
+    if (syncInProgress) return;
     syncPricingFromSources()
       .then((result) => {
         if (result.success) {
@@ -365,6 +387,7 @@ export function stopPeriodicSync(): void {
   if (syncTimer) {
     clearInterval(syncTimer);
     syncTimer = null;
+    syncInProgress = false;
     console.log("[PRICING_SYNC] Periodic sync stopped");
   }
 }
@@ -373,9 +396,8 @@ export function stopPeriodicSync(): void {
  * Get current sync status.
  */
 export function getSyncStatus(): SyncStatus {
-  const enabled = process.env.PRICING_SYNC_ENABLED === "true";
   return {
-    enabled,
+    enabled: runtimeEnabled || process.env.PRICING_SYNC_ENABLED === "true",
     lastSync: lastSyncTime,
     lastSyncModelCount,
     nextSync:
@@ -387,6 +409,31 @@ export function getSyncStatus(): SyncStatus {
   };
 }
 
+/**
+ * Enable or disable periodic sync at runtime.
+ */
+export function setSyncEnabled(enabled: boolean): void {
+  if (enabled && !runtimeEnabled) {
+    runtimeEnabled = true;
+    startPeriodicSync(activeSyncIntervalMs);
+  } else if (!enabled && runtimeEnabled) {
+    runtimeEnabled = false;
+    stopPeriodicSync();
+  }
+}
+
+/**
+ * Update sync interval at runtime (restarts timer if running).
+ */
+export function setSyncInterval(intervalMs: number): void {
+  const safeMs = Number.isFinite(intervalMs) && intervalMs >= 60_000 ? intervalMs : 3600_000;
+  activeSyncIntervalMs = safeMs;
+  if (runtimeEnabled && syncTimer) {
+    stopPeriodicSync();
+    startPeriodicSync(safeMs);
+  }
+}
+
 // ─── Init (called from server-init.ts) ───────────────────
 
 /**
@@ -395,7 +442,9 @@ export function getSyncStatus(): SyncStatus {
 export async function initPricingSync(): Promise<void> {
   if (process.env.PRICING_SYNC_ENABLED !== "true") {
     console.log("[PRICING_SYNC] Disabled (set PRICING_SYNC_ENABLED=true to enable)");
+    runtimeEnabled = false;
     return;
   }
+  runtimeEnabled = true;
   startPeriodicSync();
 }

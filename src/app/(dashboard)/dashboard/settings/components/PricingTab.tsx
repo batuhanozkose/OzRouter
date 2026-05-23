@@ -360,6 +360,36 @@ export default function PricingTab() {
     }
   }, [loadData, showStatus, t]);
 
+  const setSyncConfig = useCallback(
+    async (config: { enabled?: boolean; intervalMs?: number }) => {
+      setSyncing(true);
+      try {
+        const response = await fetch("/api/pricing/sync", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(config),
+        });
+        if (!response.ok) {
+          const payload = (await response.json().catch(() => ({}))) as { error?: { message?: string } };
+          throw new Error(payload.error?.message || t("pricingSyncConfigFailed"));
+        }
+        const updated = (await response.json()) as SyncStatus;
+        setSyncStatus(updated);
+        showStatus("success", t(updated.enabled ? "pricingSyncEnabled" : "pricingSyncDisabled"));
+      } catch (error: any) {
+        showStatus(
+          "error",
+          t("pricingSyncConfigFailedWithReason", {
+            reason: error?.message || t("unknownError"),
+          })
+        );
+      } finally {
+        setSyncing(false);
+      }
+    },
+    [showStatus, t]
+  );
+
   const selectProviderFilter = useCallback((alias: string) => {
     setSelectedProvider((previous) => (previous === alias ? null : alias));
   }, []);
@@ -399,7 +429,39 @@ export default function PricingTab() {
             </h3>
             <p className="text-sm text-text-muted mt-1">{t("pricingSyncDescription")}</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 mr-2">
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={syncStatus?.enabled ?? false}
+                  onChange={(e) => {
+                    void setSyncConfig({ enabled: e.target.checked });
+                  }}
+                  disabled={syncing}
+                />
+                <div className="w-9 h-5 rounded-full bg-bg-subtle border border-border peer-checked:bg-emerald-500 peer-checked:border-emerald-500 peer-focus:ring-2 peer-focus:ring-primary/20 transition-colors after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4" />
+              </label>
+              <span className="text-xs text-text-muted">
+                {syncStatus?.enabled ? t("syncEnabled") : t("syncDisabled")}
+              </span>
+            </div>
+            {syncStatus?.enabled && (
+              <select
+                className="text-xs rounded-lg border border-border bg-bg-subtle px-2 py-1.5 text-text"
+                value={syncStatus.intervalMs}
+                onChange={(e) => {
+                  void setSyncConfig({ intervalMs: Number(e.target.value) });
+                }}
+                disabled={syncing}
+              >
+                <option value={3600000}>{t("pricingSyncInterval1h")}</option>
+                <option value={21600000}>{t("pricingSyncInterval6h")}</option>
+                <option value={43200000}>{t("pricingSyncInterval12h")}</option>
+                <option value={86400000}>{t("pricingSyncInterval24h")}</option>
+              </select>
+            )}
             <Button variant="secondary" onClick={() => void clearSyncedPricing()} loading={syncing}>
               {t("clearSyncedPricing")}
             </Button>

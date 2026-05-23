@@ -325,7 +325,7 @@ export default function MemoryPage() {
 
           <div className="flex items-center justify-between mt-4">
             <div className="text-sm text-gray-500">
-              {t("pageInfo", { page, totalPages, total })}
+              {t("pageInfo", { page, totalPages, total, from: (page - 1) * 20 + 1, to: Math.min(page * 20, total) })}
             </div>
             <div className="flex gap-2">
               <Button

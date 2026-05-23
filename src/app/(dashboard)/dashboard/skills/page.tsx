@@ -714,17 +714,26 @@ export default function SkillsPage() {
 
           {skillsProvider === "skillsmp" && mpResults.length > 0 && (
             <div className="grid gap-3">
-              {mpResults.map((skill) => (
-                <Card key={skill.name}>
+              {mpResults.map((skill, i) => (
+                <Card key={`mp-${i}-${skill.name}`}>
                   <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-semibold">{skill.name}</h4>
+                    <div className="min-w-0 flex-1 mr-4">
+                      <h4 className="font-semibold">
+                        <a
+                          href={skill.sourceUrl || `https://skillsmp.com/skills/${encodeURIComponent(skill.name)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-violet-400 hover:text-violet-300 hover:underline"
+                        >
+                          {skill.name}
+                        </a>
+                      </h4>
                       <p className="text-sm text-text-muted mt-1">{skill.description}</p>
                     </div>
                     <button
                       onClick={() => installFromMarketplace(skill)}
                       disabled={mpInstallingId === skill.name}
-                      className="px-4 py-1.5 text-sm font-medium rounded-lg bg-violet-500 text-white hover:bg-violet-600 disabled:opacity-50 transition-colors"
+                      className="px-4 py-1.5 text-sm font-medium rounded-lg bg-violet-500 text-white hover:bg-violet-600 disabled:opacity-50 transition-colors shrink-0"
                     >
                       {mpInstallingId === skill.name ? "Installing..." : "Install"}
                     </button>
@@ -736,11 +745,20 @@ export default function SkillsPage() {
 
           {skillsProvider === "skillssh" && shResults.length > 0 && (
             <div className="grid gap-3">
-              {shResults.map((skill) => (
-                <Card key={skill.id}>
+              {shResults.map((skill, i) => (
+                <Card key={`sh-${i}-${skill.id}`}>
                   <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-semibold">{skill.name}</h4>
+                    <div className="min-w-0 flex-1 mr-4">
+                      <h4 className="font-semibold">
+                        <a
+                          href={`https://skills.sh/${encodeURIComponent(skill.id)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-violet-400 hover:text-violet-300 hover:underline"
+                        >
+                          {skill.name}
+                        </a>
+                      </h4>
                       <p className="text-sm text-text-muted mt-1">
                         {skill.source} · {skill.installs.toLocaleString()} installs
                       </p>
@@ -748,7 +766,7 @@ export default function SkillsPage() {
                     <button
                       onClick={() => installFromSkillsSh(skill)}
                       disabled={shInstallingId === skill.id}
-                      className="px-4 py-1.5 text-sm font-medium rounded-lg bg-violet-500 text-white hover:bg-violet-600 disabled:opacity-50 transition-colors"
+                      className="px-4 py-1.5 text-sm font-medium rounded-lg bg-violet-500 text-white hover:bg-violet-600 disabled:opacity-50 transition-colors shrink-0"
                     >
                       {shInstallingId === skill.id ? "Installing..." : "Install"}
                     </button>

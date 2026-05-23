@@ -2,16 +2,14 @@
  * OzRouter MCP Server — Model Context Protocol server exposing
  * OzRouter gateway intelligence as tools for AI agents.
  *
- * Supports two transports:
- *   1. stdio  — for IDE integration (VS Code, Cursor, Claude Desktop)
- *   2. HTTP   — for remote/programmatic access
+ * Supports HTTP transports via SSE and Streamable HTTP.
  *
  * Tools wrap existing OzRouter API endpoints and add intelligence
  * such as routing simulation, budget guards, and session snapshots.
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+
 import {
   getComboModelProvider,
   getComboModelString,
@@ -46,7 +44,7 @@ import {
   oneproxyRotateInput,
   oneproxyStatsInput,
 } from "./schemas/tools.ts";
-import { startMcpHeartbeat } from "./runtimeHeartbeat.ts";
+
 
 import { closeAuditDb, logToolCall } from "./audit.ts";
 import {
@@ -946,50 +944,4 @@ export function createMcpServer(): McpServer {
   });
 
   return server;
-}
-
-// ============ Main Entry Point (stdio) ============
-
-/**
- * Start the MCP server with stdio transport.
- * Called when `ozrouter --mcp` is used.
- */
-export async function startMcpStdio(): Promise<void> {
-  const server = createMcpServer();
-  const transport = new StdioServerTransport();
-  const version = process.env.npm_package_version || "1.8.1";
-  const stopHeartbeat = startMcpHeartbeat({
-    version,
-    scopesEnforced: MCP_ENFORCE_SCOPES,
-    allowedScopes: Array.from(MCP_ALLOWED_SCOPES),
-    toolCount: TOTAL_MCP_TOOL_COUNT,
-  });
-  const stopHeartbeatOnce = () => {
-    stopHeartbeat();
-  };
-  process.once("exit", stopHeartbeatOnce);
-  process.once("SIGINT", stopHeartbeatOnce);
-  process.once("SIGTERM", stopHeartbeatOnce);
-
-  console.error("[MCP] OzRouter MCP Server starting (stdio transport)...");
-  try {
-    await server.connect(transport);
-    console.error("[MCP] OzRouter MCP Server connected and ready.");
-  } finally {
-    if (closeAuditDb()) {
-      console.error("[MCP] Audit database checkpointed and closed.");
-    }
-    stopHeartbeatOnce();
-    process.off("exit", stopHeartbeatOnce);
-    process.off("SIGINT", stopHeartbeatOnce);
-    process.off("SIGTERM", stopHeartbeatOnce);
-  }
-}
-
-// If this file is run directly, start stdio server
-if (process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/\\/g, "/"))) {
-  startMcpStdio().catch((err) => {
-    console.error("[MCP] Fatal error:", err);
-    process.exit(1);
-  });
 }

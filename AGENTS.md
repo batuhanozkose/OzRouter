@@ -6,16 +6,16 @@ OzRouter is a unified AI proxy/router — route any LLM through one endpoint. Mu
 with **160+ providers** (OpenAI, Anthropic, Gemini, DeepSeek, Groq, xAI, Mistral, Fireworks,\
 Cohere, NVIDIA, Cerebras, Pollinations, Puter, Cloudflare AI, HuggingFace, DeepInfra,\
 SambaNova, Meta Llama API, Moonshot AI, AI21 Labs, Databricks, Snowflake, and many more)\
-with **MCP Server** (29 tools) and **A2A v0.3 Protocol**.
+with **MCP Server** (29 tools over SSE / Streamable HTTP) and **A2A v0.3 Protocol**.
 
 ## Stack
 
-- **Runtime**: Next.js 16 (App Router), Node.js &gt;=18 &lt;24, ES Modules (`"type": "module"`)
-- **Language**: TypeScript 5.9 (`src/`) + JavaScript (`open-sse/`)
+- **Runtime**: Next.js 16 (App Router), Node.js &gt;=20.20.2 &lt;21 or &gt;=22.22.2 &lt;23 or &gt;=24 &lt;25, ES Modules (`"type": "module"`)
+- **Language**: TypeScript 6.0 (`src/`) + JavaScript (`open-sse/`)
 - **Database**: better-sqlite3 (SQLite) — `DATA_DIR` configurable, default `~/.ozrouter/`
 - **Streaming**: SSE via `open-sse` internal workspace package
 - **Styling**: Tailwind CSS v4
-- **i18n**: next-intl with 40+ languages
+- **i18n**: next-intl with English and Turkish catalogs
 - **Schemas**: Zod v4 for all API / MCP input validation
 
 ---
@@ -113,7 +113,7 @@ All persistence uses SQLite through domain-specific modules:\
 `file core.ts`, `file providers.ts`, `file models.ts`, `file combos.ts`, `file apiKeys.ts`, `file settings.ts`,\
 `file backup.ts`, `file proxies.ts`, `file prompts.ts`, `file webhooks.ts`, `file detailedLogs.ts`,\
 `file domainState.ts`, `file registeredKeys.ts`, `file quotaSnapshots.ts`, `file modelComboMappings.ts`,\
-`file cliToolState.ts`, `file encryption.ts`, `file readCache.ts`, `file secrets.ts`, `file stateReset.ts`,\
+`file cliToolState.ts`, `file remoteInstances.ts`, `file encryption.ts`, `file readCache.ts`, `file secrets.ts`, `file stateReset.ts`,\
 `file contextHandoffs.ts`, `file compression.ts`.\
 Schema migrations live in `db/migrations/` and run via `file migrationRunner.ts`.\
 `file src/lib/localDb.ts` is a **re-export layer only** — never add logic there.
@@ -124,7 +124,7 @@ Schema migrations live in `db/migrations/` and run via `file migrationRunner.ts`
   journaling. `SCHEMA_SQL` defines 20 base tables. Helpers: `rowToCamel`, `encryptConnectionFields`.
 - **`file migrationRunner.ts`**: Applies versioned SQL files from `db/migrations/` inside transactions.\
   Tracks applied migrations in `_ozrouter_migrations` table.
-- **Migrations**: 39 files (`file 001_initial_schema.sql` -&gt; `file 040_oneproxy_proxy_fields.sql`).\
+- **Migrations**: 43 files (`file 001_initial_schema.sql` -&gt; `file 045_remote_instances.sql`, with retired gaps).\
   Each migration is idempotent and runs in a transaction.
 - **Domain modules** import `getDbInstance()` from `file core.ts` for all CRUD operations.\
   Each module owns a specific table/set of tables (e.g., `file providers.ts` -&gt; `provider_connections`,\
@@ -305,7 +305,7 @@ Policy engine modules: `file policyEngine.ts`, `file comboResolver.ts`, `file co
 
 ### MCP Server (`open-sse/mcp-server/`)
 
-29 tools, 3 transports (stdio / SSE / Streamable HTTP). Scoped auth (10 scopes), Zod schemas.
+29 tools, 2 transports (SSE / Streamable HTTP). Scoped auth (10 scopes), Zod schemas.
 
 **Core tools** (20): get_health, list_combos, get_combo_metrics, switch_combo, check_quota,\
 route_request, cost_report, list_models_catalog, web_search, simulate_route, set_budget_guard,\
@@ -321,9 +321,8 @@ best_combo_for_task, explain_route, get_session_snapshot, db_health_check, sync_
 #### MCP Internals
 
 - **Tool registration**: Each tool is an object with `{ name, description, inputSchema: ZodSchema, handler: async (args) => {...} }`. Zod validates inputs before the handler fires.
-- `createMcpServer()` and `startMcpStdio()` exported from `file mcp-server/index.ts`.\
-  `createMcpServer()` wires all tool sets; `startMcpStdio()` launches the stdio transport.
-- **Transports**: stdio (CLI `ozrouter --mcp`), SSE (`/api/mcp/sse`), Streamable HTTP\
+- `createMcpServer()` exported from `file mcp-server/index.ts`. It wires all tool sets.
+- **Transports**: SSE (`/api/mcp/sse`), Streamable HTTP\
   (`/api/mcp/stream`). All share the same tool/scope engine.
 - **Scopes** (10): Control which tool categories an API key can access. Enforcement happens\
   before handler dispatch.
@@ -346,10 +345,6 @@ Skills: `file quotaManagement.ts`, `file smartRouting.ts`.
   quota; `file smartRouting.ts` recommends routing decisions.
 - **Agent Card**: `/.well-known/agent.json` exposes capabilities, skills, and metadata\
   for client auto-discovery.
-
-### ACP Module (`src/lib/acp/`)
-
-Agent Communication Protocol registry and manager.
 
 ### Memory System (`src/lib/memory/`)
 
@@ -382,6 +377,21 @@ Policy index for compliance enforcement.
 
 MITM proxy capability with certificate management, DNS handling, and target routing.
 
+### Remote CLI Instances
+
+Remote CLI setup is managed from `/dashboard/cli-tools` through Local / Remote tabs.\
+Remote machines are stored in `file src/lib/db/remoteInstances.ts` and reached through SSH via\
+`file src/lib/ssh/connectionManager.ts`. API routes under `src/app/api/remote-instances/` and\
+`src/app/api/cli-tools/remote/` handle instance CRUD, connection tests, remote status scans,\
+install flows, and applying CLI tool configuration.
+
+### Dashboard Surfaces
+
+- `/dashboard/studio` owns chat/search playground experiences.
+- `/dashboard/changelog` is changelog-only and reads local `CHANGELOG.md` through `/api/changelog`,\
+  falling back to GitHub raw changelog when local loading fails.
+- `/dashboard/cli-tools` separates local and remote CLI tool management.
+
 ### Middleware (`src/middleware/`)
 
 Request middleware including `file promptInjectionGuard.ts`.
@@ -409,6 +419,8 @@ Request middleware including `file promptInjectionGuard.ts`.
 - **DB ops** go through `src/lib/db/` modules, never raw SQL in routes
 - **Provider requests** flow through `open-sse/handlers/`
 - **MCP/A2A pages** are tabs inside `/dashboard/endpoint`, not standalone routes
+- **Changelog page** remains changelog-only; do not reintroduce News tabs or tab state there
+- **Remote CLI changes** must go through `src/lib/db/remoteInstances.ts`, `src/lib/ssh/`, and `src/shared/services/remoteCliRuntime.ts`
 - **No memory leaks** in SSE streams (abort signals, cleanup)
 - **Rate limit headers** must be parsed correctly
 - All API inputs validated with **Zod schemas**

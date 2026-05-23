@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import { getDbInstance } from "@/lib/db/core";
+import {
+  resolvePricingForModel,
+  type PricingByProvider,
+  type PricingResolution,
+} from "@/lib/usage/pricingResolver";
 
 function getRangeStartIso(range: string): string | null {
   const end = new Date();
@@ -32,17 +37,27 @@ function getRangeStartIso(range: string): string | null {
 
 function shortModelName(model: string | null): string {
   if (!model) return "-";
-  const parts = model.split(/[/:-]/);
+  const parts = model.split(/[/:]/);
   return parts[parts.length - 1] || model;
 }
 
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-type PricingByProvider = Record<string, Record<string, Record<string, unknown>>>;
 type ComputeCostFromPricing = (
   pricing: Record<string, unknown> | null | undefined,
   tokens: Record<string, number | undefined> | null | undefined
 ) => number;
+type CostDetails = {
+  cost: number;
+  pricingSource: string | null;
+  pricingProvider: string | null;
+  pricingModel: string | null;
+  estimatedCost: boolean;
+};
+type CostSourceSummary = Pick<
+  CostDetails,
+  "pricingSource" | "pricingProvider" | "pricingModel" | "estimatedCost"
+>;
 
 function toNumber(value: unknown): number {
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -65,45 +80,64 @@ function appendWhereCondition(whereClause: string, condition: string): string {
   return whereClause ? `${whereClause} AND (${condition})` : `WHERE (${condition})`;
 }
 
-function resolveModelPricing(
-  pricingByProvider: PricingByProvider,
-  provider: string,
-  model: string,
-  normalizeModelName: (model: string) => string
-): Record<string, unknown> | null {
-  const providerPricing = pricingByProvider[provider];
-  if (!providerPricing) return null;
-
-  const normalizedModel = normalizeModelName(model);
-  const shortModel = shortModelName(model);
-  return (
-    providerPricing[model] ||
-    providerPricing[normalizedModel] ||
-    providerPricing[shortModel] ||
-    null
-  );
+function toCostSourceSummary(resolution: PricingResolution | null): CostSourceSummary {
+  return {
+    pricingSource: resolution?.source || null,
+    pricingProvider: resolution?.pricingProvider || null,
+    pricingModel: resolution?.pricingModel || null,
+    estimatedCost: resolution?.estimated || false,
+  };
 }
 
-function computeUsageRowCost(
+function chooseCostSourceSummary(current: CostSourceSummary | undefined, next: CostSourceSummary) {
+  const nextSummary = {
+    pricingSource: next.pricingSource,
+    pricingProvider: next.pricingProvider,
+    pricingModel: next.pricingModel,
+    estimatedCost: next.estimatedCost,
+  };
+  if (!current || (!current.estimatedCost && next.estimatedCost)) return nextSummary;
+  return current;
+}
+
+function computeUsageRowCostDetails(
   row: Record<string, unknown>,
   pricingByProvider: PricingByProvider,
-  normalizeModelName: (model: string) => string,
   computeCostFromPricing: ComputeCostFromPricing
-): number {
+): CostDetails {
   const provider = toStringValue(row.provider);
   const model = toStringValue(row.model);
-  if (!provider || !model) return 0;
+  if (!provider || !model) {
+    return {
+      cost: 0,
+      pricingSource: null,
+      pricingProvider: null,
+      pricingModel: null,
+      estimatedCost: false,
+    };
+  }
 
-  const pricing = resolveModelPricing(pricingByProvider, provider, model, normalizeModelName);
-  if (!pricing) return 0;
+  const resolution = resolvePricingForModel(pricingByProvider, provider, model);
+  if (!resolution) {
+    return {
+      cost: 0,
+      pricingSource: null,
+      pricingProvider: null,
+      pricingModel: null,
+      estimatedCost: false,
+    };
+  }
 
-  return computeCostFromPricing(pricing, {
-    input: toNumber(row.promptTokens),
-    output: toNumber(row.completionTokens),
-    cacheRead: toNumber(row.cacheReadTokens),
-    cacheCreation: toNumber(row.cacheCreationTokens),
-    reasoning: toNumber(row.reasoningTokens),
-  });
+  return {
+    cost: computeCostFromPricing(resolution.pricing, {
+      input: toNumber(row.promptTokens),
+      output: toNumber(row.completionTokens),
+      cacheRead: toNumber(row.cacheReadTokens),
+      cacheCreation: toNumber(row.cacheCreationTokens),
+      reasoning: toNumber(row.reasoningTokens),
+    }),
+    ...toCostSourceSummary(resolution),
+  };
 }
 
 function formatUtcDate(date: Date): string {
@@ -164,8 +198,7 @@ export async function GET(request: Request) {
     // Fetch pricing data for cost calculation (no rows loaded)
     const { getPricing } = await import("@/lib/db/settings");
     const pricingByProvider = (await getPricing()) as PricingByProvider;
-    const { computeCostFromPricing, normalizeModelName } =
-      await import("@/lib/usage/costCalculator");
+    const { computeCostFromPricing } = await import("@/lib/usage/costCalculator");
 
     const summaryRow = db
       .prepare(
@@ -475,13 +508,12 @@ export async function GET(request: Request) {
     for (const row of dailyCostRows) {
       const date = toStringValue(row.date);
       if (!date) continue;
-      const cost = computeUsageRowCost(
+      const costDetails = computeUsageRowCostDetails(
         row,
         pricingByProvider,
-        normalizeModelName,
         computeCostFromPricing
       );
-      dailyCostByDate.set(date, (dailyCostByDate.get(date) || 0) + cost);
+      dailyCostByDate.set(date, (dailyCostByDate.get(date) || 0) + costDetails.cost);
     }
 
     const dailyTrend = dailyRows.map((row) => ({
@@ -507,10 +539,9 @@ export async function GET(request: Request) {
         input: Number(row.promptTokens) || 0,
         output: Number(row.completionTokens) || 0,
       };
-      const cost = computeUsageRowCost(
+      const costDetails = computeUsageRowCostDetails(
         row,
         pricingByProvider,
-        normalizeModelName,
         computeCostFromPricing
       );
       return {
@@ -527,7 +558,11 @@ export async function GET(request: Request) {
             ? Number((Number(row.successfulRequests) / Number(row.requests)) * 100).toFixed(2)
             : 0,
         lastUsed: row.lastUsed,
-        cost: roundCost(cost),
+        cost: roundCost(costDetails.cost),
+        pricingSource: costDetails.pricingSource,
+        pricingProvider: costDetails.pricingProvider,
+        pricingModel: costDetails.pricingModel,
+        estimatedCost: costDetails.estimatedCost,
       };
     });
 
@@ -535,54 +570,88 @@ export async function GET(request: Request) {
     summary.totalCost = roundCost(totalCost);
 
     const providerCostByProvider = new Map<string, number>();
+    const providerSourceByProvider = new Map<string, CostSourceSummary>();
     for (const row of providerCostRows) {
       const provider = toStringValue(row.provider);
       if (!provider) continue;
-      const cost = computeUsageRowCost(
+      const costDetails = computeUsageRowCostDetails(
         row,
         pricingByProvider,
-        normalizeModelName,
         computeCostFromPricing
       );
-      providerCostByProvider.set(provider, (providerCostByProvider.get(provider) || 0) + cost);
+      providerCostByProvider.set(
+        provider,
+        (providerCostByProvider.get(provider) || 0) + costDetails.cost
+      );
+      providerSourceByProvider.set(
+        provider,
+        chooseCostSourceSummary(providerSourceByProvider.get(provider), costDetails)
+      );
     }
 
-    const byProvider = providerRows.map((row) => ({
-      provider: row.provider,
-      requests: Number(row.requests),
-      promptTokens: Number(row.promptTokens),
-      completionTokens: Number(row.completionTokens),
-      totalTokens: Number(row.totalTokens),
-      avgLatencyMs: Math.round(Number(row.avgLatencyMs)),
-      successRatePct:
-        Number(row.requests) > 0
-          ? Number((Number(row.successfulRequests) / Number(row.requests)) * 100).toFixed(2)
-          : 0,
-      cost: roundCost(providerCostByProvider.get(toStringValue(row.provider)) || 0),
-    }));
+    const byProvider = providerRows.map((row) => {
+      const provider = toStringValue(row.provider);
+      const source = providerSourceByProvider.get(provider);
+      return {
+        provider: row.provider,
+        requests: Number(row.requests),
+        promptTokens: Number(row.promptTokens),
+        completionTokens: Number(row.completionTokens),
+        totalTokens: Number(row.totalTokens),
+        avgLatencyMs: Math.round(Number(row.avgLatencyMs)),
+        successRatePct:
+          Number(row.requests) > 0
+            ? Number((Number(row.successfulRequests) / Number(row.requests)) * 100).toFixed(2)
+            : 0,
+        cost: roundCost(providerCostByProvider.get(provider) || 0),
+        ...(source || {
+          pricingSource: null,
+          pricingProvider: null,
+          pricingModel: null,
+          estimatedCost: false,
+        }),
+      };
+    });
 
     const accountCostByAccount = new Map<string, number>();
+    const accountSourceByAccount = new Map<string, CostSourceSummary>();
     for (const row of accountCostRows) {
       const account = toStringValue(row.account, "unknown");
-      const cost = computeUsageRowCost(
+      const costDetails = computeUsageRowCostDetails(
         row,
         pricingByProvider,
-        normalizeModelName,
         computeCostFromPricing
       );
-      accountCostByAccount.set(account, (accountCostByAccount.get(account) || 0) + cost);
+      accountCostByAccount.set(
+        account,
+        (accountCostByAccount.get(account) || 0) + costDetails.cost
+      );
+      accountSourceByAccount.set(
+        account,
+        chooseCostSourceSummary(accountSourceByAccount.get(account), costDetails)
+      );
     }
 
-    const byAccount = accountRows.map((row) => ({
-      account: toStringValue(row.account, "unknown"),
-      requests: Number(row.requests),
-      promptTokens: Number(row.promptTokens),
-      completionTokens: Number(row.completionTokens),
-      totalTokens: Number(row.totalTokens),
-      avgLatencyMs: Math.round(Number(row.avgLatencyMs)),
-      lastUsed: row.lastUsed,
-      cost: roundCost(accountCostByAccount.get(toStringValue(row.account, "unknown")) || 0),
-    }));
+    const byAccount = accountRows.map((row) => {
+      const account = toStringValue(row.account, "unknown");
+      const source = accountSourceByAccount.get(account);
+      return {
+        account,
+        requests: Number(row.requests),
+        promptTokens: Number(row.promptTokens),
+        completionTokens: Number(row.completionTokens),
+        totalTokens: Number(row.totalTokens),
+        avgLatencyMs: Math.round(Number(row.avgLatencyMs)),
+        lastUsed: row.lastUsed,
+        cost: roundCost(accountCostByAccount.get(account) || 0),
+        ...(source || {
+          pricingSource: null,
+          pricingProvider: null,
+          pricingModel: null,
+          estimatedCost: false,
+        }),
+      };
+    });
 
     const apiKeyMap = new Map<
       string,
@@ -595,6 +664,10 @@ export async function GET(request: Request) {
         completionTokens: number;
         totalTokens: number;
         cost: number;
+        pricingSource: string | null;
+        pricingProvider: string | null;
+        pricingModel: string | null;
+        estimatedCost: boolean;
       }
     >();
     for (const row of apiKeyRows) {
@@ -610,18 +683,27 @@ export async function GET(request: Request) {
         completionTokens: 0,
         totalTokens: 0,
         cost: 0,
+        pricingSource: null,
+        pricingProvider: null,
+        pricingModel: null,
+        estimatedCost: false,
       };
 
       existing.requests += Number(row.requests);
       existing.promptTokens += Number(row.promptTokens);
       existing.completionTokens += Number(row.completionTokens);
       existing.totalTokens += Number(row.totalTokens);
-      existing.cost += computeUsageRowCost(
+      const costDetails = computeUsageRowCostDetails(
         row,
         pricingByProvider,
-        normalizeModelName,
         computeCostFromPricing
       );
+      existing.cost += costDetails.cost;
+      const source = chooseCostSourceSummary(existing, costDetails);
+      existing.pricingSource = source.pricingSource;
+      existing.pricingProvider = source.pricingProvider;
+      existing.pricingModel = source.pricingModel;
+      existing.estimatedCost = source.estimatedCost;
       apiKeyMap.set(key, existing);
     }
     const byApiKey = Array.from(apiKeyMap.values())
@@ -689,7 +771,11 @@ export async function GET(request: Request) {
         }
         if (apiKeyWhere) {
           presetConditions.push(apiKeyWhere);
-          Object.assign(presetParams, params);
+          for (const key of Object.keys(params)) {
+            if (key.startsWith("apiKey")) {
+              presetParams[key] = params[key];
+            }
+          }
         }
 
         const presetWhere =
@@ -715,12 +801,11 @@ export async function GET(request: Request) {
 
         let presetTotalCost = 0;
         for (const row of presetModelRows) {
-          presetTotalCost += computeUsageRowCost(
+          presetTotalCost += computeUsageRowCostDetails(
             row,
             pricingByProvider,
-            normalizeModelName,
             computeCostFromPricing
-          );
+          ).cost;
         }
 
         presetSummaries[presetRange] = {

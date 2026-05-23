@@ -40,13 +40,23 @@ interface UsageAnalyticsProviderRow {
   requests: number;
   totalTokens: number;
   cost: number;
+  pricingSource?: string | null;
+  pricingProvider?: string | null;
+  pricingModel?: string | null;
+  estimatedCost?: boolean;
 }
 
 interface UsageAnalyticsModelRow {
   model: string;
+  rawModel?: string;
+  provider?: string;
   requests: number;
   totalTokens: number;
   cost: number;
+  pricingSource?: string | null;
+  pricingProvider?: string | null;
+  pricingModel?: string | null;
+  estimatedCost?: boolean;
 }
 
 interface UsageAnalyticsTrendRow {
@@ -63,6 +73,10 @@ interface UsageAnalyticsApiKeyRow {
   completionTokens: number;
   totalTokens: number;
   cost: number;
+  pricingSource?: string | null;
+  pricingProvider?: string | null;
+  pricingModel?: string | null;
+  estimatedCost?: boolean;
 }
 
 interface UsageAnalyticsAccountRow {
@@ -70,6 +84,10 @@ interface UsageAnalyticsAccountRow {
   totalTokens: number;
   requests: number;
   cost: number;
+  pricingSource?: string | null;
+  pricingProvider?: string | null;
+  pricingModel?: string | null;
+  estimatedCost?: boolean;
 }
 
 interface UsageAnalyticsPayload {
@@ -102,13 +120,35 @@ const CHART_COLORS = [
   "#ec4899",
 ];
 
-function createCurrencyFormatter(locale: string) {
+function createCurrencyFormatter(locale: string, microPrecision = false) {
   return new Intl.NumberFormat(locale, {
     style: "currency",
     currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: microPrecision ? 6 : 2,
+    maximumFractionDigits: microPrecision ? 6 : 2,
   });
+}
+
+function pricingSourceTitle(row: Record<string, unknown>) {
+  const pricingSource = typeof row.pricingSource === "string" ? row.pricingSource : null;
+  const pricingProvider = typeof row.pricingProvider === "string" ? row.pricingProvider : null;
+  const pricingModel = typeof row.pricingModel === "string" ? row.pricingModel : null;
+  if (!pricingSource || !pricingProvider || !pricingModel) return undefined;
+  const prefix = row.estimatedCost === true ? "Estimated from" : "Priced from";
+  return `${prefix} ${pricingProvider}/${pricingModel} (${pricingSource})`;
+}
+
+function EstimatedBadge({ row }: { row: Record<string, unknown> }) {
+  if (row.estimatedCost !== true) return null;
+
+  return (
+    <span
+      className="rounded border border-amber-400/30 bg-amber-400/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-amber-300"
+      title={pricingSourceTitle(row)}
+    >
+      estimated
+    </span>
+  );
 }
 
 function csvCell(value: string | number): string {
@@ -212,7 +252,11 @@ function downloadFile(content: string, filename: string, mimeType: string) {
 export default function CostOverviewTab() {
   const t = useTranslations("costs");
   const locale = useLocale();
-  const currencyFormatter = useMemo(() => createCurrencyFormatter(locale), [locale]);
+  const [microPrecision, setMicroPrecision] = useState(false);
+  const currencyFormatter = useMemo(
+    () => createCurrencyFormatter(locale, microPrecision),
+    [locale, microPrecision]
+  );
   const [range, setRange] = useState<CostRange>("30d");
   const [analytics, setAnalytics] = useState<UsageAnalyticsPayload | null>(null);
   const [presetCosts, setPresetCosts] = useState<Record<"1d" | "7d" | "30d", number>>({
@@ -391,6 +435,18 @@ export default function CostOverviewTab() {
               value={range}
               onChange={(value) => setRange(value as CostRange)}
             />
+            <label className="inline-flex items-center gap-1.5 ml-3 cursor-pointer">
+              <input
+                type="checkbox"
+                className="sr-only peer"
+                checked={microPrecision}
+                onChange={(e) => setMicroPrecision(e.target.checked)}
+              />
+              <div className="w-8 h-4.5 rounded-full bg-bg-subtle border border-border peer-checked:bg-amber-500 peer-checked:border-amber-500 transition-colors after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:after:translate-x-3.5 relative" />
+              <span className="text-xs text-text-muted whitespace-nowrap">
+                {t("microPrecision")}
+              </span>
+            </label>
           </div>
         </div>
       </Card>
@@ -636,8 +692,14 @@ export default function CostOverviewTab() {
               title={t("costTrend")}
               rows={analytics?.dailyTrend || []}
               locale={locale}
+              microPrecision={microPrecision}
             />
-            <ProviderSpendCard title={t("providerShare")} rows={providersByCost} locale={locale} />
+            <ProviderSpendCard
+              title={t("providerShare")}
+              rows={providersByCost}
+              locale={locale}
+              microPrecision={microPrecision}
+            />
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
@@ -649,6 +711,7 @@ export default function CostOverviewTab() {
               secondaryLabel={t("tokens")}
               rows={providersByCost}
               locale={locale}
+              microPrecision={microPrecision}
             />
             <TopListCard
               title={t("topModels")}
@@ -658,6 +721,7 @@ export default function CostOverviewTab() {
               secondaryLabel={t("tokens")}
               rows={modelsByCost}
               locale={locale}
+              microPrecision={microPrecision}
             />
           </div>
 
@@ -679,6 +743,7 @@ export default function CostOverviewTab() {
                     { key: "cost", label: t("cost"), align: "right", format: "currency" },
                   ]}
                   locale={locale}
+                  microPrecision={microPrecision}
                 />
               )}
               {accountsByCost.length > 0 && (
@@ -697,6 +762,7 @@ export default function CostOverviewTab() {
                     { key: "cost", label: t("cost"), align: "right", format: "currency" },
                   ]}
                   locale={locale}
+                  microPrecision={microPrecision}
                 />
               )}
             </div>
@@ -759,16 +825,22 @@ function ProviderSpendCard({
   title,
   rows,
   locale,
+  microPrecision = false,
 }: {
   title: string;
   rows: UsageAnalyticsProviderRow[];
   locale: string;
+  microPrecision?: boolean;
 }) {
-  const currencyFormatter = createCurrencyFormatter(locale);
+  const currencyFormatter = createCurrencyFormatter(locale, microPrecision);
   const chartRows = rows.slice(0, 6).map((row, index) => ({
     name: row.provider,
     value: row.cost,
     fill: CHART_COLORS[index % CHART_COLORS.length],
+    pricingSource: row.pricingSource,
+    pricingProvider: row.pricingProvider,
+    pricingModel: row.pricingModel,
+    estimatedCost: row.estimatedCost,
   }));
 
   return (
@@ -812,6 +884,7 @@ function ProviderSpendCard({
                   style={{ backgroundColor: row.fill }}
                 />
                 <span className="truncate text-text-main">{row.name}</span>
+                <EstimatedBadge row={row} />
               </div>
               <span className="font-mono text-text-muted">
                 {currencyFormatter.format(row.value)}
@@ -828,12 +901,14 @@ function CostTrendCard({
   title,
   rows,
   locale,
+  microPrecision = false,
 }: {
   title: string;
   rows: UsageAnalyticsTrendRow[];
   locale: string;
+  microPrecision?: boolean;
 }) {
-  const currencyFormatter = createCurrencyFormatter(locale);
+  const currencyFormatter = createCurrencyFormatter(locale, microPrecision);
   const chartRows = rows.map((row) => ({
     date: row.date.slice(5),
     cost: row.cost || 0,
@@ -1026,16 +1101,18 @@ function TopListCard({
   secondaryKey,
   secondaryLabel,
   locale,
+  microPrecision = false,
 }: {
   title: string;
-  rows: Array<Record<string, string | number>>;
+  rows: Array<Record<string, string | number | boolean | null | undefined>>;
   nameKey: string;
   valueKey: string;
   secondaryKey?: string;
   secondaryLabel?: string;
   locale: string;
+  microPrecision?: boolean;
 }) {
-  const currencyFormatter = createCurrencyFormatter(locale);
+  const currencyFormatter = createCurrencyFormatter(locale, microPrecision);
 
   return (
     <Card className="p-5">
@@ -1048,7 +1125,10 @@ function TopListCard({
             key={String(row[nameKey])}
             className="flex items-center justify-between gap-3 rounded-lg border border-border/20 bg-surface/20 px-4 py-3"
           >
-            <span className="text-sm text-text-main truncate">{String(row[nameKey])}</span>
+            <span className="flex min-w-0 items-center gap-2">
+              <span className="truncate text-sm text-text-main">{String(row[nameKey])}</span>
+              <EstimatedBadge row={row} />
+            </span>
             <div className="flex items-center gap-3 shrink-0">
               {secondaryKey ? (
                 <span className="text-xs text-text-muted">
@@ -1081,13 +1161,15 @@ function CostBreakdownTable({
   rows,
   columns,
   locale,
+  microPrecision = false,
 }: {
   title: string;
-  rows: Array<Record<string, string | number | null>>;
+  rows: Array<Record<string, string | number | boolean | null | undefined>>;
   columns: ColumnDef[];
   locale: string;
+  microPrecision?: boolean;
 }) {
-  const currencyFormatter = createCurrencyFormatter(locale);
+  const currencyFormatter = createCurrencyFormatter(locale, microPrecision);
 
   function formatValue(value: unknown, format?: ColumnDef["format"]): string {
     const num = Number(value || 0);
@@ -1136,7 +1218,14 @@ function CostBreakdownTable({
                         : "text-left text-text-main truncate max-w-[200px]"
                     }`}
                   >
-                    {formatValue(row[column.key], column.format)}
+                    {column.format === "currency" ? (
+                      <span className="inline-flex items-center justify-end gap-2">
+                        <span>{formatValue(row[column.key], column.format)}</span>
+                        <EstimatedBadge row={row} />
+                      </span>
+                    ) : (
+                      formatValue(row[column.key], column.format)
+                    )}
                   </td>
                 ))}
               </tr>

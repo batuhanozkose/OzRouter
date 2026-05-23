@@ -361,3 +361,13 @@ export {
 } from "./db/oneproxy";
 
 export type { OneproxyProxyRecord, OneproxyStats } from "./db/oneproxy";
+
+export {
+  listInstances,
+  getInstance,
+  createInstance,
+  deleteInstance,
+  updateInstance,
+} from "./db/remoteInstances";
+
+export type { RemoteInstanceRow, RemoteInstancePublic } from "./db/remoteInstances";

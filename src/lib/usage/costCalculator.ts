@@ -82,23 +82,13 @@ export async function calculateCost(
   if (!tokens || !provider || !model) return 0;
 
   try {
-    const { getPricingForModel } = await import("@/lib/localDb");
+    const { getPricing } = await import("@/lib/db/settings");
+    const { resolvePricingForModel } = await import("./pricingResolver");
 
-    // Try exact match first, then normalized model name
-    let pricing = await getPricingForModel(provider, model);
-    if (!pricing) {
-      const normalized = normalizeModelName(model);
-      if (normalized !== model) {
-        pricing = await getPricingForModel(provider, normalized);
-      }
-    }
-    if (!pricing) return 0;
-
-    const pricingRecord =
-      pricing && typeof pricing === "object" && !Array.isArray(pricing)
-        ? (pricing as Record<string, unknown>)
-        : {};
-    return computeCostFromPricing(pricingRecord, tokens);
+    const pricingByProvider = await getPricing();
+    const resolution = resolvePricingForModel(pricingByProvider, provider, model);
+    if (!resolution) return 0;
+    return computeCostFromPricing(resolution.pricing, tokens);
   } catch (error) {
     console.error("Error calculating cost:", error);
     return 0;

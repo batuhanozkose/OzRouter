@@ -120,10 +120,6 @@ const REAL_042_BOOTSTRAP_TOKEN_SQL = fs.readFileSync(
   path.resolve("src/lib/db/migrations/042_bootstrap_token.sql"),
   "utf8"
 );
-const REAL_043_INFLIGHT_SETTINGS_SQL = fs.readFileSync(
-  path.resolve("src/lib/db/migrations/043_inflight_settings.sql"),
-  "utf8"
-);
 const REAL_044_DRAIN_STATE_SQL = fs.readFileSync(
   path.resolve("src/lib/db/migrations/044_drain_state.sql"),
   "utf8"
@@ -907,11 +903,6 @@ test(
       );
       db.prepare("INSERT INTO key_value (namespace, key, value) VALUES (?, ?, ?)").run(
         "settings",
-        "inflight_max_global",
-        "250"
-      );
-      db.prepare("INSERT INTO key_value (namespace, key, value) VALUES (?, ?, ?)").run(
-        "settings",
         "drained_connections",
         '["conn-1"]'
       );
@@ -919,16 +910,15 @@ test(
       const count = withMockedMigrationFs(
         {
           "042_bootstrap_token.sql": REAL_042_BOOTSTRAP_TOKEN_SQL,
-          "043_inflight_settings.sql": REAL_043_INFLIGHT_SETTINGS_SQL,
           "044_drain_state.sql": REAL_044_DRAIN_STATE_SQL,
         },
         () => runner.runMigrations(db)
       );
 
-      assert.equal(count, 3);
+      assert.equal(count, 2);
       assert.deepEqual(
         db.prepare("SELECT version FROM _ozrouter_migrations ORDER BY version").all(),
-        [{ version: "041" }, { version: "042" }, { version: "043" }, { version: "044" }]
+        [{ version: "041" }, { version: "042" }, { version: "044" }]
       );
       assert.equal(
         db
@@ -943,8 +933,6 @@ test(
         [
           { key: "drain_threshold_percent", value: "90" },
           { key: "drained_connections", value: '["conn-1"]' },
-          { key: "inflight_max_global", value: "250" },
-          { key: "inflight_max_per_provider", value: "20" },
         ]
       );
     } finally {

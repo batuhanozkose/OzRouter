@@ -9,7 +9,7 @@ import {
   getCliConfigPaths,
   getCliRuntimeStatus,
 } from "@/shared/services/cliRuntime";
-import { createMultiBackup } from "@/shared/services/backupService";
+import { createMultiBackup, listBackups, readBackup } from "@/shared/services/backupService";
 import { saveCliToolLastConfigured, deleteCliToolLastConfigured } from "@/lib/db/cliToolState";
 import { cliModelConfigSchema } from "@/shared/validation/schemas";
 import { isValidationFailure, validateBody } from "@/shared/validation/helpers";
@@ -18,6 +18,7 @@ import { getApiKeyById } from "@/lib/localDb";
 const getCodexConfigPath = () => getCliConfigPaths("codex").config;
 const getCodexAuthPath = () => getCliConfigPaths("codex").auth;
 const getCodexDir = () => path.dirname(getCodexConfigPath());
+const OZROUTER_PREVIOUS_OPENAI_API_KEY = "OZROUTER_PREVIOUS_OPENAI_API_KEY";
 
 // Parse TOML config to object (simple parser for codex config)
 const parseToml = (content: string) => {
@@ -131,6 +132,28 @@ const hasOzRouterConfig = (config: string | null) => {
     config.includes('model_provider = "ozrouter"') ||
     config.includes("[model_providers.ozrouter]")
   );
+};
+
+const findPreviousAuthFromBackups = async (currentApiKey: unknown) => {
+  const backups = await listBackups("codex");
+  const authBackups = backups.filter(
+    (backup) => path.basename(backup.originalPath) === "auth.json"
+  );
+
+  for (const backup of authBackups) {
+    try {
+      const { content } = await readBackup("codex", backup.id);
+      const authData = JSON.parse(content);
+      if (authData?.OPENAI_API_KEY && authData.OPENAI_API_KEY !== currentApiKey) {
+        delete authData[OZROUTER_PREVIOUS_OPENAI_API_KEY];
+        return authData;
+      }
+    } catch {
+      /* Ignore unreadable or non-JSON backups. */
+    }
+  }
+
+  return null;
 };
 
 // GET - Check codex CLI and read current settings
@@ -264,15 +287,29 @@ export async function POST(request: Request) {
     // Fix: Codex CLI sends /chat/completions; ensure the base resolves strictly to /api/v1
     const normalizedBaseUrl = baseUrl.replace(/\/v1\/?$/, "").replace(/\/api\/?$/, "") + "/api/v1";
 
-    // Always create a custom provider to reliably pass wire_api and use OZROUTER_API_KEY
-    parsed._root.model_provider = "ozrouter";
-    parsed._sections["model_providers.ozrouter"] = {
-      name: "OzRouter",
-      base_url: normalizedBaseUrl,
-      wire_api: wireApi || "chat",
-      env_key: "OPENAI_API_KEY",
-    };
-    delete parsed._root.openai_base_url;
+    // Hybrid strategy: Codex CLI custom providers read env_key only from
+    // environment variables, NOT from auth.json. The built-in OpenAI provider
+    // reads auth.json though. So for chat mode we use the built-in provider
+    // (openai_base_url + auth.json) and for responses mode we need the custom
+    // provider (which requires the user to export the env variable).
+    const useCustomProvider = wireApi === "responses";
+
+    if (useCustomProvider) {
+      // Responses API requires a custom provider for wire_api setting
+      parsed._root.model_provider = "ozrouter";
+      parsed._sections["model_providers.ozrouter"] = {
+        name: "OzRouter",
+        base_url: normalizedBaseUrl,
+        wire_api: "responses",
+        env_key: "OPENAI_API_KEY",
+      };
+      delete parsed._root.openai_base_url;
+    } else {
+      // Chat mode: use built-in OpenAI provider — it reads auth.json correctly
+      parsed._root.openai_base_url = normalizedBaseUrl;
+      delete parsed._root.model_provider;
+      delete parsed._sections["model_providers.ozrouter"];
+    }
 
     // Process model aliases into notice.model_migrations
     if (modelMappings && Object.keys(modelMappings).length > 0) {
@@ -299,6 +336,13 @@ export async function POST(request: Request) {
       /* No existing auth */
     }
 
+    if (
+      authData.OPENAI_API_KEY &&
+      authData.OPENAI_API_KEY !== apiKey &&
+      !authData[OZROUTER_PREVIOUS_OPENAI_API_KEY]
+    ) {
+      authData[OZROUTER_PREVIOUS_OPENAI_API_KEY] = authData.OPENAI_API_KEY;
+    }
     authData.OPENAI_API_KEY = apiKey;
     await fs.writeFile(authPath, JSON.stringify(authData, null, 2));
 
@@ -313,6 +357,7 @@ export async function POST(request: Request) {
       success: true,
       message: "Codex settings applied successfully!",
       configPath,
+      requiresEnvExport: useCustomProvider,
     });
   } catch (error) {
     console.log("Error updating codex settings:", error);
@@ -366,12 +411,28 @@ export async function DELETE(request: Request) {
     const configContent = toToml(parsed);
     await fs.writeFile(configPath, configContent);
 
-    // Remove OPENAI_API_KEY from auth.json
+    // Restore the user's pre-OzRouter OpenAI key when available. Codex's default
+    // provider also uses OPENAI_API_KEY, so deleting it blindly breaks normal
+    // OpenAI account/API-key usage after reset.
     const authPath = getCodexAuthPath();
     try {
       const existingAuth = await fs.readFile(authPath, "utf-8");
       const authData = JSON.parse(existingAuth);
-      delete authData.OPENAI_API_KEY;
+      const previousApiKey = authData[OZROUTER_PREVIOUS_OPENAI_API_KEY];
+
+      if (typeof previousApiKey === "string" && previousApiKey) {
+        authData.OPENAI_API_KEY = previousApiKey;
+        delete authData[OZROUTER_PREVIOUS_OPENAI_API_KEY];
+      } else {
+        const backupAuthData = await findPreviousAuthFromBackups(authData.OPENAI_API_KEY);
+        if (backupAuthData) {
+          Object.keys(authData).forEach((key) => delete authData[key]);
+          Object.assign(authData, backupAuthData);
+        } else {
+          delete authData.OPENAI_API_KEY;
+          delete authData[OZROUTER_PREVIOUS_OPENAI_API_KEY];
+        }
+      }
 
       // Write back or delete if empty
       if (Object.keys(authData).length === 0) {

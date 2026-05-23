@@ -90,6 +90,7 @@ security-analysis/
 
 # ── Yerel Agent Yapılandırmaları ─────────────────────────────
 .gemini/
+.antigravitycli/
 .omx/
 .gitnexus
 .worktrees

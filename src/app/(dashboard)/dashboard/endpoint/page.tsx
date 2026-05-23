@@ -14,7 +14,7 @@ type ServiceStatus = {
   loading: boolean;
 };
 
-type McpTransport = "stdio" | "sse" | "streamable-http";
+type McpTransport = "sse" | "streamable-http";
 
 /* ────── Toggle Switch ────── */
 function ServiceToggle({
@@ -143,7 +143,6 @@ function TransportSelector({
 }) {
   const t = useTranslations("endpoints");
   const options: { value: McpTransport; label: string; desc: string }[] = [
-    { value: "stdio", label: "stdio", desc: t("transportStdioDesc") },
     { value: "sse", label: "SSE", desc: t("transportSseDesc") },
     {
       value: "streamable-http",
@@ -153,7 +152,6 @@ function TransportSelector({
   ];
 
   const urlMap: Record<McpTransport, string> = {
-    stdio: "ozrouter --mcp",
     sse: `${baseUrl}/api/mcp/sse`,
     "streamable-http": `${baseUrl}/api/mcp/stream`,
   };
@@ -216,12 +214,11 @@ function TransportSelector({
           className="material-symbols-rounded text-sm"
           style={{ color: "var(--color-text-muted)" }}
         >
-          {value === "stdio" ? "terminal" : "link"}
+          link
         </span>
         <code className="text-xs break-all" style={{ color: "var(--color-text-muted)" }}>
           {urlMap[value]}
         </code>
-        {value !== "stdio" && (
           <button
             className="ml-auto text-xs px-2 py-0.5 rounded border hover:opacity-80 transition-opacity"
             style={{
@@ -233,7 +230,6 @@ function TransportSelector({
           >
             {t("copy")}
           </button>
-        )}
       </div>
     </div>
   );
@@ -250,7 +246,7 @@ export default function EndpointPage() {
   const [a2aEnabled, setA2aEnabled] = useState(false);
   const [mcpToggling, setMcpToggling] = useState(false);
   const [a2aToggling, setA2aToggling] = useState(false);
-  const [mcpTransport, setMcpTransport] = useState<McpTransport>("stdio");
+  const [mcpTransport, setMcpTransport] = useState<McpTransport>("sse");
   const [transportSaving, setTransportSaving] = useState(false);
 
   const [baseUrl, setBaseUrl] = useState("");
@@ -271,7 +267,7 @@ export default function EndpointPage() {
           const data = await res.json();
           setMcpEnabled(!!data.mcpEnabled);
           setA2aEnabled(!!data.a2aEnabled);
-          setMcpTransport((data.mcpTransport as McpTransport) || "stdio");
+          setMcpTransport((data.mcpTransport as McpTransport) || "sse");
         }
       } catch {
         // defaults stay

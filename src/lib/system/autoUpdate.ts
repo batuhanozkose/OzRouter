@@ -144,6 +144,8 @@ export function buildSourceUpdateScript(
     "trap - EXIT",
     "if command -v pm2 >/dev/null 2>&1; then",
     `  pm2 restart ${shellQuote(pm2ProcessName)} --update-env`,
+    "elif [ -x ./node_modules/.bin/pm2 ]; then",
+    `  ./node_modules/.bin/pm2 restart ${shellQuote(pm2ProcessName)} --update-env`,
     "else",
     '  echo "[AutoUpdate] PM2 is not installed; restart OzRouter manually to activate the update."',
     "fi",

@@ -353,10 +353,10 @@ const COMBO_TEMPLATE_FALLBACK = {
   balancedDesc: "Least-used routing to spread demand over time.",
   freeStackTitle: "Free Stack ($0)",
   freeStackDesc:
-    "Round-robin across all free providers: Kiro, Qoder, Qwen, Gemini CLI. Zero cost, never stops.",
+    "Round-robin across all free providers: Qoder, Kiro, Amazon Q. 8 models, zero cost, never stops.",
   paidPremiumTitle: "Paid Premium",
   paidPremiumDesc:
-    "Round-robin across paid subscriptions: Cursor, Antigravity. Top-tier models, distributed load.",
+    "Round-robin across paid subscriptions: Cursor, Antigravity, Codex, GitHub Copilot, Claude Code. Top-tier models, distributed load.",
 };
 
 const COMBO_TEMPLATES = [
@@ -2540,32 +2540,34 @@ function ComboFormModal({ isOpen, combo, onClose, onSave, activeProviders, combo
   };
 
   const FREE_STACK_PRESET_MODELS = [
-    { model: "gemini-cli/gemini-3-flash-preview", weight: 0 },
-    { model: "kr/claude-sonnet-4.5", weight: 0 },
-    { model: "if/kimi-k2-thinking", weight: 0 },
     { model: "if/qwen3-coder-plus", weight: 0 },
+    { model: "if/kimi-k2", weight: 0 },
     { model: "if/deepseek-v3.2", weight: 0 },
-    { model: "nvidia/llama-3.3-70b-instruct", weight: 0 },
-    { model: "groq/llama-3.3-70b-versatile", weight: 0 },
+    { model: "if/deepseek-r1", weight: 0 },
+    { model: "kr/claude-sonnet-4.5", weight: 0 },
+    { model: "kr/claude-haiku-4.5", weight: 0 },
+    { model: "amazon-q/claude-sonnet-4.5", weight: 0 },
+    { model: "amazon-q/claude-haiku-4.5", weight: 0 },
   ];
 
   const PAID_PREMIUM_PRESET_MODELS = [
-    { model: "cu/claude-4.6-opus-high", weight: 0 },
-    { model: "antigravity/claude-sonnet-4-6", weight: 0 },
     { model: "cu/claude-4.6-sonnet-high", weight: 0 },
-    { model: "antigravity/gemini-3.1-pro-high", weight: 0 },
-    { model: "antigravity/gemini-3-pro-high", weight: 0 },
+    { model: "antigravity/claude-sonnet-4.5", weight: 0 },
+    { model: "cx/gpt-5.5-high", weight: 0 },
+    { model: "gh/claude-sonnet-4.6", weight: 0 },
+    { model: "cc/claude-sonnet-4.5", weight: 0 },
   ];
 
+  const TEMPLATE_MODEL_MAP: Record<string, { model: string; weight: number }[]> = {
+    "free-stack": FREE_STACK_PRESET_MODELS,
+    "paid-premium": PAID_PREMIUM_PRESET_MODELS,
+  };
+
   const applyTemplate = (template) => {
+    setName(template.suggestedName);
     setStrategy(template.strategy);
     setConfig((prev) => ({ ...prev, ...template.config }));
-    if (!name.trim()) setName(template.suggestedName);
-    if (template.id === "free-stack") {
-      setModels(FREE_STACK_PRESET_MODELS);
-    } else if (template.id === "paid-premium") {
-      setModels(PAID_PREMIUM_PRESET_MODELS);
-    }
+    setModels([...(TEMPLATE_MODEL_MAP[template.id] ?? [])]);
   };
 
   // Format model display name with readable provider name

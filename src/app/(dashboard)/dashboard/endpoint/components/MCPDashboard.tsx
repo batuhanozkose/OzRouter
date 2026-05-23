@@ -9,11 +9,11 @@ type McpStatusResponse = {
   online: boolean;
   heartbeatPath: string;
   heartbeat: {
-    pid: number;
+    pid: number | null;
     startedAt: string;
     lastHeartbeatAt: string;
     version: string;
-    transport: "stdio";
+    transport: string;
     scopesEnforced: boolean;
     allowedScopes: string[];
     toolCount: number;

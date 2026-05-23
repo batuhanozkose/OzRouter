@@ -4,7 +4,7 @@ import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 const en = require("../../src/i18n/messages/en.json");
-const zhCn = require("../../src/i18n/messages/zh-CN.json");
+const tr = require("../../src/i18n/messages/tr.json");
 
 const requiredSettingsKeys = [
   "adaptiveVolumeRouting",
@@ -21,9 +21,9 @@ const requiredSettingsKeys = [
   "purgeLogsFailed",
 ];
 
-test("settings translations include LKGP and maintenance keys in English and Simplified Chinese", () => {
+test("settings translations include LKGP and maintenance keys in English and Turkish", () => {
   for (const key of requiredSettingsKeys) {
     assert.equal(typeof en.settings?.[key], "string", `en.settings.${key} should exist`);
-    assert.equal(typeof zhCn.settings?.[key], "string", `zh-CN.settings.${key} should exist`);
+    assert.equal(typeof tr.settings?.[key], "string", `tr.settings.${key} should exist`);
   }
 });

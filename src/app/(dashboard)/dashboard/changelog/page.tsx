@@ -1,13 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Card, SegmentedControl } from "@/shared/components";
+import { Card } from "@/shared/components";
 import ChangelogViewer from "./components/ChangelogViewer";
-import NewsViewer from "./components/NewsViewer";
 
 export default function ChangelogPage() {
-  const [activeTab, setActiveTab] = useState<"news" | "changelog">("news");
   const t = useTranslations("sidebar");
   const title = typeof t.has === "function" && t.has("changelog") ? t("changelog") : "Changelog";
 
@@ -20,20 +17,10 @@ export default function ChangelogPage() {
             Stay up to date with the latest platform features and announcements.
           </p>
         </div>
-        <div className="shrink-0 w-full sm:w-[240px]">
-          <SegmentedControl
-            options={[
-              { label: "News", value: "news" },
-              { label: "Changelog", value: "changelog" },
-            ]}
-            value={activeTab}
-            onChange={(val) => setActiveTab(val as "news" | "changelog")}
-          />
-        </div>
       </div>
 
       <Card className="min-h-[500px] overflow-hidden" padding="none">
-        {activeTab === "news" ? <NewsViewer /> : <ChangelogViewer />}
+        <ChangelogViewer />
       </Card>
     </div>
   );

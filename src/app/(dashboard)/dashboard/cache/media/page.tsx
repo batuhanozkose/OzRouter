@@ -1,5 +1,5 @@
-import MediaPageClient from "./MediaPageClient";
+import { permanentRedirect } from "next/navigation";
 
 export default function MediaPage() {
-  return <MediaPageClient />;
+  permanentRedirect("/dashboard/studio");
 }

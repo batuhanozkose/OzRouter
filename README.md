@@ -2,7 +2,7 @@
 
 > **Türkçe sürüm:** [README_TR.md](README_TR.md)
 
-OzRouter is a local AI gateway for routing coding tools, chat clients, and OpenAI-compatible SDKs through one endpoint.
+OzRouter is a local AI gateway for routing coding tools, chat clients, and OpenAI-compatible SDKs through one endpoint. It is a fork of [OmniRoute](https://github.com/diegosouzapw/OmniRoute).
 
 It is built for local machines, home servers, and private development environments. You run OzRouter once, connect your tools to `http://localhost:20128/v1`, then manage provider accounts, fallback rules, quotas, usage logs, and model routing from the dashboard.
 
@@ -84,6 +84,24 @@ nvm use 24
 ```
 
 ## Installation
+
+### Quick Install (Recommended)
+
+One command — clones the repo, installs dependencies, sets up PM2, builds, and starts:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/batuhanozkose/OzRouter/main/scripts/install.sh | bash
+```
+
+The installer handles Node.js checks, git, npm dependencies, environment setup, PM2 process management with auto-start on boot, and the first build. After it finishes, open:
+
+```txt
+http://localhost:20128/dashboard
+```
+
+Default login uses the `INITIAL_PASSWORD` from your `.env`.
+
+### Manual Install
 
 Clone the repository:
 

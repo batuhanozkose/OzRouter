@@ -76,6 +76,7 @@ const CRITICAL_DB_TABLES: CriticalTableSpec[] = [
   { table: "provider_nodes", maxRows: 5_000 },
   { table: "combos", maxRows: 5_000 },
   { table: "api_keys", maxRows: 5_000 },
+  { table: "remote_instances", maxRows: 1_000 },
   { table: "proxy_registry", maxRows: 5_000 },
   { table: "proxy_assignments", maxRows: 10_000 },
   { table: "model_combo_mappings", maxRows: 5_000 },

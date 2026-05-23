@@ -2,7 +2,7 @@
  * MCP HTTP Transport Layer — session-aware handlers for SSE and Streamable HTTP.
  *
  * Runs the MCP server **inside** the Next.js process so it can be toggled
- * from the dashboard without requiring `ozrouter --mcp`.
+ * from the dashboard.
  *
  * Transport modes:
  *   - SSE:             GET /api/mcp/sse (event stream)  +  POST /api/mcp/sse (messages)
@@ -11,6 +11,7 @@
 
 import { randomUUID } from "node:crypto";
 import { createMcpServer } from "./server.ts";
+import { logToolCall } from "./audit.ts";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
@@ -27,6 +28,22 @@ type StreamableSession = {
 
 const _streamableSessions = new Map<string, StreamableSession>();
 
+let _eagerInitDone = false;
+
+function logConnectionEvent(
+  event: "connected" | "disconnected",
+  transport: string,
+  sessionId?: string
+): void {
+  void logToolCall(
+    `_mcp_${event}`,
+    { transport, sessionId: sessionId || null },
+    { status: event },
+    0,
+    true
+  );
+}
+
 function closeSseTransport(): void {
   if (_sseTransport) {
     try {
@@ -34,6 +51,7 @@ function closeSseTransport(): void {
     } catch {
       // ignore shutdown errors
     }
+    logConnectionEvent("disconnected", "sse");
   }
   _sseServer = null;
   _sseTransport = null;
@@ -52,6 +70,7 @@ function closeStreamableSession(sessionId: string): void {
     // ignore shutdown errors
   }
   _streamableSessions.delete(sessionId);
+  logConnectionEvent("disconnected", "streamable-http", sessionId);
 }
 
 function closeAllStreamableSessions(): void {
@@ -77,6 +96,7 @@ function ensureSseServer(): {
   _sseStartedAt = Date.now();
 
   void _sseServer.connect(_sseTransport);
+  logConnectionEvent("connected", "sse");
 
   console.log("[MCP] HTTP transport started (sse)");
   return { server: _sseServer, transport: _sseTransport };
@@ -99,6 +119,7 @@ function createStreamableSession(): StreamableSession {
 
   void server.connect(transport);
   _streamableSessions.set(sessionId, session);
+  logConnectionEvent("connected", "streamable-http", sessionId);
   console.log(`[MCP] HTTP transport started (streamable-http:${sessionId})`);
   return session;
 }
@@ -222,6 +243,7 @@ export function getMcpHttpStatus(): {
   transport: string | null;
   startedAt: number | null;
   uptime: string | null;
+  uptimeMs: number | null;
 } {
   const streamableStartedAt =
     _streamableSessions.size > 0
@@ -230,18 +252,38 @@ export function getMcpHttpStatus(): {
   const startedAt = streamableStartedAt ?? _sseStartedAt;
   const transport = _streamableSessions.size > 0 ? "streamable-http" : _sseTransport ? "sse" : null;
   const online = transport !== null;
+  const uptimeMs = startedAt ? Math.max(0, Date.now() - startedAt) : null;
 
   return {
     online,
     transport,
     startedAt,
     uptime: startedAt ? `${Math.floor((Date.now() - startedAt) / 1000)}s` : null,
+    uptimeMs,
   };
+}
+
+/**
+ * Eagerly initialize the MCP transport based on settings.
+ * Called when MCP is enabled — starts the transport immediately
+ * so the status check shows it as online without waiting for a client.
+ */
+export function ensureMcpTransport(mcpTransport: "sse" | "streamable-http"): void {
+  if (_eagerInitDone) return;
+
+  if (mcpTransport === "sse") {
+    ensureSseServer();
+  } else if (mcpTransport === "streamable-http") {
+    // Streamable HTTP is session-based — don't eagerly create sessions
+    // Just mark that we're ready to accept connections
+  }
+  _eagerInitDone = true;
 }
 
 export function shutdownMcpHttp(): void {
   closeSseTransport();
   closeAllStreamableSessions();
+  _eagerInitDone = false;
   console.log("[MCP] HTTP transport shutdown");
 }
 

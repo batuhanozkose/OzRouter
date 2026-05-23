@@ -8,6 +8,7 @@ import { PROVIDER_ID_TO_ALIAS } from "@ozrouter/open-sse/config/providerModels.t
 import { invalidateDbCache } from "./readCache";
 import { resolveProxyForConnectionFromRegistry } from "./proxies";
 import { getComboModelProvider as getComboEntryProvider } from "@/lib/combos/steps";
+import { getDefaultPricing } from "@/shared/constants/pricing";
 
 type JsonRecord = Record<string, unknown>;
 type PricingModels = Record<string, JsonRecord>;
@@ -203,8 +204,6 @@ function buildPricingSourceMap(layers: {
 async function getPricingLayers() {
   const db = getDbInstance();
 
-  // Layer 1: Hardcoded defaults (lowest priority)
-  const { getDefaultPricing } = await import("@/shared/constants/pricing");
   return {
     defaults: getDefaultPricing(),
     litellm: readPricingNamespace(db, "pricing_synced"),
@@ -236,7 +235,11 @@ export async function getPricingForModel(provider: string, model: string) {
 
   const { PROVIDER_ID_TO_ALIAS } = await import("@ozrouter/open-sse/config/providerModels");
   const alias = PROVIDER_ID_TO_ALIAS[provider];
-  if (alias && pricing[alias]) return pricing[alias][model] || null;
+  if (alias && pricing[alias]?.[model]) return pricing[alias][model];
+
+  for (const [id, a] of Object.entries(PROVIDER_ID_TO_ALIAS)) {
+    if (a === provider && pricing[id]?.[model]) return pricing[id][model];
+  }
 
   const np = provider?.replace(/-cn$/, "");
   if (np && np !== provider && pricing[np]) return pricing[np][model] || null;
@@ -250,17 +253,17 @@ export async function updatePricing(pricingData: PricingByProvider) {
     "INSERT OR REPLACE INTO key_value (namespace, key, value) VALUES ('pricing', ?, ?)"
   );
 
-  const rows = db.prepare("SELECT key, value FROM key_value WHERE namespace = 'pricing'").all();
-  const existing: PricingByProvider = {};
-  for (const row of rows) {
-    const record = toRecord(row);
-    const key = typeof record.key === "string" ? record.key : null;
-    const rawValue = typeof record.value === "string" ? record.value : null;
-    if (!key || rawValue === null) continue;
-    existing[key] = toRecord(JSON.parse(rawValue)) as PricingModels;
-  }
-
   const tx = db.transaction(() => {
+    const rows = db.prepare("SELECT key, value FROM key_value WHERE namespace = 'pricing'").all();
+    const existing: PricingByProvider = {};
+    for (const row of rows) {
+      const record = toRecord(row);
+      const key = typeof record.key === "string" ? record.key : null;
+      const rawValue = typeof record.value === "string" ? record.value : null;
+      if (!key || rawValue === null) continue;
+      existing[key] = toRecord(JSON.parse(rawValue)) as PricingModels;
+    }
+
     for (const [provider, models] of Object.entries(pricingData)) {
       insert.run(provider, JSON.stringify({ ...(existing[provider] || {}), ...models }));
     }
@@ -306,6 +309,7 @@ export async function resetPricing(provider: string, model?: string) {
   }
 
   backupDbFile("pre-write");
+  invalidateDbCache("pricing");
   const allRows = db.prepare("SELECT key, value FROM key_value WHERE namespace = 'pricing'").all();
   const result: Record<string, unknown> = {};
   for (const row of allRows) {
@@ -322,6 +326,7 @@ export async function resetAllPricing() {
   const db = getDbInstance();
   db.prepare("DELETE FROM key_value WHERE namespace = 'pricing'").run();
   backupDbFile("pre-write");
+  invalidateDbCache("pricing");
   return {};
 }
 

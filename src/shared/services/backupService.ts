@@ -185,6 +185,25 @@ export async function restoreBackup(toolId: string, backupId: string) {
 }
 
 /**
+ * Read a backup payload and metadata without restoring it.
+ */
+export async function readBackup(toolId: string, backupId: string) {
+  const backupPath = safePath(toolId, backupId);
+  const metaPath = backupPath + ".meta.json";
+
+  let meta;
+  try {
+    const raw = await fs.readFile(metaPath, "utf-8");
+    meta = JSON.parse(raw);
+  } catch {
+    throw new Error(`Backup metadata not found: ${backupId}`);
+  }
+
+  const content = await fs.readFile(backupPath, "utf-8");
+  return { meta, content };
+}
+
+/**
  * Delete a specific backup by its id.
  */
 export async function deleteBackup(toolId: string, backupId: string) {

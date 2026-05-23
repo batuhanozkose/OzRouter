@@ -733,7 +733,7 @@ open-sse/mcp-server/
 | Feature           | MCP Server                   | A2A Server                                        |
 | ----------------- | ---------------------------- | ------------------------------------------------- |
 | **Protocol**      | Model Context Protocol       | Agent-to-Agent Protocol v0.3                      |
-| **Transport**     | stdio / HTTP                 | HTTP (JSON-RPC 2.0)                               |
+| **Transport**     | SSE / Streamable HTTP        | HTTP (JSON-RPC 2.0)                               |
 | **Discovery**     | Tool listing via MCP         | `/.well-known/agent.json`                         |
 | **Granularity**   | 16 individual tools          | 2 high-level skills                               |
 | **Best for**      | IDE agents (Cursor, VS Code) | Multi-agent systems (LangChain, CrewAI)           |

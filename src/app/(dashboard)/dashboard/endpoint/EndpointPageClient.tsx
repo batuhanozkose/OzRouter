@@ -1977,7 +1977,7 @@ export default function APIPageClient({ machineId }: APIPageClientProps) {
                       {t("mcpCardTitle") || "MCP Server"}
                     </h3>
                     <p className="text-xs text-text-muted mt-1">
-                      {t("mcpCardDescription") || "Model Context Protocol over stdio"}
+                      {t("mcpCardDescription") || "Model Context Protocol (SSE / Streamable HTTP)"}
                     </p>
                   </div>
                   <span
@@ -2004,7 +2004,7 @@ export default function APIPageClient({ machineId }: APIPageClientProps) {
                 </div>
                 <div className="mt-3 rounded-lg bg-bg p-3 border border-border/70">
                   <p className="text-xs font-semibold mb-1">{t("quickStart") || "Quick Start"}</p>
-                  <code className="text-xs font-mono break-all">ozrouter --mcp</code>
+                  <code className="text-xs font-mono break-all">{baseUrl}/api/mcp/sse</code>
                 </div>
                 <div className="mt-3">
                   <Link
@@ -2072,10 +2072,10 @@ export default function APIPageClient({ machineId }: APIPageClientProps) {
                   {t("mcpQuickStartTitle") || "MCP Quick Start"}
                 </h4>
                 <ol className="text-sm text-text-muted space-y-1 list-decimal list-inside">
-                  <li>{t("mcpQuickStartStep1") || "Run the MCP server via `ozrouter --mcp`."}</li>
+                  <li>{t("mcpQuickStartStep1") || "Enable MCP from the Endpoints page and choose your transport."}</li>
                   <li>
                     {t("mcpQuickStartStep2") ||
-                      "Configure your MCP client to connect over stdio transport."}
+                      "Connect your MCP client to the SSE or Streamable HTTP endpoint URL."}
                   </li>
                   <li>
                     {t("mcpQuickStartStep3") ||

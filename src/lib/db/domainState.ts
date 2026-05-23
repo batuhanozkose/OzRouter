@@ -230,8 +230,8 @@ export function loadBudget(apiKeyId) {
     resetInterval:
       typeof record.reset_interval === "string" ? record.reset_interval : ("daily" as const),
     resetTime: typeof record.reset_time === "string" ? record.reset_time : "00:00",
-    budgetResetAt: toNumber(record.budget_reset_at, 0) || null,
-    lastBudgetResetAt: toNumber(record.last_budget_reset_at, 0) || null,
+    budgetResetAt: record.budget_reset_at != null ? toNumber(record.budget_reset_at) : null,
+    lastBudgetResetAt: record.last_budget_reset_at != null ? toNumber(record.last_budget_reset_at) : null,
     warningEmittedAt: toNumber(record.warning_emitted_at, 0) || null,
     warningPeriodStart: toNumber(record.warning_period_start, 0) || null,
   };

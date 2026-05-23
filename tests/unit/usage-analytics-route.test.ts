@@ -124,10 +124,153 @@ test("GET /api/usage/analytics includes byModel array with cost calculations", a
   assert.equal(response.status, 200);
   assert.ok(Array.isArray(body.byModel));
   assert.ok(body.byModel.length > 0);
-  const gptEntry = body.byModel.find((m) => m.model === "4o" && m.provider === "openai");
+  const gptEntry = body.byModel.find((m) => m.rawModel === "gpt-4o" && m.provider === "openai");
   assert.ok(gptEntry);
   assert.ok(typeof gptEntry.cost === "number");
   assert.ok(gptEntry.cost > 0);
+});
+
+test("GET /api/usage/analytics resolves provider alias pricing for Codex", async () => {
+  await localDb.updatePricing({
+    cx: { "gpt-5.5": { input: 5, output: 30, reasoning: 30 } },
+  });
+
+  const db = core.getDbInstance();
+  db.prepare(
+    `INSERT INTO usage_history (provider, model, connection_id, api_key_id, api_key_name, tokens_input, tokens_output, tokens_reasoning, success, latency_ms, timestamp)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    "codex",
+    "gpt-5.5",
+    "codex-conn",
+    "codex-key",
+    "Codex Key",
+    100,
+    50,
+    25,
+    1,
+    200,
+    new Date().toISOString()
+  );
+
+  const response = await analyticsRoute.GET(makeRequest("http://localhost/api/usage/analytics"));
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assertClose(body.summary.totalCost, 0.00275);
+
+  const codexProvider = body.byProvider.find((row) => row.provider === "codex");
+  assert.ok(codexProvider);
+  assertClose(codexProvider.cost, 0.00275);
+
+  const codexModel = body.byModel.find(
+    (row) => row.rawModel === "gpt-5.5" && row.provider === "codex"
+  );
+  assert.ok(codexModel);
+  assertClose(codexModel.cost, 0.00275);
+});
+
+test("GET /api/usage/analytics estimates Antigravity costs from canonical model pricing", async () => {
+  await localDb.updatePricing({
+    anthropic: { "claude-opus-4-6": { input: 5, output: 25 } },
+    gemini: { "gemini-3-flash-preview": { input: 0.5, output: 3 } },
+  });
+
+  const db = core.getDbInstance();
+  db.prepare(
+    `INSERT INTO usage_history (provider, model, connection_id, api_key_id, api_key_name, tokens_input, tokens_output, success, latency_ms, timestamp)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    "antigravity",
+    "claude-opus-4-6-thinking",
+    "ag-conn",
+    "ag-key",
+    "Antigravity Key",
+    211,
+    130,
+    1,
+    200,
+    new Date().toISOString()
+  );
+
+  db.prepare(
+    `INSERT INTO usage_history (provider, model, connection_id, api_key_id, api_key_name, tokens_input, tokens_output, success, latency_ms, timestamp)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    "antigravity",
+    "gemini-3-flash",
+    "ag-conn",
+    "ag-key",
+    "Antigravity Key",
+    100,
+    50,
+    1,
+    200,
+    new Date().toISOString()
+  );
+
+  const response = await analyticsRoute.GET(makeRequest("http://localhost/api/usage/analytics"));
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assertClose(body.summary.totalCost, 0.004505);
+
+  const claudeModel = body.byModel.find(
+    (row) => row.provider === "antigravity" && row.rawModel === "claude-opus-4-6-thinking"
+  );
+  assert.ok(claudeModel);
+  assert.equal(claudeModel.estimatedCost, true);
+  assert.equal(claudeModel.pricingSource, "family-fallback");
+  assert.equal(claudeModel.pricingProvider, "anthropic");
+  assert.equal(claudeModel.pricingModel, "claude-opus-4-6");
+  assertClose(claudeModel.cost, 0.004305);
+
+  const geminiModel = body.byModel.find(
+    (row) => row.provider === "antigravity" && row.rawModel === "gemini-3-flash"
+  );
+  assert.ok(geminiModel);
+  assert.equal(geminiModel.estimatedCost, true);
+  assert.equal(geminiModel.pricingProvider, "gemini");
+  assert.equal(geminiModel.pricingModel, "gemini-3-flash-preview");
+  assertClose(geminiModel.cost, 0.0002);
+});
+
+test("GET /api/usage/analytics estimates custom provider costs from model family pricing", async () => {
+  await localDb.updatePricing({
+    alibaba: { "qwen3.7-max": { input: 1.2, output: 6 } },
+  });
+
+  const db = core.getDbInstance();
+  db.prepare(
+    `INSERT INTO usage_history (provider, model, connection_id, api_key_id, api_key_name, tokens_input, tokens_output, success, latency_ms, timestamp)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    "openai-compatible-chat-test",
+    "qwen/qwen3.7-max",
+    "custom-conn",
+    "custom-key",
+    "Custom Key",
+    100,
+    50,
+    1,
+    200,
+    new Date().toISOString()
+  );
+
+  const response = await analyticsRoute.GET(makeRequest("http://localhost/api/usage/analytics"));
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assertClose(body.summary.totalCost, 0.00042);
+
+  const customModel = body.byModel.find(
+    (row) => row.provider === "openai-compatible-chat-test" && row.rawModel === "qwen/qwen3.7-max"
+  );
+  assert.ok(customModel);
+  assert.equal(customModel.estimatedCost, true);
+  assert.equal(customModel.pricingSource, "family-fallback");
+  assert.equal(customModel.pricingProvider, "alibaba");
+  assert.equal(customModel.pricingModel, "qwen3.7-max");
 });
 
 test("GET /api/usage/analytics filters by range parameter", async () => {

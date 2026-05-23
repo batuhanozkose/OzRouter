@@ -1,10 +1,14 @@
 "use client";
 
+/* eslint-disable react-hooks/exhaustive-deps, react-hooks/immutability, react-hooks/set-state-in-effect */
+
 import { useState, useEffect, useRef } from "react";
 import { Card, Button, ModelSelectModal, ManualConfigModal } from "@/shared/components";
 import Image from "next/image";
 import CliStatusBadge from "./CliStatusBadge";
 import { useTranslations } from "next-intl";
+import InstallProgressModal from "./InstallProgressModal";
+import { runRemoteInstall } from "./remoteInstall";
 
 const CLOUD_URL = process.env.NEXT_PUBLIC_CLOUD_URL;
 
@@ -19,6 +23,9 @@ export default function OpenClawToolCard({
   cloudEnabled,
   batchStatus,
   lastConfiguredAt,
+  isRemote = false,
+  instanceId = null,
+  onConfigApplied,
 }) {
   const t = useTranslations("cliTools");
   const [openclawStatus, setOpenclawStatus] = useState(null);
@@ -29,6 +36,10 @@ export default function OpenClawToolCard({
   const [selectedApiKeyId, setSelectedApiKeyId] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [installing, setInstalling] = useState(false);
+  const [installOutput, setInstallOutput] = useState<string | null>(null);
+  const [installError, setInstallError] = useState<string | null>(null);
+  const [showInstallModal, setShowInstallModal] = useState(false);
   const [modelAliases, setModelAliases] = useState({});
   const [showManualConfigModal, setShowManualConfigModal] = useState(false);
   const [customBaseUrl, setCustomBaseUrl] = useState("");
@@ -55,6 +66,31 @@ export default function OpenClawToolCard({
 
   // Use batch status as fallback when card hasn't been expanded yet
   const effectiveConfigStatus = configStatus || batchStatus?.configStatus || null;
+
+  const handleRemoteInstall = async () => {
+    if (!instanceId) return;
+    setShowInstallModal(true);
+    setInstalling(true);
+    setInstallOutput("");
+    setInstallError(null);
+    try {
+      const result = await runRemoteInstall({
+        instanceId,
+        toolId: "openclaw",
+        onOutput: setInstallOutput,
+      });
+      if (result.success) {
+        await checkOpenclawStatus();
+        onConfigApplied?.();
+      } else {
+        setInstallError(result.output || "Install failed");
+      }
+    } catch (err: any) {
+      setInstallError(err?.message || "Install failed");
+    } finally {
+      setInstalling(false);
+    }
+  };
 
   // (#523) Store the key *id* (not the masked string) so the backend can
   // resolve the real secret from DB before writing to config files.
@@ -108,13 +144,30 @@ export default function OpenClawToolCard({
 
   const checkOpenclawStatus = async () => {
     setCheckingOpenclaw(true);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
     try {
-      const res = await fetch("/api/cli-tools/openclaw-settings");
-      const data = await res.json();
-      setOpenclawStatus(data);
-    } catch (error) {
-      setOpenclawStatus({ installed: false, error: error.message });
+      if (isRemote) {
+        const res = await fetch("/api/cli-tools/remote/tool-status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ instanceId, toolId: "openclaw" }),
+          signal: controller.signal,
+        });
+        const data = await res.json();
+        setOpenclawStatus(data);
+      } else {
+        const res = await fetch("/api/cli-tools/openclaw-settings", { signal: controller.signal });
+        const data = await res.json();
+        setOpenclawStatus(data);
+      }
+    } catch (error: any) {
+      setOpenclawStatus({
+        installed: false,
+        error: error.name === "AbortError" ? "Timeout" : error.message,
+      });
     } finally {
+      clearTimeout(timer);
       setCheckingOpenclaw(false);
     }
   };
@@ -137,12 +190,17 @@ export default function OpenClawToolCard({
       const selectedKeyId =
         selectedApiKeyId?.trim() || (apiKeys?.length > 0 ? apiKeys[0].id : null);
 
-      const res = await fetch("/api/cli-tools/openclaw-settings", {
+      const endpoint = isRemote
+        ? "/api/cli-tools/remote/apply"
+        : "/api/cli-tools/openclaw-settings";
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          instanceId,
+          toolId: "openclaw",
           baseUrl: getEffectiveBaseUrl(),
-          apiKey: !cloudEnabled ? "sk_ozrouter" : null,
+          apiKey: isRemote ? undefined : !cloudEnabled ? "sk_ozrouter" : null,
           keyId: selectedKeyId,
           model: selectedModel,
         }),
@@ -151,6 +209,7 @@ export default function OpenClawToolCard({
       if (res.ok) {
         setMessage({ type: "success", text: t("settingsApplied") });
         checkOpenclawStatus();
+        onConfigApplied?.();
       } else {
         setMessage({
           type: "error",
@@ -170,13 +229,21 @@ export default function OpenClawToolCard({
     setRestoring(true);
     setMessage(null);
     try {
-      const res = await fetch("/api/cli-tools/openclaw-settings", { method: "DELETE" });
+      const res = await fetch(
+        isRemote ? "/api/cli-tools/remote/apply" : "/api/cli-tools/openclaw-settings",
+        {
+          method: "DELETE",
+          headers: isRemote ? { "Content-Type": "application/json" } : undefined,
+          body: isRemote ? JSON.stringify({ instanceId, toolId: "openclaw" }) : undefined,
+        }
+      );
       const data = await res.json();
       if (res.ok) {
         setMessage({ type: "success", text: t("settingsReset") });
         setSelectedModel("");
         setSelectedApiKeyId("");
         checkOpenclawStatus();
+        onConfigApplied?.();
       } else {
         setMessage({
           type: "error",
@@ -339,6 +406,17 @@ export default function OpenClawToolCard({
                     : t("installCliPrompt", { tool: "Open Claw" })}
                 </p>
               </div>
+              {isRemote && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleRemoteInstall}
+                  loading={installing}
+                >
+                  <span className="material-symbols-outlined text-[16px]">download</span>
+                  {t("install")}
+                </Button>
+              )}
             </div>
           )}
 
@@ -555,6 +633,13 @@ export default function OpenClawToolCard({
         onClose={() => setShowManualConfigModal(false)}
         title={t("openClawManualConfiguration")}
         configs={getManualConfigs()}
+      />
+      <InstallProgressModal
+        open={showInstallModal}
+        output={installOutput}
+        error={installError}
+        installing={installing}
+        onClose={() => setShowInstallModal(false)}
       />
     </Card>
   );

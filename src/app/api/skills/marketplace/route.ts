@@ -24,6 +24,7 @@ export async function GET(request: Request) {
         name,
         description: `Popular skill: ${name}`,
         installCount: 0,
+        sourceUrl: `https://skillsmp.com/skills/${name}`,
       }));
       return NextResponse.json({ skills });
     }

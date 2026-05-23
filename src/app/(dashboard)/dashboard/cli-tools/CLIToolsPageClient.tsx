@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Card, CardSkeleton, SegmentedControl } from "@/shared/components";
+import { Card, CardSkeleton } from "@/shared/components";
 import { CLI_TOOLS } from "@/shared/constants/cliTools";
 import {
   PROVIDER_MODELS,
@@ -20,29 +20,11 @@ import {
   CopilotToolCard,
   CustomCliCard,
 } from "./components";
+import RemoteInstanceBar from "./components/RemoteInstanceBar";
+import RemoteInstanceModal from "./components/RemoteInstanceModal";
 import { useTranslations } from "next-intl";
 
 const CLOUD_URL = process.env.NEXT_PUBLIC_CLOUD_URL;
-const AUTO_CONFIGURED_TOOL_IDS = new Set([
-  "claude",
-  "codex",
-  "droid",
-  "openclaw",
-  "cline",
-  "kilo",
-  "copilot",
-]);
-const GUIDED_TOOL_IDS = new Set([
-  "cursor",
-  "windsurf",
-  "continue",
-  "opencode",
-  "hermes",
-  "amp",
-  "qwen",
-]);
-const MITM_TOOL_IDS = new Set(["antigravity", "kiro"]);
-const CUSTOM_TOOL_IDS = new Set(["custom"]);
 
 export default function CLIToolsPageClient({ machineId: _machineId }) {
   const t = useTranslations("cliTools");
@@ -55,7 +37,14 @@ export default function CLIToolsPageClient({ machineId: _machineId }) {
   const [toolStatuses, setToolStatuses] = useState({});
   const [statusesLoaded, setStatusesLoaded] = useState(false);
   const [dynamicModels, setDynamicModels] = useState([]);
-  const [activeCategory, setActiveCategory] = useState("auto");
+  const [activeTab, setActiveTab] = useState<"local" | "remote">("local");
+  const [remoteInstances, setRemoteInstances] = useState<any[]>([]);
+  const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(null);
+  const [remoteStatuses, setRemoteStatuses] = useState<Record<string, any>>({});
+  const [remoteStatusLoading, setRemoteStatusLoading] = useState(false);
+  const [showInstanceModal, setShowInstanceModal] = useState(false);
+  const [editingInstance, setEditingInstance] = useState<any>(null);
+  const [testResult, setTestResult] = useState<{ success: boolean; error?: string } | null>(null);
   const translateOrFallback = useCallback(
     (key, fallback, values = undefined) => {
       try {
@@ -68,13 +57,82 @@ export default function CLIToolsPageClient({ machineId: _machineId }) {
     [t]
   );
 
-  useEffect(() => {
-    fetchConnections();
-    loadCloudSettings();
-    fetchApiKeys();
-    fetchToolStatuses();
-    fetchDynamicModels();
-  }, []);
+  const fetchRemoteInstances = async () => {
+    try {
+      const res = await fetch("/api/remote-instances");
+      if (res.ok) {
+        const data = await res.json();
+        setRemoteInstances(data.instances || []);
+      }
+    } catch (error) {
+      console.log("Error fetching remote instances:", error);
+    }
+  };
+
+  const fetchRemoteStatus = async (instanceId: string, options: { silent?: boolean } = {}) => {
+    if (!options.silent) setRemoteStatusLoading(true);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60_000);
+    try {
+      const res = await fetch("/api/cli-tools/remote/status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ instanceId }),
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setRemoteStatuses(data);
+      } else {
+        setRemoteStatuses({ _error: data.message || data.error || "Connection failed" });
+      }
+    } catch (error) {
+      const message =
+        error instanceof DOMException && error.name === "AbortError"
+          ? "Remote scan timed out while opening SSH connection"
+          : "Request failed";
+      setRemoteStatuses({ _error: message });
+    } finally {
+      clearTimeout(timeoutId);
+      if (!options.silent) setRemoteStatusLoading(false);
+    }
+  };
+
+  const handleSaveInstance = async (data: any) => {
+    const res = await fetch("/api/remote-instances", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "Failed to save instance");
+    }
+    await fetchRemoteInstances();
+  };
+
+  const handleDeleteInstance = async (id: string) => {
+    await fetch(`/api/remote-instances?id=${id}`, { method: "DELETE" });
+    if (selectedInstanceId === id) setSelectedInstanceId(null);
+    await fetchRemoteInstances();
+  };
+
+  const handleTestConnection = async (id: string) => {
+    try {
+      const res = await fetch("/api/remote-instances", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ _action: "test", id }),
+      });
+      const data = await res.json();
+      setTestResult(data);
+      setTimeout(() => setTestResult(null), 5000);
+    } catch (error: any) {
+      setTestResult({ success: false, error: error.message });
+      setTimeout(() => setTestResult(null), 5000);
+    }
+  };
 
   const loadCloudSettings = async () => {
     try {
@@ -143,6 +201,16 @@ export default function CLIToolsPageClient({ machineId: _machineId }) {
       console.log("Error fetching dynamic models:", error);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchConnections();
+    loadCloudSettings();
+    fetchApiKeys();
+    fetchToolStatuses();
+    fetchDynamicModels();
+    fetchRemoteInstances();
+  }, []);
 
   const getActiveProviders = () => {
     return connections.filter((c) => c.isActive !== false);
@@ -243,24 +311,23 @@ export default function CLIToolsPageClient({ machineId: _machineId }) {
 
   const availableModels = getAllAvailableModels();
   const hasActiveProviders = availableModels.length > 0;
-  const toolEntries = Object.entries(CLI_TOOLS).filter(([toolId]) => {
-    if (activeCategory === "all") return true;
-    if (activeCategory === "auto") return AUTO_CONFIGURED_TOOL_IDS.has(toolId);
-    if (activeCategory === "guided") return GUIDED_TOOL_IDS.has(toolId);
-    if (activeCategory === "mitm") return MITM_TOOL_IDS.has(toolId);
-    if (activeCategory === "custom") return CUSTOM_TOOL_IDS.has(toolId);
-    return true;
-  });
+  const toolEntries = Object.entries(CLI_TOOLS);
 
-  const renderToolCard = (toolId, tool) => {
+  const renderToolCard = (toolId: string, tool: any, isRemote = false) => {
+    const statusSource = isRemote ? remoteStatuses : toolStatuses;
     const commonProps = {
       tool,
       isExpanded: expandedTool === toolId,
       onToggle: () => setExpandedTool(expandedTool === toolId ? null : toolId),
       baseUrl: getBaseUrl(),
       apiKeys,
-      batchStatus: toolStatuses[toolId] || null,
-      lastConfiguredAt: toolStatuses[toolId]?.lastConfiguredAt || null,
+      batchStatus: statusSource[toolId] || null,
+      lastConfiguredAt: statusSource[toolId]?.lastConfiguredAt || null,
+      isRemote,
+      instanceId: isRemote ? selectedInstanceId : null,
+      onConfigApplied: isRemote
+        ? () => selectedInstanceId && fetchRemoteStatus(selectedInstanceId, { silent: true })
+        : undefined,
     };
 
     switch (toolId) {
@@ -396,104 +463,157 @@ export default function CLIToolsPageClient({ machineId: _machineId }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <Card>
-        <div className="flex items-start gap-3">
-          <div className="p-2 rounded-lg bg-primary/10 text-primary">
-            <span className="material-symbols-outlined text-[20px]">tips_and_updates</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <h2 className="text-sm font-semibold">{t("howItWorks")}</h2>
-            <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2 text-xs text-text-muted">
-              <div className="rounded-lg border border-border/50 bg-black/[0.02] dark:bg-white/[0.02] p-2.5">
-                {t("installationGuide")}
-              </div>
-              <div className="rounded-lg border border-border/50 bg-black/[0.02] dark:bg-white/[0.02] p-2.5">
-                {t("configureEndpoint")}
-              </div>
-              <div className="rounded-lg border border-border/50 bg-black/[0.02] dark:bg-white/[0.02] p-2.5">
-                {t("testConnection")}
-              </div>
-            </div>
-          </div>
-        </div>
-      </Card>
+      {/* Tab bar */}
+      <div className="flex gap-1 p-1 rounded-lg bg-black/5 dark:bg-white/5 w-fit">
+        <button
+          onClick={() => setActiveTab("local")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all ${
+            activeTab === "local"
+              ? "bg-white dark:bg-white/10 text-text-main shadow-sm"
+              : "text-text-muted hover:text-text-main"
+          }`}
+        >
+          <span className="material-symbols-outlined text-[18px]">terminal</span>
+          {t("localTab")}
+        </button>
+        <button
+          onClick={() => setActiveTab("remote")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all ${
+            activeTab === "remote"
+              ? "bg-white dark:bg-white/10 text-text-main shadow-sm"
+              : "text-text-muted hover:text-text-main"
+          }`}
+        >
+          <span className="material-symbols-outlined text-[18px]">dns</span>
+          {t("remoteTab")}
+        </button>
+      </div>
 
-      <Card>
-        <div className="flex flex-col gap-4">
-          <div className="flex items-start justify-between gap-4 flex-wrap">
-            <div>
-              <h2 className="text-sm font-semibold">{t("toolCategories")}</h2>
-              <p className="text-xs text-text-muted mt-1">{t("toolCategoriesDesc")}</p>
-            </div>
-            <span className="text-xs text-text-muted">
-              {t("visibleToolsCount", { count: toolEntries.length })}
-            </span>
-          </div>
-          <SegmentedControl
-            options={[
-              { value: "auto", label: t("autoConfiguredTab") },
-              { value: "guided", label: t("guidedClientsTab") },
-              { value: "mitm", label: t("mitmClientsTab") },
-              {
-                value: "custom",
-                label: translateOrFallback("customCliTab", "Custom CLI"),
-              },
-              { value: "all", label: t("allToolsTab") },
-            ]}
-            value={activeCategory}
-            onChange={setActiveCategory}
-          />
-        </div>
-      </Card>
-
-      {!hasActiveProviders && (
-        <Card className="border-yellow-500/50 bg-yellow-500/5">
-          <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-yellow-500">warning</span>
-            <div>
-              <p className="font-medium text-yellow-600 dark:text-yellow-400">
-                {t("noActiveProviders")}
-              </p>
-              <p className="text-sm text-text-muted">{t("noActiveProvidersDesc")}</p>
-            </div>
-          </div>
-        </Card>
-      )}
-
-      <div className="flex flex-col gap-4">
-        {toolEntries.map(([toolId, tool]) => {
-          const docsHref = getToolDocsHref(toolId, tool);
-          const isExternalDocs = /^https?:\/\//i.test(docsHref);
-          return (
-            <div key={toolId} className="flex flex-col gap-2.5">
-              {renderToolCard(toolId, tool)}
-              <div className="rounded-lg border border-border/50 bg-black/[0.02] dark:bg-white/[0.02] p-3">
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2.5">
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">
-                      {t("whenToUseLabel")}
-                    </p>
-                    <p className="text-xs text-text-muted mt-1 break-words">
-                      {getToolUseCase(toolId, tool)}
-                    </p>
-                  </div>
-                  <a
-                    href={docsHref}
-                    target={isExternalDocs ? "_blank" : undefined}
-                    rel={isExternalDocs ? "noopener noreferrer" : undefined}
-                    className="inline-flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors whitespace-nowrap"
-                  >
-                    <span className="material-symbols-outlined text-[14px]" aria-hidden="true">
-                      menu_book
-                    </span>
-                    {t("openToolDocs")}
-                  </a>
+      {activeTab === "local" ? (
+        <>
+          {!hasActiveProviders && (
+            <Card className="border-yellow-500/50 bg-yellow-500/5">
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-yellow-500">warning</span>
+                <div>
+                  <p className="font-medium text-yellow-600 dark:text-yellow-400">
+                    {t("noActiveProviders")}
+                  </p>
+                  <p className="text-sm text-text-muted">{t("noActiveProvidersDesc")}</p>
                 </div>
               </div>
+            </Card>
+          )}
+          <div className="flex flex-col gap-4">
+            {toolEntries.map(([toolId, tool]) => {
+              const docsHref = getToolDocsHref(toolId, tool);
+              const isExternalDocs = /^https?:\/\//i.test(docsHref);
+              return (
+                <div key={toolId} className="flex flex-col gap-2.5">
+                  {renderToolCard(toolId, tool)}
+                  <div className="rounded-lg border border-border/50 bg-black/[0.02] dark:bg-white/[0.02] p-3">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2.5">
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                          {t("whenToUseLabel")}
+                        </p>
+                        <p className="text-xs text-text-muted mt-1 break-words">
+                          {getToolUseCase(toolId, tool)}
+                        </p>
+                      </div>
+                      <a
+                        href={docsHref}
+                        target={isExternalDocs ? "_blank" : undefined}
+                        rel={isExternalDocs ? "noopener noreferrer" : undefined}
+                        className="inline-flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors whitespace-nowrap"
+                      >
+                        <span className="material-symbols-outlined text-[14px]" aria-hidden="true">
+                          menu_book
+                        </span>
+                        {t("openToolDocs")}
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Test result toast */}
+          {testResult && (
+            <div
+              className={`rounded-lg px-4 py-2 text-sm ${
+                testResult.success
+                  ? "bg-green-500/10 text-green-600 border border-green-500/30"
+                  : "bg-red-500/10 text-red-600 border border-red-500/30"
+              }`}
+            >
+              {testResult.success ? t("connectionSuccess") : t("connectionFailed")}
+              {testResult.error && <>: {testResult.error}</>}
             </div>
-          );
-        })}
-      </div>
+          )}
+
+          <Card>
+            <RemoteInstanceBar
+              instances={remoteInstances}
+              selectedId={selectedInstanceId}
+              onSelect={(id) => {
+                setSelectedInstanceId(id);
+                fetchRemoteStatus(id);
+              }}
+              onAdd={() => {
+                setEditingInstance(null);
+                setShowInstanceModal(true);
+              }}
+              onEdit={(inst) => {
+                setEditingInstance(inst);
+                setShowInstanceModal(true);
+              }}
+              onDelete={handleDeleteInstance}
+              onTest={handleTestConnection}
+              onRefresh={(id) => fetchRemoteStatus(id)}
+            />
+          </Card>
+
+          {showInstanceModal && (
+            <RemoteInstanceModal
+              instance={editingInstance}
+              onSave={handleSaveInstance}
+              onClose={() => setShowInstanceModal(false)}
+            />
+          )}
+
+          {!selectedInstanceId ? (
+            <Card>
+              <div className="flex flex-col items-center gap-3 py-8 text-text-muted">
+                <span className="material-symbols-outlined text-[48px]">dns</span>
+                <p>{t("selectOrAddRemoteInstance")}</p>
+              </div>
+            </Card>
+          ) : remoteStatusLoading ? (
+            <div className="flex flex-col gap-4">
+              <CardSkeleton />
+              <CardSkeleton />
+              <CardSkeleton />
+            </div>
+          ) : remoteStatuses._error ? (
+            <Card className="border-red-500/30">
+              <div className="flex items-center gap-3 p-4 text-sm text-red-400">
+                <span className="material-symbols-outlined">error</span>
+                <span>{remoteStatuses._error}</span>
+              </div>
+            </Card>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {toolEntries.map(([toolId, tool]) => (
+                <div key={toolId}>{renderToolCard(toolId, tool, true)}</div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

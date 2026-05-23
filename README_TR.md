@@ -1,6 +1,6 @@
 # OzRouter
 
-OzRouter, kodlama araçlarını, sohbet istemcilerini ve OpenAI uyumlu SDK'ları tek bir endpoint üzerinden yönlendiren yerel bir AI ağ geçididir.
+OzRouter, kodlama araçlarını, sohbet istemcilerini ve OpenAI uyumlu SDK'ları tek bir endpoint üzerinden yönlendiren yerel bir AI ağ geçididir. [OmniRoute](https://github.com/diegosouzapw/OmniRoute) projesinin bir fork'udur.
 
 Yerel makineler, ev sunucuları ve özel geliştirme ortamları için tasarlanmıştır. OzRouter'ı bir kez çalıştırır, araçlarınızı `http://localhost:20128/v1` adresine bağlarsınız, ardından sağlayıcı hesaplarını, fallback kurallarını, kotaları, kullanım günlüklerini ve model yönlendirmelerini panelden yönetirsiniz.
 
@@ -82,6 +82,24 @@ nvm use 24
 ```
 
 ## Kurulum
+
+### Hızlı Kurulum (Önerilen)
+
+Tek komut — depoyu klonlar, bağımlılıkları yükler, PM2'yi kurar, derler ve başlatır:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/batuhanozkose/OzRouter/main/scripts/install.sh | bash
+```
+
+Kurulum sihirbazı Node.js kontrolü, git, npm bağımlılıkları, ortam ayarları, sistem açılışında otomatik başlayan PM2 süreç yönetimi ve ilk derlemeyi gerçekleştirir. Tamamlandıktan sonra şu adresi açın:
+
+```txt
+http://localhost:20128/dashboard
+```
+
+Varsayılan giriş, `.env` dosyanızdaki `INITIAL_PASSWORD` değeridir.
+
+### Manuel Kurulum
 
 Depoyu klonlayın:
 

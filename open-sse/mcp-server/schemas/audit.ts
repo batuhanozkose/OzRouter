@@ -21,7 +21,7 @@ export interface McpAuditEntry {
   outputSummary: string;
   /** Execution duration in milliseconds */
   durationMs: number;
-  /** API key ID used for the invocation (null for anonymous/stdio) */
+  /** API key ID used for the invocation (null for anonymous/unauthenticated) */
   apiKeyId: string | null;
   /** Whether the tool execution succeeded */
   success: boolean;

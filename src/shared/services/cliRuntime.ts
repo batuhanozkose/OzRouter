@@ -49,7 +49,7 @@ const CLI_TOOLS: Record<string, any> = {
     },
   },
   cursor: {
-    defaultCommands: ["agent", "cursor"],
+    defaultCommands: ["cursor-agent", "agent", "cursor"],
     envBinKey: "CLI_CURSOR_BIN",
     requiresBinary: true,
     // Cursor startup can be slower on first run in containerized host-mount mode.
@@ -540,15 +540,32 @@ const getLookupEnv = () => {
   return env;
 };
 
-const resolveToolCommands = (toolId: string): string[] => {
+export const resolveToolCommands = (
+  toolId: string,
+  options: { includeEnvOverride?: boolean } = {}
+): string[] => {
   const tool = CLI_TOOLS[toolId];
   if (!tool) return [];
-  const envCommand = String(process.env[tool.envBinKey] || "").trim();
+  const includeEnvOverride = options.includeEnvOverride ?? true;
+  const envCommand = includeEnvOverride ? String(process.env[tool.envBinKey] || "").trim() : "";
   if (envCommand) return [envCommand];
   if (Array.isArray(tool.defaultCommands) && tool.defaultCommands.length > 0) {
     return tool.defaultCommands.filter(Boolean);
   }
   return tool.defaultCommand ? [tool.defaultCommand] : [];
+};
+
+export const getCliToolCommandCandidates = (toolId: string): string[] =>
+  resolveToolCommands(toolId, { includeEnvOverride: false });
+
+export const getCliToolHealthcheckTimeoutMs = (toolId: string): number => {
+  const tool = CLI_TOOLS[toolId];
+  return Number(tool?.healthcheckTimeoutMs || 4000);
+};
+
+export const getCliToolRequiresBinary = (toolId: string): boolean => {
+  const tool = CLI_TOOLS[toolId];
+  return tool?.requiresBinary !== false;
 };
 
 const checkExplicitPath = async (commandPath: string) => {

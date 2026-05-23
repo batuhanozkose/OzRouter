@@ -87,7 +87,10 @@ export default function ChangelogViewer() {
   useEffect(() => {
     async function fetchChangelog() {
       try {
-        const res = await fetch(CHANGELOG_RAW_URL, { cache: "no-store" });
+        let res = await fetch("/api/changelog", { cache: "no-store" });
+        if (!res.ok) {
+          res = await fetch(CHANGELOG_RAW_URL, { cache: "no-store" });
+        }
         if (!res.ok) throw new Error(`Changelog fetch failed with ${res.status}`);
 
         const text = await res.text();

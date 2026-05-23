@@ -1,7 +1,11 @@
 "use client";
 
+/* eslint-disable react-hooks/exhaustive-deps, react-hooks/immutability, react-hooks/set-state-in-effect */
+
 import { useState, useEffect } from "react";
 import { Card, Button, ModelSelectModal, ManualConfigModal } from "@/shared/components";
+import InstallProgressModal from "./InstallProgressModal";
+import { runRemoteInstall } from "./remoteInstall";
 import Image from "next/image";
 import CliStatusBadge from "./CliStatusBadge";
 import { useTranslations } from "next-intl";
@@ -16,6 +20,9 @@ export default function CodexToolCard({
   cloudEnabled,
   batchStatus,
   lastConfiguredAt,
+  isRemote = false,
+  instanceId = null,
+  onConfigApplied,
 }) {
   const t = useTranslations("cliTools");
   const [codexStatus, setCodexStatus] = useState(null);
@@ -24,6 +31,10 @@ export default function CodexToolCard({
   const [restoring, setRestoring] = useState(false);
   const [message, setMessage] = useState(null);
   const [showInstallGuide, setShowInstallGuide] = useState(false);
+  const [installing, setInstalling] = useState(false);
+  const [installOutput, setInstallOutput] = useState<string | null>(null);
+  const [installError, setInstallError] = useState<string | null>(null);
+  const [showInstallModal, setShowInstallModal] = useState(false);
   const [selectedApiKey, setSelectedApiKey] = useState("");
   const [selectedModel, setSelectedModel] = useState("gpt-5.5");
   const CODEX_DEFAULT_MODELS = [
@@ -54,6 +65,7 @@ export default function CodexToolCard({
   const [showBackups, setShowBackups] = useState(false);
   const [restoringBackup, setRestoringBackup] = useState(null);
   const cliReady = !!(codexStatus?.installed && codexStatus?.runnable);
+  const canApplySettings = !!selectedModel && (!cloudEnabled || !!selectedApiKey);
 
   useEffect(() => {
     // Store the key *id* so the backend can resolve the real secret from DB
@@ -66,8 +78,10 @@ export default function CodexToolCard({
     if (isExpanded && !codexStatus) {
       checkCodexStatus();
       fetchModelAliases();
-      fetchProfiles();
-      fetchBackups();
+      if (!isRemote) {
+        fetchProfiles();
+        fetchBackups();
+      }
     }
   }, [isExpanded, codexStatus]);
 
@@ -111,6 +125,7 @@ export default function CodexToolCard({
 
   const getConfigStatus = () => {
     if (!cliReady) return null;
+    if (isRemote && codexStatus?.hasOzRouter) return "configured";
     if (!codexStatus.config) return "not_configured";
     const hasBaseUrl =
       codexStatus.config.includes(baseUrl) ||
@@ -122,7 +137,10 @@ export default function CodexToolCard({
   const configStatus = getConfigStatus();
 
   // Use batch status as fallback when card hasn't been expanded yet
-  const effectiveConfigStatus = configStatus || batchStatus?.configStatus || null;
+  const effectiveConfigStatus =
+    configStatus ||
+    (batchStatus?.configStatus === "unknown" ? "not_configured" : batchStatus?.configStatus) ||
+    null;
 
   const getEffectiveBaseUrl = () => {
     const url = customBaseUrl || baseUrl;
@@ -134,15 +152,40 @@ export default function CodexToolCard({
     return url.replace(/\/v1\/?$/, "").replace(/\/api\/?$/, "") + "/api/v1";
   };
 
+  // Return the raw key value for the selected API key (used in env export command)
+  const getSelectedKeyDisplay = () => {
+    if (!selectedApiKey) return "<YOUR_OZROUTER_API_KEY>";
+    const matched = apiKeys?.find((k) => k.id === selectedApiKey);
+    // rawKey is the unmasked key from /api/cli-tools/keys; fall back to masked key
+    return matched?.rawKey || matched?.key || "<YOUR_OZROUTER_API_KEY>";
+  };
+
   const checkCodexStatus = async () => {
     setCheckingCodex(true);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
     try {
-      const res = await fetch("/api/cli-tools/codex-settings");
-      const data = await res.json();
-      setCodexStatus(data);
-    } catch (error) {
-      setCodexStatus({ installed: false, error: error.message });
+      if (isRemote) {
+        const res = await fetch("/api/cli-tools/remote/tool-status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ instanceId, toolId: "codex" }),
+          signal: controller.signal,
+        });
+        const data = await res.json();
+        setCodexStatus(data);
+      } else {
+        const res = await fetch("/api/cli-tools/codex-settings", { signal: controller.signal });
+        const data = await res.json();
+        setCodexStatus(data);
+      }
+    } catch (error: any) {
+      setCodexStatus({
+        installed: false,
+        error: error.name === "AbortError" ? "Timeout" : error.message,
+      });
     } finally {
+      clearTimeout(timer);
       setCheckingCodex(false);
     }
   };
@@ -160,30 +203,77 @@ export default function CodexToolCard({
             : selectedApiKey;
 
       // Send both apiKey (as fallback) and keyId to look up the unmasked string natively
-      const res = await fetch("/api/cli-tools/codex-settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          baseUrl: getEffectiveBaseUrl(),
-          apiKey: keyToUse,
-          keyId: selectedApiKey,
-          model: selectedModel || CODEX_DEFAULT_MODELS[0],
-          reasoningEffort,
-          wireApi,
-          modelMappings,
-        }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setMessage({ type: "success", text: t("settingsApplied") });
-        checkCodexStatus();
-      } else {
-        setMessage({
-          type: "error",
-          text:
-            (typeof data.error === "string" ? data.error : data.error?.message) ||
-            t("failedApplySettings"),
+      if (isRemote) {
+        const res = await fetch("/api/cli-tools/remote/apply", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            instanceId,
+            toolId: "codex",
+            baseUrl: getEffectiveBaseUrl(),
+            apiKey: keyToUse,
+            keyId: selectedApiKey,
+            model: selectedModel || CODEX_DEFAULT_MODELS[0],
+            reasoningEffort,
+            wireApi,
+            modelMappings,
+          }),
         });
+        const data = await res.json();
+        if (res.ok) {
+          if (data.requiresEnvExport) {
+            setMessage({
+              type: "warning",
+              text: t("codexEnvExportWarning"),
+              envCommand: `export OPENAI_API_KEY="${getSelectedKeyDisplay()}"`,
+            });
+          } else {
+            setMessage({ type: "success", text: t("settingsApplied") });
+          }
+          await checkCodexStatus();
+          onConfigApplied?.();
+        } else {
+          setMessage({
+            type: "error",
+            text:
+              (typeof data.error === "string" ? data.error : data.error?.message) ||
+              t("failedApplySettings"),
+          });
+        }
+      } else {
+        const res = await fetch("/api/cli-tools/codex-settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            baseUrl: getEffectiveBaseUrl(),
+            apiKey: keyToUse,
+            keyId: selectedApiKey,
+            model: selectedModel || CODEX_DEFAULT_MODELS[0],
+            reasoningEffort,
+            wireApi,
+            modelMappings,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          if (data.requiresEnvExport) {
+            setMessage({
+              type: "warning",
+              text: t("codexEnvExportWarning"),
+              envCommand: `export OPENAI_API_KEY="${getSelectedKeyDisplay()}"`,
+            });
+          } else {
+            setMessage({ type: "success", text: t("settingsApplied") });
+          }
+          checkCodexStatus();
+        } else {
+          setMessage({
+            type: "error",
+            text:
+              (typeof data.error === "string" ? data.error : data.error?.message) ||
+              t("failedApplySettings"),
+          });
+        }
       }
     } catch (error) {
       setMessage({ type: "error", text: error.message });
@@ -196,19 +286,41 @@ export default function CodexToolCard({
     setRestoring(true);
     setMessage(null);
     try {
-      const res = await fetch("/api/cli-tools/codex-settings", { method: "DELETE" });
-      const data = await res.json();
-      if (res.ok) {
-        setMessage({ type: "success", text: t("settingsReset") });
-        setSelectedModel("");
-        checkCodexStatus();
-      } else {
-        setMessage({
-          type: "error",
-          text:
-            (typeof data.error === "string" ? data.error : data.error?.message) ||
-            t("failedResetSettings"),
+      if (isRemote) {
+        const res = await fetch("/api/cli-tools/remote/apply", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ instanceId, toolId: "codex" }),
         });
+        const data = await res.json();
+        if (res.ok) {
+          setMessage({ type: "success", text: t("settingsReset") });
+          setSelectedModel("");
+          await checkCodexStatus();
+          onConfigApplied?.();
+        } else {
+          setMessage({
+            type: "error",
+            text:
+              (typeof data.error === "string" ? data.error : data.error?.message) ||
+              t("failedResetSettings"),
+          });
+        }
+      } else {
+        const res = await fetch("/api/cli-tools/codex-settings", { method: "DELETE" });
+        const data = await res.json();
+        if (res.ok) {
+          setMessage({ type: "success", text: t("settingsReset") });
+          setSelectedModel("");
+          checkCodexStatus();
+        } else {
+          setMessage({
+            type: "error",
+            text:
+              (typeof data.error === "string" ? data.error : data.error?.message) ||
+              t("failedResetSettings"),
+          });
+        }
       }
     } catch (error) {
       setMessage({ type: "error", text: error.message });
@@ -354,6 +466,7 @@ export default function CodexToolCard({
 
   const getManualConfigs = () => {
     const keyToUse = !cloudEnabled ? "sk_ozrouter" : "<YOUR_OZROUTER_API_KEY>";
+    const useCustomProvider = wireApi === "responses";
 
     let configContent = `# OzRouter Configuration for Codex CLI
 model = "${selectedModel || CODEX_DEFAULT_MODELS[0]}"`;
@@ -362,7 +475,7 @@ model = "${selectedModel || CODEX_DEFAULT_MODELS[0]}"`;
       configContent += `\nmodel_reasoning_effort = "${reasoningEffort}"`;
     }
 
-    if (wireApi === "responses") {
+    if (useCustomProvider) {
       configContent += `
 model_provider = "ozrouter"
 
@@ -375,7 +488,7 @@ env_key = "OPENAI_API_KEY"
     } else {
       configContent += `
 
-# Utilize the built-in OpenAI provider pointed to OzRouter
+# Built-in OpenAI provider pointed to OzRouter
 openai_base_url = "${getEffectiveBaseUrl()}"
 `;
     }
@@ -389,18 +502,29 @@ openai_base_url = "${getEffectiveBaseUrl()}"
       }
     }
 
-    const authContent = JSON.stringify({ OPENAI_API_KEY: keyToUse }, null, 2);
-
-    return [
+    const configs = [
       {
         filename: "~/.codex/config.toml",
         content: configContent,
       },
-      {
+    ];
+
+    if (!useCustomProvider) {
+      // Chat mode: auth.json is read by the built-in OpenAI provider
+      const authContent = JSON.stringify({ OPENAI_API_KEY: keyToUse }, null, 2);
+      configs.push({
         filename: "~/.codex/auth.json",
         content: authContent,
-      },
-    ];
+      });
+    } else {
+      // Responses mode: env variable required, show export command
+      configs.push({
+        filename: "Environment Variable (required)",
+        content: `# Codex CLI custom providers read the API key from environment variables only.\n# Add this to your ~/.bashrc or ~/.zshrc:\nexport OPENAI_API_KEY="${keyToUse}"`,
+      });
+    }
+
+    return configs;
   };
 
   return (
@@ -506,6 +630,42 @@ openai_base_url = "${getEffectiveBaseUrl()}"
                         . {t("codexAuthNoteSuffix")}
                       </p>
                     </div>
+                    {isRemote && !cliReady && (
+                      <div className="pt-2 border-t border-border">
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={async () => {
+                            if (!instanceId) return;
+                            setShowInstallModal(true);
+                            setInstalling(true);
+                            setInstallOutput("");
+                            setInstallError(null);
+                            try {
+                              const result = await runRemoteInstall({
+                                instanceId,
+                                toolId: "codex",
+                                onOutput: setInstallOutput,
+                              });
+                              if (result.success) {
+                                await checkCodexStatus();
+                                onConfigApplied?.();
+                              } else {
+                                setInstallError(result.output || "Install failed");
+                              }
+                            } catch (err: any) {
+                              setInstallError(err.message);
+                            } finally {
+                              setInstalling(false);
+                            }
+                          }}
+                          loading={installing}
+                        >
+                          <span className="material-symbols-outlined text-[16px]">download</span>
+                          {t("install")}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -714,12 +874,40 @@ openai_base_url = "${getEffectiveBaseUrl()}"
 
               {message && (
                 <div
-                  className={`flex items-center gap-2 px-2 py-1.5 rounded text-xs ${message.type === "success" ? "bg-green-500/10 text-green-600" : "bg-red-500/10 text-red-600"}`}
+                  className={`flex flex-col gap-1.5 px-2 py-1.5 rounded text-xs ${
+                    message.type === "success"
+                      ? "bg-green-500/10 text-green-600"
+                      : message.type === "warning"
+                        ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                        : "bg-red-500/10 text-red-600"
+                  }`}
                 >
-                  <span className="material-symbols-outlined text-[14px]">
-                    {message.type === "success" ? "check_circle" : "error"}
-                  </span>
-                  <span>{message.text}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[14px]">
+                      {message.type === "success"
+                        ? "check_circle"
+                        : message.type === "warning"
+                          ? "warning"
+                          : "error"}
+                    </span>
+                    <span>{message.text}</span>
+                  </div>
+                  {message.envCommand && (
+                    <div className="ml-5 flex items-center gap-1.5">
+                      <code className="flex-1 px-2 py-1 bg-black/5 dark:bg-white/5 rounded font-mono text-[11px] select-all">
+                        {message.envCommand}
+                      </code>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(message.envCommand);
+                        }}
+                        className="p-0.5 text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors"
+                        title={t("copy")}
+                      >
+                        <span className="material-symbols-outlined text-[14px]">content_copy</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -728,7 +916,7 @@ openai_base_url = "${getEffectiveBaseUrl()}"
                   variant="primary"
                   size="sm"
                   onClick={handleApplySettings}
-                  disabled={!selectedApiKey || !selectedModel}
+                  disabled={!canApplySettings}
                   loading={applying}
                 >
                   <span className="material-symbols-outlined text-[14px] mr-1">save</span>
@@ -749,35 +937,39 @@ openai_base_url = "${getEffectiveBaseUrl()}"
                   {t("manualConfig")}
                 </Button>
                 <div className="flex-1" />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setShowProfiles(!showProfiles);
-                    if (!showProfiles) fetchProfiles();
-                  }}
-                >
-                  <span className="material-symbols-outlined text-[14px] mr-1">
-                    manage_accounts
-                  </span>
-                  {t("profiles")}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setShowBackups(!showBackups);
-                    if (!showBackups) fetchBackups();
-                  }}
-                >
-                  <span className="material-symbols-outlined text-[14px] mr-1">history</span>
-                  {t("backups")}
-                  {backups.length > 0 && ` (${backups.length})`}
-                </Button>
+                {!isRemote && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setShowProfiles(!showProfiles);
+                        if (!showProfiles) fetchProfiles();
+                      }}
+                    >
+                      <span className="material-symbols-outlined text-[14px] mr-1">
+                        manage_accounts
+                      </span>
+                      {t("profiles")}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setShowBackups(!showBackups);
+                        if (!showBackups) fetchBackups();
+                      }}
+                    >
+                      <span className="material-symbols-outlined text-[14px] mr-1">history</span>
+                      {t("backups")}
+                      {backups.length > 0 && ` (${backups.length})`}
+                    </Button>
+                  </>
+                )}
               </div>
 
               {/* Profiles Section */}
-              {showProfiles && (
+              {!isRemote && showProfiles && (
                 <div className="mt-2 p-3 bg-surface border border-border rounded-lg">
                   <h4 className="text-xs font-semibold text-text-main mb-2 flex items-center gap-1">
                     <span className="material-symbols-outlined text-[14px]">manage_accounts</span>
@@ -844,7 +1036,7 @@ openai_base_url = "${getEffectiveBaseUrl()}"
               )}
 
               {/* Backups Section */}
-              {showBackups && (
+              {!isRemote && showBackups && (
                 <div className="mt-2 p-3 bg-surface border border-border rounded-lg">
                   <h4 className="text-xs font-semibold text-text-main mb-2 flex items-center gap-1">
                     <span className="material-symbols-outlined text-[14px]">history</span>
@@ -901,6 +1093,13 @@ openai_base_url = "${getEffectiveBaseUrl()}"
         onClose={() => setShowManualConfigModal(false)}
         title={t("codexManualConfiguration")}
         configs={getManualConfigs()}
+      />
+      <InstallProgressModal
+        open={showInstallModal}
+        output={installOutput}
+        error={installError}
+        installing={installing}
+        onClose={() => setShowInstallModal(false)}
       />
     </Card>
   );

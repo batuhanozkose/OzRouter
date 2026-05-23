@@ -171,6 +171,12 @@ function getResetTimeParts(resetTime: string): [number, number] {
   return [parseInt(match[1], 10), parseInt(match[2], 10)];
 }
 
+/**
+ * Compute UTC timestamp with explicit date components.
+ * NOTE: Date.UTC auto-wraps month/day overflow per ECMAScript spec
+ * (e.g. Date.UTC(2026, 12, 1) → January 2027, Date.UTC(2026, 3, 32) → May 2).
+ * This behavior is relied upon for next-month / next-day boundary calculation.
+ */
 function getUtcDateMs(year: number, month: number, day: number, hours: number, minutes: number) {
   return Date.UTC(year, month, day, hours, minutes, 0, 0);
 }

@@ -1,7 +1,11 @@
 "use client";
 
+/* eslint-disable react-hooks/exhaustive-deps, react-hooks/immutability, react-hooks/set-state-in-effect */
+
 import { useState, useEffect, useRef } from "react";
 import { Card, Button, ModelSelectModal, ManualConfigModal } from "@/shared/components";
+import InstallProgressModal from "./InstallProgressModal";
+import { runRemoteInstall } from "./remoteInstall";
 import Image from "next/image";
 import CliStatusBadge from "./CliStatusBadge";
 import { useTranslations } from "next-intl";
@@ -25,6 +29,9 @@ export default function ClaudeToolCard({
   cloudEnabled,
   batchStatus,
   lastConfiguredAt,
+  isRemote = false,
+  instanceId = null,
+  onConfigApplied,
 }) {
   const t = useTranslations("cliTools");
   const [claudeStatus, setClaudeStatus] = useState(null);
@@ -33,6 +40,10 @@ export default function ClaudeToolCard({
   const [restoring, setRestoring] = useState(false);
   const [message, setMessage] = useState(null);
   const [showInstallGuide, setShowInstallGuide] = useState(false);
+  const [installing, setInstalling] = useState(false);
+  const [installOutput, setInstallOutput] = useState<string | null>(null);
+  const [installError, setInstallError] = useState<string | null>(null);
+  const [showInstallModal, setShowInstallModal] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [currentEditingAlias, setCurrentEditingAlias] = useState(null);
   const [selectedApiKey, setSelectedApiKey] = useState("");
@@ -44,11 +55,12 @@ export default function ClaudeToolCard({
   const [backups, setBackups] = useState([]);
   const [showBackups, setShowBackups] = useState(false);
   const [restoringBackup, setRestoringBackup] = useState(null);
-  const cliReady = !!(claudeStatus?.installed && claudeStatus?.runnable);
+  const effectiveClaudeStatus = claudeStatus || batchStatus || null;
+  const cliReady = !!(effectiveClaudeStatus?.installed && effectiveClaudeStatus?.runnable);
 
   const getConfigStatus = () => {
     if (!cliReady) return null;
-    const currentUrl = claudeStatus.settings?.env?.ANTHROPIC_BASE_URL;
+    const currentUrl = effectiveClaudeStatus?.settings?.env?.ANTHROPIC_BASE_URL;
     if (!currentUrl) return "not_configured";
     const localMatch = currentUrl.includes("localhost") || currentUrl.includes("127.0.0.1");
     const cloudMatch = cloudEnabled && CLOUD_URL && currentUrl.startsWith(CLOUD_URL);
@@ -115,13 +127,39 @@ export default function ClaudeToolCard({
 
   const checkClaudeStatus = async () => {
     setCheckingClaude(true);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
     try {
-      const res = await fetch("/api/cli-tools/claude-settings");
-      const data = await res.json();
-      setClaudeStatus(data);
-    } catch (error) {
-      setClaudeStatus({ installed: false, error: error.message });
+      if (isRemote) {
+        const res = await fetch("/api/cli-tools/remote/tool-status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ instanceId, toolId: "claude" }),
+          signal: controller.signal,
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setClaudeStatus(data);
+        } else {
+          setClaudeStatus({
+            ...(batchStatus || {}),
+            installed: batchStatus?.installed ?? false,
+            runnable: batchStatus?.runnable ?? false,
+            error: data.error || data.message || "Remote status failed",
+          });
+        }
+      } else {
+        const res = await fetch("/api/cli-tools/claude-settings", { signal: controller.signal });
+        const data = await res.json();
+        setClaudeStatus(data);
+      }
+    } catch (error: any) {
+      setClaudeStatus({
+        installed: false,
+        error: error.name === "AbortError" ? "Timeout" : error.message,
+      });
     } finally {
+      clearTimeout(timer);
       setCheckingClaude(false);
     }
   };
@@ -142,9 +180,6 @@ export default function ClaudeToolCard({
     try {
       const env: any = { ANTHROPIC_BASE_URL: getEffectiveBaseUrl() };
 
-      // (#523) Prefer keyId lookup so the backend writes the real key to disk.
-      // If no key is selected, leave auth unset so local installs can rely on
-      // anonymous access instead of persisting a fake placeholder token.
       const selectedKeyId = selectedApiKey?.trim() || (apiKeys?.length > 0 ? apiKeys[0].id : null);
 
       tool.defaultModels.forEach((model) => {
@@ -152,29 +187,55 @@ export default function ClaudeToolCard({
         if (targetModel && model.envKey) env[model.envKey] = targetModel;
       });
 
-      const postBody: Record<string, unknown> = { env };
-      if (selectedKeyId) postBody.keyId = selectedKeyId;
-
-      const res = await fetch("/api/cli-tools/claude-settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(postBody),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setMessage({ type: "success", text: t("settingsApplied") });
-        setClaudeStatus((prev) => ({
-          ...prev,
-          hasBackup: true,
-          settings: { ...prev?.settings, env },
-        }));
-      } else {
-        setMessage({
-          type: "error",
-          text:
-            (typeof data.error === "string" ? data.error : data.error?.message) ||
-            t("failedApplySettings"),
+      if (isRemote) {
+        const res = await fetch("/api/cli-tools/remote/apply", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            instanceId,
+            toolId: "claude",
+            baseUrl: getEffectiveBaseUrl(),
+            keyId: selectedKeyId,
+            env,
+          }),
         });
+        const data = await res.json();
+        if (res.ok) {
+          setMessage({ type: "success", text: t("settingsApplied") });
+          onConfigApplied?.();
+        } else {
+          setMessage({
+            type: "error",
+            text:
+              (typeof data.error === "string" ? data.error : data.error?.message) ||
+              t("failedApplySettings"),
+          });
+        }
+      } else {
+        const postBody: Record<string, unknown> = { env };
+        if (selectedKeyId) postBody.keyId = selectedKeyId;
+
+        const res = await fetch("/api/cli-tools/claude-settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(postBody),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setMessage({ type: "success", text: t("settingsApplied") });
+          setClaudeStatus((prev) => ({
+            ...prev,
+            hasBackup: true,
+            settings: { ...prev?.settings, env },
+          }));
+        } else {
+          setMessage({
+            type: "error",
+            text:
+              (typeof data.error === "string" ? data.error : data.error?.message) ||
+              t("failedApplySettings"),
+          });
+        }
       }
     } catch (error) {
       setMessage({ type: "error", text: error.message });
@@ -187,21 +248,33 @@ export default function ClaudeToolCard({
     setRestoring(true);
     setMessage(null);
     try {
-      const res = await fetch("/api/cli-tools/claude-settings", { method: "DELETE" });
-      const data = await res.json();
-      if (res.ok) {
-        setMessage({ type: "success", text: t("settingsReset") });
-        tool.defaultModels.forEach((model) =>
-          onModelMappingChange(model.alias, model.defaultValue || "")
-        );
-        setSelectedApiKey("");
-      } else {
-        setMessage({
-          type: "error",
-          text:
-            (typeof data.error === "string" ? data.error : data.error?.message) ||
-            t("failedResetSettings"),
+      if (isRemote) {
+        const res = await fetch("/api/cli-tools/remote/apply", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ instanceId, toolId: "claude" }),
         });
+        if (res.ok) {
+          setMessage({ type: "success", text: t("settingsReset") });
+          onConfigApplied?.();
+        }
+      } else {
+        const res = await fetch("/api/cli-tools/claude-settings", { method: "DELETE" });
+        const data = await res.json();
+        if (res.ok) {
+          setMessage({ type: "success", text: t("settingsReset") });
+          tool.defaultModels.forEach((model) =>
+            onModelMappingChange(model.alias, model.defaultValue || "")
+          );
+          setSelectedApiKey("");
+        } else {
+          setMessage({
+            type: "error",
+            text:
+              (typeof data.error === "string" ? data.error : data.error?.message) ||
+              t("failedResetSettings"),
+          });
+        }
       }
     } catch (error) {
       setMessage({ type: "error", text: error.message });
@@ -332,15 +405,17 @@ export default function ClaudeToolCard({
                 <span className="material-symbols-outlined text-yellow-500">warning</span>
                 <div className="flex-1">
                   <p className="font-medium text-yellow-600 dark:text-yellow-400">
-                    {claudeStatus.installed
+                    {effectiveClaudeStatus.installed
                       ? t("cliNotRunnable", { tool: "Claude" })
                       : t("cliNotInstalled", { tool: "Claude" })}
                   </p>
                   <p className="text-sm text-text-muted">
-                    {claudeStatus.installed
+                    {effectiveClaudeStatus.installed
                       ? t("cliFoundFailedHealthcheck", {
                           tool: "Claude",
-                          reason: claudeStatus.reason ? ` (${claudeStatus.reason})` : "",
+                          reason: effectiveClaudeStatus.reason
+                            ? ` (${effectiveClaudeStatus.reason})`
+                            : "",
                         })
                       : t("installCliPrompt", { tool: "Claude" })}
                   </p>
@@ -371,6 +446,42 @@ export default function ClaudeToolCard({
                       <code className="px-1 bg-black/5 dark:bg-white/5 rounded">claude</code>{" "}
                       {t("toVerify")}
                     </p>
+                    {isRemote && !cliReady && (
+                      <div className="pt-2 border-t border-border">
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={async () => {
+                            if (!instanceId) return;
+                            setShowInstallModal(true);
+                            setInstalling(true);
+                            setInstallOutput("");
+                            setInstallError(null);
+                            try {
+                              const result = await runRemoteInstall({
+                                instanceId,
+                                toolId: "claude",
+                                onOutput: setInstallOutput,
+                              });
+                              if (result.success) {
+                                await checkClaudeStatus();
+                                onConfigApplied?.();
+                              } else {
+                                setInstallError(result.output || "Install failed");
+                              }
+                            } catch (err: any) {
+                              setInstallError(err.message);
+                            } finally {
+                              setInstalling(false);
+                            }
+                          }}
+                          loading={installing}
+                        >
+                          <span className="material-symbols-outlined text-[16px]">download</span>
+                          {t("install")}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -381,7 +492,7 @@ export default function ClaudeToolCard({
             <>
               <div className="flex flex-col gap-2">
                 {/* Current Base URL */}
-                {claudeStatus?.settings?.env?.ANTHROPIC_BASE_URL && (
+                {effectiveClaudeStatus?.settings?.env?.ANTHROPIC_BASE_URL && (
                   <div className="flex items-center gap-2">
                     <span className="w-32 shrink-0 text-sm font-semibold text-text-main text-right">
                       {t("current")}
@@ -390,7 +501,7 @@ export default function ClaudeToolCard({
                       arrow_forward
                     </span>
                     <span className="flex-1 px-2 py-1.5 text-xs text-text-muted truncate">
-                      {claudeStatus.settings.env.ANTHROPIC_BASE_URL}
+                      {effectiveClaudeStatus.settings.env.ANTHROPIC_BASE_URL}
                     </span>
                   </div>
                 )}
@@ -593,6 +704,13 @@ export default function ClaudeToolCard({
         onClose={() => setShowManualConfigModal(false)}
         title={t("claudeManualConfiguration")}
         configs={getManualConfigs()}
+      />
+      <InstallProgressModal
+        open={showInstallModal}
+        output={installOutput}
+        error={installError}
+        installing={installing}
+        onClose={() => setShowInstallModal(false)}
       />
     </Card>
   );

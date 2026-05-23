@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable react-hooks/exhaustive-deps, react-hooks/set-state-in-effect */
+
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Card, Button, ModelSelectModal } from "@/shared/components";
 import Image from "next/image";
@@ -8,6 +10,8 @@ import { copyToClipboard } from "@/shared/utils/clipboard";
 import { getDisplayBaseUrl } from "@/shared/utils/origin";
 import { buildOpenCodeConfigDocument } from "@/shared/services/opencodeConfig";
 import { useTheme } from "@/shared/hooks/useTheme";
+import InstallProgressModal from "./InstallProgressModal";
+import { runRemoteInstall } from "./remoteInstall";
 
 export default function DefaultToolCard({
   toolId,
@@ -19,6 +23,9 @@ export default function DefaultToolCard({
   activeProviders = [],
   cloudEnabled = false,
   batchStatus,
+  isRemote = false,
+  instanceId = null,
+  onConfigApplied,
 }) {
   const t = useTranslations("cliTools");
   const translateOrFallback = useCallback(
@@ -38,6 +45,10 @@ export default function DefaultToolCard({
   const [runtimeStatus, setRuntimeStatus] = useState(null);
   const [message, setMessage] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [installing, setInstalling] = useState(false);
+  const [installOutput, setInstallOutput] = useState<string | null>(null);
+  const [installError, setInstallError] = useState<string | null>(null);
+  const [showInstallModal, setShowInstallModal] = useState(false);
   const runtimeFetchStartedRef = useRef(false);
   const { isDark } = useTheme();
 
@@ -296,6 +307,33 @@ export default function DefaultToolCard({
 
   // Check if this tool supports direct config file write
   const supportsDirectSave = ["continue", "opencode", "qwen"].includes(toolId);
+  const supportsRemoteInstall = ["cursor", "opencode", "amp", "qoder", "qwen"].includes(toolId);
+
+  const handleRemoteInstall = async () => {
+    if (!instanceId) return;
+    setShowInstallModal(true);
+    setInstalling(true);
+    setInstallOutput("");
+    setInstallError(null);
+    try {
+      const result = await runRemoteInstall({
+        instanceId,
+        toolId,
+        onOutput: setInstallOutput,
+      });
+      if (result.success) {
+        setRuntimeStatus(null);
+        runtimeFetchStartedRef.current = false;
+        onConfigApplied?.();
+      } else {
+        setInstallError(result.output || "Install failed");
+      }
+    } catch (error: any) {
+      setInstallError(error?.message || "Install failed");
+    } finally {
+      setInstalling(false);
+    }
+  };
 
   const renderApiKeySelector = () => {
     return (
@@ -591,6 +629,19 @@ export default function DefaultToolCard({
                   {t("saveConfig")}
                 </Button>
               )}
+              {isRemote &&
+                supportsRemoteInstall &&
+                (runtimeStatus?.installed === false || batchStatus?.installed === false) && (
+                  <Button
+                    variant={supportsDirectSave ? "outline" : "primary"}
+                    size="sm"
+                    onClick={handleRemoteInstall}
+                    loading={installing}
+                  >
+                    <span className="material-symbols-outlined text-[14px] mr-1">download</span>
+                    {t("install")}
+                  </Button>
+                )}
               {tool.codeBlock && (
                 <Button
                   variant={supportsDirectSave ? "outline" : "primary"}
@@ -751,6 +802,13 @@ export default function DefaultToolCard({
         title={t("selectModel")}
         multiSelect={isMultiModelTool}
         showCombos={!tool.hideComboModels}
+      />
+      <InstallProgressModal
+        open={showInstallModal}
+        output={installOutput}
+        error={installError}
+        installing={installing}
+        onClose={() => setShowInstallModal(false)}
       />
     </Card>
   );
